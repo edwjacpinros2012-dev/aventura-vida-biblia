@@ -8,13 +8,25 @@ const categoryData = [
   { id: "cat-arcade", name: "Arcade", slug: "arcade", description: "Retos dinámicos y de exploración.", icon: "↗", sortOrder: 3 },
   { id: "cat-adventures", name: "Aventuras", slug: "aventuras", description: "Historias interactivas por capítulos.", icon: "⌁", sortOrder: 4 },
   { id: "cat-values", name: "Valores", slug: "valores", description: "Historias para practicar buenos valores.", icon: "♥", sortOrder: 5 },
+  { id: "cat-words", name: "Palabras", slug: "palabras", description: "Retos de palabras y conceptos bíblicos.", icon: "⌕", sortOrder: 6 },
+  { id: "cat-creativity", name: "Creatividad", slug: "creatividad", description: "Actividades para crear y explorar.", icon: "◌", sortOrder: 7 },
+  { id: "cat-stories", name: "Historias", slug: "historias", description: "Relatos con decisiones y actividades.", icon: "▤", sortOrder: 8 },
+  { id: "cat-logic", name: "Lógica", slug: "logica", description: "Patrones, secuencias y acertijos.", icon: "◈", sortOrder: 9 },
+  { id: "cat-verses", name: "Versículos", slug: "versiculos", description: "Práctica para recordar palabras de vida.", icon: "¶", sortOrder: 10 },
+  { id: "cat-puzzles", name: "Rompecabezas", slug: "rompecabezas", description: "Escenas para ordenar pieza por pieza.", icon: "▦", sortOrder: 11 },
 ];
 
 const gameData = [
   { id: "game-memory", slug: "memoria-biblica", name: "Memoria bíblica", shortDescription: "Une cartas de historias y símbolos para iluminar el sendero.", categoryId: "cat-memory", suggestedAgeMin: 6, suggestedAgeMax: 10, difficulty: Difficulty.INITIAL, maxPoints: 320, xpReward: 100, moduleKey: "memory-bible", featured: true },
-  { id: "game-quiz", slug: "preguntas-de-aventura", name: "Preguntas de aventura", shortDescription: "Responde preguntas visuales y abre nuevas rutas en el mapa.", categoryId: "cat-quiz", suggestedAgeMin: 7, suggestedAgeMax: 12, difficulty: Difficulty.EXPLORER, maxPoints: 450, xpReward: 130, moduleKey: "quiz-adventure", featured: true },
+  { id: "game-quiz", slug: "preguntas-de-aventura", name: "Preguntas bíblicas", shortDescription: "Responde preguntas, descubre explicaciones y abre nuevas rutas.", categoryId: "cat-quiz", suggestedAgeMin: 7, suggestedAgeMax: 12, difficulty: Difficulty.EXPLORER, maxPoints: 450, xpReward: 130, moduleKey: "quiz-adventure", featured: true },
   { id: "game-light", slug: "recolector-de-luz", name: "Recolector de luz", shortDescription: "Ayuda a Lumo a recoger destellos y evitar nubes traviesas.", categoryId: "cat-arcade", suggestedAgeMin: 8, suggestedAgeMax: 13, difficulty: Difficulty.ADVENTURER, maxPoints: 600, xpReward: 160, moduleKey: "light-collector", featured: true },
   { id: "game-garden", slug: "guardianes-del-jardin", name: "Guardianes del jardín", shortDescription: "Cuida semillas y comparte la cosecha.", categoryId: "cat-values", suggestedAgeMin: 5, suggestedAgeMax: 9, difficulty: Difficulty.INITIAL, maxPoints: 280, xpReward: 90, moduleKey: "garden-helpers", featured: false },
+  { id: "game-word-search", slug: "sopa-de-letras-biblica", name: "Sopa de Letras Bíblica", shortDescription: "Encuentra palabras de historias bíblicas en tableros progresivos.", categoryId: "cat-words", suggestedAgeMin: 6, suggestedAgeMax: 12, difficulty: Difficulty.INITIAL, maxPoints: 360, xpReward: 90, moduleKey: "word-search", featured: false },
+  { id: "game-coloring", slug: "colorear-biblico", name: "Colorear Bíblico", shortDescription: "Pinta una escena original y guarda tu creación.", categoryId: "cat-creativity", suggestedAgeMin: 4, suggestedAgeMax: 10, difficulty: Difficulty.INITIAL, maxPoints: 280, xpReward: 70, moduleKey: "coloring", featured: false },
+  { id: "game-stories", slug: "historias-biblicas-interactivas", name: "Historias Bíblicas Interactivas", shortDescription: "Lee capítulos, toma decisiones y responde retos.", categoryId: "cat-stories", suggestedAgeMin: 6, suggestedAgeMax: 12, difficulty: Difficulty.EXPLORER, maxPoints: 430, xpReward: 130, moduleKey: "story", featured: false },
+  { id: "game-iq", slug: "iq-biblico", name: "IQ Bíblico", shortDescription: "Resuelve patrones, secuencias y acertijos apropiados para tu nivel.", categoryId: "cat-logic", suggestedAgeMin: 7, suggestedAgeMax: 13, difficulty: Difficulty.EXPLORER, maxPoints: 390, xpReward: 110, moduleKey: "iq", featured: false },
+  { id: "game-verse", slug: "aprende-el-versiculo", name: "Aprende el Versículo", shortDescription: "Estudia un versículo y supera retos para recordarlo.", categoryId: "cat-verses", suggestedAgeMin: 6, suggestedAgeMax: 13, difficulty: Difficulty.EXPLORER, maxPoints: 350, xpReward: 120, moduleKey: "verse", featured: false },
+  { id: "game-puzzle", slug: "rompecabezas-biblico", name: "Rompecabezas Bíblico", shortDescription: "Ordena piezas de una ilustración original.", categoryId: "cat-puzzles", suggestedAgeMin: 6, suggestedAgeMax: 13, difficulty: Difficulty.ADVENTURER, maxPoints: 500, xpReward: 140, moduleKey: "puzzle", featured: false },
 ];
 
 async function main() {

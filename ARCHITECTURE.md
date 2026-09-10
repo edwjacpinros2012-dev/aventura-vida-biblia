@@ -9,7 +9,8 @@
 | Datos | PostgreSQL + Prisma | Relaciones tipadas, migraciones y consultas mantenibles. |
 | Validación futura | Zod en límites de servidor | Validar entradas antes de persistir o conceder recompensas. |
 | Autenticación futura | Auth.js con adaptador Prisma | Sesiones seguras y roles del servidor para jugador/administrador. |
-| Juegos | Registro interno de juegos + adaptador por juego | El shell de la plataforma no conoce la implementación de cada juego. |
+| Juegos | Registro interno de juegos + adaptador por juego | El shell monta módulos revisados desde una clave, sin incrustarlos en las páginas. |
+| Progreso de demostración | Provider React + `localStorage` | Permite probar UX de puntos, XP, rachas, logros y perfil sin recopilar información del menor. |
 
 ## Estructura de carpetas
 
@@ -33,11 +34,13 @@ Principios principales:
 - Las futuras operaciones de puntos se registran en transacciones inmutables (`Score`, `XpTransaction`, `Reward`) y el servidor será su fuente de verdad.
 - Los índices cubren catálogo publicado, sesiones por usuario/juego, puntuaciones por periodo y progreso de misiones.
 
-## Arquitectura de juegos futura
+## Arquitectura de juegos actual y futura
 
-Cada juego interno se registrará con metadatos y un adaptador, por ejemplo `memory-bible`. El adaptador recibirá un contexto de juego limitado; no accederá directamente a Prisma, sesiones administrativas ni secretos.
+Cada juego interno se registra con metadatos y una clave (`word-search`, `coloring`, `quiz`, `story`, `memory`, `iq`, `verse` o `puzzle`). `GamePlayer` resuelve esa clave en un módulo de `components/games`; todos se ejecutan dentro de `GameShell`, que entrega estados de carga, error y victoria. Ningún módulo accede a Prisma, secretos ni rutas administrativas.
 
-El futuro Game SDK será una capa de API autenticada del servidor: abrirá una sesión, aceptará eventos permitidos, verificará reglas del juego y finalmente calculará puntos/XP/recompensas. Los valores enviados desde el navegador nunca serán autoridad.
+Durante esta demostración, `PlayerProgressProvider` conserva únicamente métricas de juego no personales en `localStorage`: puntos, XP, racha, identificadores de juegos terminados, logros y versículos practicados. No es una fuente de verdad ni debe usarse para un ranking real.
+
+El futuro Game SDK será una capa de API autenticada del servidor: abrirá una sesión, aceptará eventos permitidos, verificará reglas del juego y finalmente calculará puntos/XP/recompensas. Sustituirá el guardado local; los valores enviados desde el navegador nunca serán autoridad.
 
 Paquetes HTML5 de terceros no se ejecutarán en el dominio principal. Requerirán una revisión de confianza y aislamiento con `iframe sandbox` y un origen separado, comunicándose con la plataforma únicamente mediante mensajes con un contrato estricto.
 

@@ -23,8 +23,8 @@ export function GameCard({ game, compact = false }: { game: Game; compact?: bool
           <span className="rounded-lg bg-ink/5 px-2 py-1 text-ink/60">{game.suggestedAge}</span>
           <span className="rounded-lg bg-sun/25 px-2 py-1 text-ink">+{game.xp} XP</span>
         </div>
-        <Link href={`/juegos/${game.slug}`} className="mt-5 inline-flex w-full items-center justify-between rounded-xl bg-ink px-4 py-3 text-sm font-extrabold text-white outline-none transition-colors hover:bg-violet focus-visible:ring-4 focus-visible:ring-violet/25">
-          Ver aventura <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        <Link href={game.isPlayable ? `/juegos/${game.slug}/jugar` : `/juegos/${game.slug}`} className="mt-5 inline-flex w-full items-center justify-between rounded-xl bg-ink px-4 py-3 text-sm font-extrabold text-white outline-none transition-colors hover:bg-violet focus-visible:ring-4 focus-visible:ring-violet/25">
+          {game.isPlayable ? "Jugar ahora" : "Ver aventura"} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </Link>
       </div>
     </article>

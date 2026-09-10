@@ -1,16 +1,18 @@
 # Aventura Vida
 
-Plataforma web de juegos, misiones y aventuras para **Proyecto Vida Kids**. Esta entrega implementa exclusivamente la **Fase 1**: arquitectura, sistema visual, páginas públicas, catálogo navegable, datos de demostración y base PostgreSQL/Prisma preparada para las siguientes fases.
+Plataforma web de juegos, misiones y aventuras para **Proyecto Vida Kids**. Incluye la base pública de Fase 1 y ocho minijuegos bíblicos internos para probar la experiencia de juego.
 
 ## Incluye
 
-- Inicio público responsive con hero, misión diaria, aventura destacada, novedades y progreso de muestra.
+- Inicio público responsive con hero, misión diaria, aventura destacada, novedades y catálogo navegable.
 - Catálogo de juegos con búsqueda, filtros por categoría/dificultad/edad y vistas de nuevos/populares.
-- Fichas individuales de juego, rutas de aventuras, misión diaria, ranking seguro por apodo y perfil de muestra.
+- Fichas individuales, rutas de aventuras, misión diaria, ranking por apodo y perfil de jugador local.
+- Ocho minijuegos funcionales: Sopa de Letras, Colorear, Preguntas Bíblicas, Historias Interactivas, Memoria, IQ Bíblico, Aprende el Versículo y Rompecabezas.
+- Shell común de juego con pantalla de carga/error/victoria, puntos, XP, racha, progreso, logros, partidas completadas y versículos aprendidos, guardado localmente por navegador.
 - Sistema visual original: no usa personajes ni recursos de franquicias de terceros.
 - Esquema Prisma para usuarios, perfiles, juegos, sesiones, progreso, puntuaciones, XP, misiones, logros, aventuras, recompensas, notificaciones, configuración y auditoría.
 - Semilla con contenido y usuarios enteramente ficticios.
-- Registro de módulos de juegos y contratos de Game SDK preparados, sin ejecutar aún minijuegos ni recompensas.
+- Registro de módulos internos y contratos de Game SDK para sustituir las recompensas locales por validación de servidor.
 
 ## Stack
 
@@ -67,21 +69,21 @@ pnpm build
 | Ruta | Estado |
 | --- | --- |
 | `/` | Implementada |
-| `/juegos` y `/juegos/[slug]` | Implementadas |
+| `/juegos`, `/juegos/[slug]` y `/juegos/[slug]/jugar` | Implementadas |
 | `/aventuras` y `/aventuras/[slug]` | Implementadas como estructura de contenido |
 | `/mision` | Implementada como demostración de misión diaria |
-| `/ranking` | Implementada con apodos ficticios y sin datos privados |
-| `/perfil` | Implementada como perfil de muestra |
+| `/ranking` | Implementada con apodos ficticios y puntuación local del jugador |
+| `/perfil` | Implementada con progreso local y sin datos personales |
 
 ## Pendiente de Fases 2–7
 
 - Autenticación, registro, perfiles persistentes y roles del servidor.
 - `/admin` protegido y CRUD de juegos/categorías/contenido.
-- Game SDK, sesiones, validación de puntuaciones, XP y logros reales.
-- Minijuegos de memoria, preguntas y recolector de luz.
+- Game SDK de servidor, sesiones autenticadas y validación de puntuaciones, XP y logros reales.
+- Misión diaria automática y recompensas verificadas. Los minijuegos ya disponibles guardan sólo en este navegador.
 - Misiones programadas, rankings reales, PWA, pruebas de seguridad y optimizaciones finales.
 
-No se muestran botones de juego que finjan otorgar puntos: las fichas indican claramente el estado de los contenidos aún pendientes.
+Los cuatro juegos heredados que todavía no tienen módulo se muestran claramente como próximos; no otorgan puntos ni fingen estar disponibles.
 
 ## Documentación de diseño
 

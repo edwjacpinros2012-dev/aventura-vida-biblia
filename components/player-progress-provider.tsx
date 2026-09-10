@@ -86,33 +86,25 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
   }, [hydrated, progress]);
 
   const completeGame = useCallback((reward: GameReward): RewardResult => {
-    let result: RewardResult = { totalPoints: progress.points, totalXp: progress.xp, level: progress.level, streak: progress.streak, newAchievementIds: [] };
-    setProgress((current) => {
-      const today = localDay();
-      const streak = current.lastPlayedOn === today ? current.streak : current.lastPlayedOn === previousDay() ? current.streak + 1 : 1;
-      const learnedVerses = reward.verseReference && !current.learnedVerses.includes(reward.verseReference) ? [...current.learnedVerses, reward.verseReference] : current.learnedVerses;
-      const partial: PlayerProgress = {
-        ...current,
-        points: current.points + Math.max(0, Math.round(reward.points)),
-        xp: current.xp + Math.max(0, Math.round(reward.xp)),
-        streak,
-        lastPlayedOn: today,
-        gamesCompleted: current.gamesCompleted + 1,
-        completedGameIds: current.completedGameIds.includes(reward.gameId) ? current.completedGameIds : [...current.completedGameIds, reward.gameId],
-        learnedVerses,
-      };
-      const newAchievementIds = calculateNewAchievements(partial);
-      const withAchievements = {
-        ...partial,
-        xp: partial.xp + newAchievementIds.length * 25,
-        achievementIds: [...partial.achievementIds, ...newAchievementIds],
-      };
-      const completed = { ...withAchievements, level: levelForXp(withAchievements.xp) };
-      result = { totalPoints: completed.points, totalXp: completed.xp, level: completed.level, streak: completed.streak, newAchievementIds };
-      return completed;
-    });
-    return result;
-  }, [progress.level, progress.points, progress.streak, progress.xp]);
+    const today = localDay();
+    const streak = progress.lastPlayedOn === today ? progress.streak : progress.lastPlayedOn === previousDay() ? progress.streak + 1 : 1;
+    const learnedVerses = reward.verseReference && !progress.learnedVerses.includes(reward.verseReference) ? [...progress.learnedVerses, reward.verseReference] : progress.learnedVerses;
+    const partial: PlayerProgress = {
+      ...progress,
+      points: progress.points + Math.max(0, Math.round(reward.points)),
+      xp: progress.xp + Math.max(0, Math.round(reward.xp)),
+      streak,
+      lastPlayedOn: today,
+      gamesCompleted: progress.gamesCompleted + 1,
+      completedGameIds: progress.completedGameIds.includes(reward.gameId) ? progress.completedGameIds : [...progress.completedGameIds, reward.gameId],
+      learnedVerses,
+    };
+    const newAchievementIds = calculateNewAchievements(partial);
+    const withAchievements = { ...partial, xp: partial.xp + newAchievementIds.length * 25, achievementIds: [...partial.achievementIds, ...newAchievementIds] };
+    const completed = { ...withAchievements, level: levelForXp(withAchievements.xp) };
+    setProgress(completed);
+    return { totalPoints: completed.points, totalXp: completed.xp, level: completed.level, streak: completed.streak, newAchievementIds };
+  }, [progress]);
 
   const saveGameProgress = useCallback((gameId: string, data: Record<string, unknown>) => {
     setProgress((current) => ({ ...current, gameProgress: { ...current.gameProgress, [gameId]: { ...current.gameProgress[gameId], ...data } } }));

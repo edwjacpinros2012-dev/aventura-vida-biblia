@@ -1,6 +1,6 @@
 # Plan de desarrollo — Aventura Vida
 
-## Alcance actual: Fase 1
+## Alcance actual: Fase 1 + demostración de minijuegos
 
 Construir la base pública de la plataforma: identidad visual, navegación adaptable, inicio, catálogo de juegos, detalle de juego, datos de demostración y una base de datos preparada para el crecimiento posterior.
 
@@ -11,15 +11,16 @@ Construir la base pública de la plataforma: identidad visual, navegación adapt
 3. Rutas públicas: inicio, juegos, detalle de juego, aventuras, misión, ranking y perfil de demostración.
 4. Catálogo con búsqueda y filtros ejecutados en el cliente sobre datos de demostración.
 5. Esquema Prisma/PostgreSQL y semilla de desarrollo, sin autenticación todavía.
-6. Estructura de módulos preparada para juegos internos y para un Game SDK futuro.
+6. Sistema modular con ocho minijuegos internos que comparten UI de victoria y progreso local de demostración.
+7. Estructura preparada para sustituir el progreso local por un Game SDK futuro.
 7. README, variables de entorno de ejemplo y verificación de lint/typecheck/build.
 
 ## Fuera de alcance — explícitamente pendiente
 
 - Inicio de sesión, registro y control de roles real.
 - Panel administrativo funcional y CRUD persistente.
-- Guardado de progreso, XP, puntos, misiones y rankings reales.
-- Ejecución de minijuegos y Game SDK operativo.
+- Guardado de progreso, XP, puntos, misiones y rankings validados en servidor.
+- Game SDK operativo con sesiones autenticadas.
 - PWA, notificaciones, subida de archivos y paquetes de juegos externos.
 
 ## Secuencia

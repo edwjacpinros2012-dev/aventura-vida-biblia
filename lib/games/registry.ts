@@ -1,7 +1,7 @@
 /**
- * Registro de módulos internos. En la Fase 1 sólo describe juegos; no ejecuta
- * código del navegador ni concede recompensas. La Fase 6 conectará cada clave
- * con un módulo revisado que use el Game SDK del servidor.
+ * Registro de módulos internos revisados. Los ocho adaptadores de interfaz
+ * viven en components/games y usan el shell común de progreso local. La
+ * siguiente fase sustituirá la concesión local por eventos validados del SDK.
  */
 export type InternalGameManifest = {
   key: string;

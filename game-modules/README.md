@@ -1,7 +1,12 @@
 # Módulos de juegos internos
 
-Este directorio recibirá los tres minijuegos demostrativos en la Fase 6.
+Los ocho minijuegos internos actuales se resuelven desde `components/games/` a
+través de `GamePlayer`. Este directorio queda reservado para una futura
+separación de módulos autocontenidos cuando el Game SDK de servidor esté listo.
 
-Cada módulo tendrá una clave única registrada en `lib/games/registry.ts` y no podrá acceder a Prisma, secretos, cookies administrativas ni tokens privados. La comunicación con recompensas deberá pasar por rutas de servidor validadas del Game SDK (Fase 4).
+Cada módulo tiene una clave única registrada en `lib/games/registry.ts` y no
+puede acceder a Prisma, secretos, cookies administrativas ni tokens privados.
+Por ahora las recompensas se muestran como demostración y se guardan localmente;
+la versión de producción deberá comunicarse mediante rutas validadas del Game SDK.
 
 Los paquetes HTML5 externos no se alojarán ni ejecutarán aquí como archivos arbitrarios. Si se admiten más adelante, se aislarán en un origen distinto con `iframe sandbox` y un protocolo de mensajes limitado.

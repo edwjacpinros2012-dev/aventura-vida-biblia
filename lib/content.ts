@@ -286,7 +286,7 @@ export const missionOfTheDay = {
   title: "Enciende tres balizas",
   description: "Responde con sabiduría y ayuda a guiar la expedición hasta la Isla Clara.",
   gameSlug: "preguntas-de-aventura",
-  gameName: "Preguntas de aventura",
+  gameName: "Preguntas bíblicas",
   rewardXp: 150,
   rewardPoints: 75,
   objective: "Completa 3 retos de preguntas",

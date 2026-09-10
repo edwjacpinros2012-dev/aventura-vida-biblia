@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { VictoryPanel, useGameCompletion } from "@/components/games/game-shell";
 
 const pairItems = [
@@ -10,7 +10,7 @@ const pairItems = [
 type Card = { id: string; pair: string; icon: string; label: string };
 
 function makeDeck(pairCount: number): Card[] {
-  const cards = pairItems.slice(0, pairCount).flatMap((item) => [{ ...item, id: `${item.id}-a` }, { ...item, id: `${item.id}-b` }]);
+  const cards = pairItems.slice(0, pairCount).flatMap((item) => [{ ...item, pair: item.id, id: `${item.id}-a` }, { ...item, pair: item.id, id: `${item.id}-b` }]);
   return [...cards].sort(() => Math.random() - 0.5);
 }
 
@@ -23,6 +23,7 @@ export function MemoryGame() {
   const [moves, setMoves] = useState(0);
   const [locked, setLocked] = useState(false);
   const timerRef = useRef<number | null>(null);
+  useEffect(() => () => { if (timerRef.current) window.clearTimeout(timerRef.current); }, []);
   const reset = (nextPairCount = pairCount) => { if (timerRef.current) window.clearTimeout(timerRef.current); setPairCount(nextPairCount); setDeck(makeDeck(nextPairCount)); setOpen([]); setMatched([]); setMoves(0); setLocked(false); resetCompletion(); };
   const reveal = (card: Card) => {
     if (locked || open.includes(card.id) || matched.includes(card.pair)) return;
@@ -34,7 +35,7 @@ export function MemoryGame() {
     timerRef.current = window.setTimeout(() => {
       if (isMatch) {
         const nextMatched = [...matched, card.pair]; setMatched(nextMatched); setOpen([]);
-        if (nextMatched.length === pairCount) { const points = Math.max(120, pairCount * 65 - moves * 4); finish({ points, xp: pairCount === 6 ? 100 : 140 }); }
+        if (nextMatched.length === pairCount) { const points = Math.max(120, pairCount * 65 - (moves + 1) * 4); finish({ points, xp: pairCount === 6 ? 100 : 140 }); }
       } else setOpen([]);
       setLocked(false);
     }, 700);
