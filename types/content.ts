@@ -1,4 +1,4 @@
-export type GameCategory = "Memoria" | "Preguntas" | "Arcade" | "Aventuras" | "Valores";
+export type GameCategory = "Memoria" | "Preguntas" | "Arcade" | "Aventuras" | "Valores" | "Palabras" | "Creatividad" | "Historias" | "Lógica" | "Versículos" | "Rompecabezas";
 export type Difficulty = "Inicial" | "Explorador" | "Aventurero";
 export type CoverTheme = "forest" | "sky" | "sunset" | "night" | "river" | "garden";
 
@@ -20,9 +20,12 @@ export type Game = {
   isPopular?: boolean;
   isFeatured?: boolean;
   isPlayable?: boolean;
+  gameKey?: BiblicalGameKey;
   lesson: string;
   objectives: string[];
 };
+
+export type BiblicalGameKey = "word-search" | "coloring" | "quiz" | "story" | "memory" | "iq" | "verse" | "puzzle";
 
 export type Adventure = {
   slug: string;

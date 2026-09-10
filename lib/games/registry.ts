@@ -11,7 +11,12 @@ export type InternalGameManifest = {
 };
 
 export const internalGameRegistry: Record<string, InternalGameManifest> = {
-  "memory-bible": { key: "memory-bible", version: "0.1.0", supportedEvents: ["progress", "finish"], trusted: true },
-  "quiz-adventure": { key: "quiz-adventure", version: "0.1.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
-  "light-collector": { key: "light-collector", version: "0.1.0", supportedEvents: ["score", "objective", "finish"], trusted: true },
+  "word-search": { key: "word-search", version: "1.0.0", supportedEvents: ["score", "progress", "finish"], trusted: true },
+  coloring: { key: "coloring", version: "1.0.0", supportedEvents: ["progress", "finish"], trusted: true },
+  quiz: { key: "quiz", version: "1.0.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
+  story: { key: "story", version: "1.0.0", supportedEvents: ["objective", "progress", "finish"], trusted: true },
+  memory: { key: "memory", version: "1.0.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
+  iq: { key: "iq", version: "1.0.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
+  verse: { key: "verse", version: "1.0.0", supportedEvents: ["objective", "progress", "finish"], trusted: true },
+  puzzle: { key: "puzzle", version: "1.0.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
 };

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@/app/globals.css";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { PlayerProgressProvider } from "@/components/player-progress-provider";
 
 export const metadata: Metadata = {
   title: "Aventura Vida | Proyecto Vida Kids",
@@ -12,9 +13,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="es">
       <body>
-        <SiteHeader />
-        <main>{children}</main>
-        <SiteFooter />
+        <PlayerProgressProvider>
+          <SiteHeader />
+          <main>{children}</main>
+          <SiteFooter />
+        </PlayerProgressProvider>
       </body>
     </html>
   );
