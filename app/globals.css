@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Arial Rounded MT Bold", "Nunito", "Trebuchet MS", ui-rounded, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: #f8fbff;
+  color: #172147;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+
+::selection { background: #cfc8ff; color: #172147; }
+
+.cloud-dots {
+  background-image: radial-gradient(circle at 12px 12px, rgba(255,255,255,.75) 2px, transparent 2.5px);
+  background-size: 33px 33px;
+}
+
+.hero-grid {
+  background-image: linear-gradient(rgba(118,100,233,.075) 1px, transparent 1px), linear-gradient(90deg, rgba(118,100,233,.075) 1px, transparent 1px);
+  background-size: 29px 29px;
+}
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

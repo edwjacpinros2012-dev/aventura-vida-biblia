@@ -1,0 +1,187 @@
+import type { Adventure, Game, GameCategory, Player } from "@/types/content";
+
+export const categories: Array<{ name: GameCategory; icon: string; color: string; description: string }> = [
+  { name: "Memoria", icon: "✦", color: "bg-sun", description: "Recuerda y descubre" },
+  { name: "Preguntas", icon: "?", color: "bg-violet", description: "Piensa y aprende" },
+  { name: "Arcade", icon: "↗", color: "bg-coral", description: "Muévete y explora" },
+  { name: "Aventuras", icon: "⌁", color: "bg-leaf", description: "Historias para vivir" },
+  { name: "Valores", icon: "♥", color: "bg-sky-500", description: "Pequeñas grandes ideas" },
+];
+
+export const games: Game[] = [
+  {
+    id: "memory-bible",
+    slug: "memoria-biblica",
+    name: "Memoria bíblica",
+    tagline: "Encuentra parejas llenas de luz",
+    description: "Une cartas de historias y símbolos para iluminar el sendero.",
+    longDescription: "Un juego de memoria con ilustraciones originales inspiradas en grandes historias de la Biblia. Encuentra cada pareja, suma estrellas y descubre una enseñanza breve al terminar.",
+    category: "Memoria",
+    difficulty: "Inicial",
+    suggestedAge: "6–10 años",
+    maxPoints: 320,
+    xp: 100,
+    playMinutes: 8,
+    coverTheme: "forest",
+    isNew: true,
+    isPopular: true,
+    isFeatured: true,
+    isPlayable: false,
+    lesson: "La paciencia y la atención nos ayudan a descubrir cosas valiosas.",
+    objectives: ["Encuentra 8 parejas", "Completa el tablero", "Descubre la enseñanza final"],
+  },
+  {
+    id: "quiz-adventure",
+    slug: "preguntas-de-aventura",
+    name: "Preguntas de aventura",
+    tagline: "El mapa responde a tus ideas",
+    description: "Responde preguntas visuales y abre nuevas rutas en el mapa.",
+    longDescription: "Viaja por islas de preguntas con retos cortos de opción múltiple. Cada respuesta correcta enciende una baliza para que el equipo pueda seguir adelante.",
+    category: "Preguntas",
+    difficulty: "Explorador",
+    suggestedAge: "7–12 años",
+    maxPoints: 450,
+    xp: 130,
+    playMinutes: 10,
+    coverTheme: "sky",
+    isNew: true,
+    isPopular: true,
+    isPlayable: false,
+    lesson: "La sabiduría crece cuando hacemos buenas preguntas.",
+    objectives: ["Responde 10 preguntas", "Enciende 3 balizas", "Llega a la última isla"],
+  },
+  {
+    id: "light-collector",
+    slug: "recolector-de-luz",
+    name: "Recolector de luz",
+    tagline: "Haz brillar el valle",
+    description: "Ayuda a Lumo a recoger destellos y esquivar nubes traviesas.",
+    longDescription: "Un pequeño desafío arcade de ritmo amable. Guía a Lumo por el valle, reúne destellos y usa campanas de viento para apartar obstáculos sin violencia.",
+    category: "Arcade",
+    difficulty: "Aventurero",
+    suggestedAge: "8–13 años",
+    maxPoints: 600,
+    xp: 160,
+    playMinutes: 7,
+    coverTheme: "sunset",
+    isPopular: true,
+    isPlayable: false,
+    lesson: "Una pequeña luz puede ayudar a muchas personas a encontrar el camino.",
+    objectives: ["Recoge 30 destellos", "Activa 2 campanas", "Ilumina el faro"],
+  },
+  {
+    id: "garden-helpers",
+    slug: "guardianes-del-jardin",
+    name: "Guardianes del jardín",
+    tagline: "Un jardín crece con cuidado",
+    description: "Organiza semillas, riega con sabiduría y comparte la cosecha.",
+    longDescription: "Una aventura tranquila de decisiones: escoge cómo cuidar el jardín y observa cómo los gestos de servicio hacen florecer el lugar.",
+    category: "Valores",
+    difficulty: "Inicial",
+    suggestedAge: "5–9 años",
+    maxPoints: 280,
+    xp: 90,
+    playMinutes: 6,
+    coverTheme: "garden",
+    isNew: true,
+    isPlayable: false,
+    lesson: "Servir con alegría hace crecer cosas buenas.",
+    objectives: ["Cuida 6 plantas", "Ayuda a un vecino", "Comparte la cosecha"],
+  },
+  {
+    id: "river-path",
+    slug: "el-camino-del-rio",
+    name: "El camino del río",
+    tagline: "Sigue las señales de amistad",
+    description: "Elige rutas amables para llevar provisiones al campamento.",
+    longDescription: "Una historia interactiva con pequeños rompecabezas y decisiones que muestran cómo la amistad y la generosidad cambian el viaje.",
+    category: "Aventuras",
+    difficulty: "Explorador",
+    suggestedAge: "7–12 años",
+    maxPoints: 400,
+    xp: 120,
+    playMinutes: 12,
+    coverTheme: "river",
+    isPlayable: false,
+    lesson: "Un buen compañero mira alrededor y está dispuesto a ayudar.",
+    objectives: ["Encuentra 3 señales", "Completa el rompecabezas", "Entrega las provisiones"],
+  },
+  {
+    id: "star-map",
+    slug: "mapa-de-estrellas",
+    name: "Mapa de estrellas",
+    tagline: "Orienta la expedición nocturna",
+    description: "Conecta constelaciones y aprende a avanzar con valentía.",
+    longDescription: "Conecta pistas bajo el cielo nocturno en un reto de observación lleno de estrellas, rutas y sorpresas escondidas.",
+    category: "Aventuras",
+    difficulty: "Explorador",
+    suggestedAge: "7–12 años",
+    maxPoints: 360,
+    xp: 110,
+    playMinutes: 9,
+    coverTheme: "night",
+    isPlayable: false,
+    lesson: "La valentía no es no tener miedo: es dar un buen paso aun cuando cuesta.",
+    objectives: ["Conecta 5 estrellas", "Encuentra la brújula", "Abre la ruta segura"],
+  },
+];
+
+export const adventures: Adventure[] = [
+  {
+    slug: "valle-de-los-destellos",
+    title: "El valle de los destellos",
+    summary: "Una expedición para devolver la luz a las aldeas del valle.",
+    chapters: 6,
+    progress: 34,
+    coverTheme: "sunset",
+    badge: "Aventura destacada",
+  },
+  {
+    slug: "islas-del-mapa-vivo",
+    title: "Las islas del mapa vivo",
+    summary: "Un mapa que aparece cuando el equipo aprende a escuchar.",
+    chapters: 5,
+    coverTheme: "sky",
+    badge: "Nueva ruta",
+  },
+  {
+    slug: "jardin-de-las-manos-amigas",
+    title: "El jardín de las manos amigas",
+    summary: "Pequeños gestos que hacen florecer una comunidad.",
+    chapters: 4,
+    coverTheme: "garden",
+    badge: "Para compartir",
+  },
+];
+
+export const missionOfTheDay = {
+  title: "Enciende tres balizas",
+  description: "Responde con sabiduría y ayuda a guiar la expedición hasta la Isla Clara.",
+  gameSlug: "preguntas-de-aventura",
+  gameName: "Preguntas de aventura",
+  rewardXp: 150,
+  rewardPoints: 75,
+  objective: "Completa 3 retos de preguntas",
+};
+
+export const leaderboard: Player[] = [
+  { nickname: "SolExplorador", avatar: "🦊", points: 2_480, trend: "up" },
+  { nickname: "LunaBrilla", avatar: "🦉", points: 2_315, trend: "up" },
+  { nickname: "NicoRío", avatar: "🦦", points: 2_190, trend: "same" },
+  { nickname: "AuriMapa", avatar: "🦋", points: 1_980, trend: "new" },
+  { nickname: "TeoValiente", avatar: "🐻", points: 1_765, trend: "up" },
+];
+
+export const latestNews = [
+  { tag: "PRÓXIMAMENTE", title: "El valle de los destellos abre su primer capítulo", date: "Esta semana", color: "bg-violet" },
+  { tag: "PARA FAMILIAS", title: "Ideas para acompañar las aventuras en casa", date: "Muy pronto", color: "bg-leaf" },
+  { tag: "NUEVO", title: "Cuatro logros listos para descubrir", date: "Recién añadido", color: "bg-coral" },
+];
+
+export function getGameBySlug(slug: string) {
+  return games.find((game) => game.slug === slug);
+}
+
+export function getAdventureBySlug(slug: string) {
+  return adventures.find((adventure) => adventure.slug === slug);
+}

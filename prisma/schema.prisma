@@ -1,0 +1,368 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PLAYER
+  ADMIN
+  MODERATOR
+  TEACHER
+  FAMILY
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+  ARCHIVED
+}
+
+enum GameType {
+  INTERNAL
+  TRUSTED_EMBED
+}
+
+enum Difficulty {
+  INITIAL
+  EXPLORER
+  ADVENTURER
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+enum ScorePeriod {
+  WEEKLY
+  MONTHLY
+  SEASON
+}
+
+enum MissionStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  ENDED
+  ARCHIVED
+}
+
+enum RewardType {
+  XP
+  POINTS
+  ACHIEVEMENT
+  ITEM
+}
+
+enum NotificationStatus {
+  PENDING
+  READ
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  PUBLISH
+  UNPUBLISH
+  ARCHIVE
+  LOGIN
+}
+
+model User {
+  id             String           @id @default(cuid())
+  email          String?          @unique
+  role           UserRole         @default(PLAYER)
+  emailVerified  DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  profile        Profile?
+  gameSessions   GameSession[]
+  gameProgress   GameProgress[]
+  scores         Score[]
+  xpTransactions XpTransaction[]
+  missionProgress MissionProgress[]
+  achievements   UserAchievement[]
+  rewards        Reward[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]       @relation("AuditActor")
+
+  @@index([role])
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  nickname  String   @unique
+  avatarKey String   @default("fox")
+  level     Int      @default(1)
+  totalXp   Int      @default(0)
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([points(sort: Desc)])
+}
+
+model GameCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  games       Game[]
+}
+
+model Game {
+  id                 String        @id @default(cuid())
+  slug               String        @unique
+  name               String
+  shortDescription   String
+  description        String?
+  coverImageUrl      String?
+  categoryId         String?
+  suggestedAgeMin    Int?
+  suggestedAgeMax    Int?
+  difficulty         Difficulty   @default(INITIAL)
+  maxPoints          Int           @default(0)
+  xpReward           Int           @default(0)
+  gameType           GameType      @default(INTERNAL)
+  moduleKey          String?       @unique
+  status             ContentStatus @default(DRAFT)
+  publishedAt        DateTime?
+  featured           Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  category           GameCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  sessions           GameSession[]
+  progress           GameProgress[]
+  scores             Score[]
+  missions           Mission[]
+  adventureLinks     AdventureGame[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId, status])
+  @@index([featured, status])
+}
+
+model GameSession {
+  id        String        @id @default(cuid())
+  userId    String
+  gameId    String
+  status    SessionStatus @default(ACTIVE)
+  startedAt DateTime      @default(now())
+  endedAt   DateTime?
+  metadata  Json?
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game      Game          @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([userId, gameId, startedAt(sort: Desc)])
+  @@index([gameId, status])
+}
+
+model GameProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  gameId    String
+  data      Json
+  completed Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+  @@index([gameId, completed])
+}
+
+model Score {
+  id         String      @id @default(cuid())
+  userId     String
+  gameId     String?
+  points     Int
+  period     ScorePeriod
+  periodKey  String
+  source     String
+  createdAt  DateTime    @default(now())
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game       Game?       @relation(fields: [gameId], references: [id], onDelete: SetNull)
+
+  @@index([period, periodKey, points(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model XpTransaction {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int
+  reason    String
+  sourceId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model Mission {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  description String
+  startsAt    DateTime
+  endsAt      DateTime?
+  objective   Json
+  xpReward    Int           @default(0)
+  pointsReward Int          @default(0)
+  status      MissionStatus @default(DRAFT)
+  gameId      String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  game        Game?         @relation(fields: [gameId], references: [id], onDelete: SetNull)
+  progress    MissionProgress[]
+
+  @@index([status, startsAt])
+}
+
+model MissionProgress {
+  id          String   @id @default(cuid())
+  missionId   String
+  userId      String
+  progress    Json
+  completedAt DateTime?
+  mission     Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([missionId, userId])
+  @@index([userId, completedAt])
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String
+  icon        String?
+  criteria    Json
+  xpReward    Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       UserAchievement[]
+
+  @@index([active])
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+  metadata      Json?
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId, unlockedAt(sort: Desc)])
+}
+
+model Adventure {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  summary     String
+  description String?
+  coverImageUrl String?
+  status      ContentStatus @default(DRAFT)
+  featured    Boolean       @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  chapters    AdventureChapter[]
+  games       AdventureGame[]
+
+  @@index([status, featured])
+}
+
+model AdventureChapter {
+  id          String    @id @default(cuid())
+  adventureId String
+  chapterNumber Int
+  title       String
+  summary     String?
+  objectives  Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  adventure   Adventure @relation(fields: [adventureId], references: [id], onDelete: Cascade)
+
+  @@unique([adventureId, chapterNumber])
+}
+
+model AdventureGame {
+  adventureId String
+  gameId      String
+  sortOrder   Int @default(0)
+  adventure   Adventure @relation(fields: [adventureId], references: [id], onDelete: Cascade)
+  game        Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@id([adventureId, gameId])
+  @@index([gameId])
+}
+
+model Reward {
+  id          String     @id @default(cuid())
+  userId      String
+  type        RewardType
+  amount      Int?
+  label       String
+  source      String
+  sourceId    String?
+  metadata    Json?
+  awardedAt   DateTime   @default(now())
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, awardedAt(sort: Desc)])
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  status    NotificationStatus @default(PENDING)
+  createdAt DateTime           @default(now())
+  readAt    DateTime?
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, createdAt(sort: Desc)])
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  actorId   String?
+  action    AuditAction
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime    @default(now())
+  actor     User?       @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId, createdAt(sort: Desc)])
+  @@index([actorId, createdAt(sort: Desc)])
+}
