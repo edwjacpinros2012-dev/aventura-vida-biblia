@@ -5,7 +5,7 @@ import { ArrowRight, CheckIcon } from "@/components/icons";
 import { GameCover } from "@/components/game-cover";
 import { adventures, games, getAdventureBySlug } from "@/lib/content";
 
-export function generateStaticParams() { return adventures.map((adventure) => ({ slug: adventure.slug })); }
+export function generateStaticParams() { return adventures.filter((adventure) => adventure.slug !== "armadura-del-espiritu").map((adventure) => ({ slug: adventure.slug })); }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

@@ -265,6 +265,14 @@ export const adventures: Adventure[] = [
     badge: "Aventura destacada",
   },
   {
+    slug: "armadura-del-espiritu",
+    title: "La Gran Aventura",
+    summary: "Acompaña a Elián a reunir la Armadura del Espíritu en un mapa de mundos luminosos.",
+    chapters: 7,
+    coverTheme: "forest",
+    badge: "Nueva campaña jugable",
+  },
+  {
     slug: "islas-del-mapa-vivo",
     title: "Las islas del mapa vivo",
     summary: "Un mapa que aparece cuando el equipo aprende a escuchar.",

@@ -1,5 +1,16 @@
 export type PlayerAchievementId = "first-adventure" | "curious-explorer" | "verse-keeper" | "steady-light" | "game-master";
 
+export type ArmorPieceId = "coraza-de-justicia";
+
+export type ArmorCampaignProgress = {
+  unlockedLevel: number;
+  completedLevelIds: string[];
+  faithTokens: number;
+  badges: string[];
+  armorPieces: ArmorPieceId[];
+  adventureSeconds: number;
+};
+
 export type PlayerProgress = {
   points: number;
   xp: number;
@@ -11,6 +22,7 @@ export type PlayerProgress = {
   learnedVerses: string[];
   achievementIds: PlayerAchievementId[];
   gameProgress: Record<string, Record<string, unknown>>;
+  armorCampaign: ArmorCampaignProgress;
 };
 
 export type GameReward = {
@@ -26,6 +38,17 @@ export type RewardResult = {
   level: number;
   streak: number;
   newAchievementIds: PlayerAchievementId[];
+};
+
+export type CampaignLevelReward = {
+  levelId: string;
+  unlocksLevel: number;
+  points: number;
+  xp: number;
+  faithTokens: number;
+  badge?: string;
+  armorPiece?: ArmorPieceId;
+  elapsedSeconds: number;
 };
 
 export const achievementDetails: Record<PlayerAchievementId, { title: string; icon: string; description: string }> = {
