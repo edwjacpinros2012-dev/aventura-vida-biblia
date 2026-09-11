@@ -16,6 +16,11 @@ export function GameShell({ game, children }: { game: Game; children: ReactNode 
         <div><p className="text-xs font-black uppercase tracking-[.2em] text-sun">Jugando ahora</p><h1 className="mt-2 font-display text-3xl font-black sm:text-4xl">{game.name}</h1><p className="mt-2 text-sm text-white/70">{game.tagline}</p></div>
         <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold sm:min-w-72"><div className="rounded-xl bg-white/10 p-3"><p className="font-display text-xl text-sun">{hydrated ? progress.level : "—"}</p><p className="mt-1 text-white/55">{hydrated ? levelTitleFor(progress.level) : "Cargando"}</p></div><div className="rounded-xl bg-white/10 p-3"><p className="font-display text-xl text-sun">{hydrated ? progress.points : "—"}</p><p className="mt-1 text-white/55">Puntos</p></div><div className="rounded-xl bg-white/10 p-3"><p className="font-display text-xl text-sun">{hydrated ? progress.streak : "—"}</p><p className="mt-1 text-white/55">Racha</p></div><div className="col-span-3 rounded-xl bg-white/10 px-3 py-2 text-left"><div className="flex justify-between text-[11px] text-white/65"><span>Próximo nivel</span><span>{xpProgress.current}/{xpProgress.needed} XP</span></div><div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-sun" style={{ width: `${Math.min(100, (xpProgress.current / xpProgress.needed) * 100)}%` }} /></div></div></div>
       </div>
+      <section className="mt-5 rounded-[1.5rem] border border-violet/10 bg-sky p-4 sm:p-5" aria-label="Cómo jugar">
+        <p className="text-xs font-black uppercase tracking-[.16em] text-violet">Cómo jugar</p>
+        <ol className="mt-3 grid gap-2 sm:grid-cols-3">{game.objectives.slice(0, 3).map((objective, index) => <li key={objective} className="flex items-center gap-2 rounded-xl bg-white/80 px-3 py-2 text-sm font-bold text-ink"><span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-violet text-xs text-white">{index + 1}</span>{objective}</li>)}</ol>
+        <p className="mt-3 text-xs font-semibold text-ink/65">Al terminar correctamente recibirás puntos y XP. Puedes volver a jugar con una nueva partida.</p>
+      </section>
       <GameErrorBoundary>{children}</GameErrorBoundary>
     </section>
   );

@@ -6,8 +6,8 @@ import { usePlayerProgress } from "@/components/player-progress-provider";
 import { armorCampaignWorlds, getArmorCampaignStage, type CampaignStage } from "@/lib/armadura-campaign";
 import type { RewardResult } from "@/types/player-progress";
 
-type CampaignScreen = "map" | "intro" | "playing" | "reward" | "narrative";
-type LevelNumber = 1 | 2;
+type CampaignScreen = "map" | "intro" | "playing" | "reward" | "narrative" | "final";
+type LevelNumber = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 type Control = "left" | "right" | "jump" | "interact";
 type Position = { x: number; y: number; velocityY: number; grounded: boolean };
 
@@ -20,18 +20,15 @@ function timeLabel(seconds: number) {
   return `${minutes}:${String(remaining).padStart(2, "0")}`;
 }
 
-function StageControls({ input }: { input: React.MutableRefObject<Record<Control, boolean>> }) {
-  const setControl = (control: Control, active: boolean) => {
-    input.current[control] = active;
-  };
+function StageControls({ onControl, onAction }: { onControl: (control: Control, active: boolean) => void; onAction: (control: "jump" | "interact") => void }) {
   const hold = (control: Control) => ({
     onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => {
-      event.currentTarget.setPointerCapture(event.pointerId);
-      setControl(control, true);
+      event.preventDefault();
+      onControl(control, true);
+      if (control === "jump" || control === "interact") onAction(control);
     },
-    onPointerUp: () => setControl(control, false),
-    onPointerCancel: () => setControl(control, false),
-    onPointerLeave: () => setControl(control, false),
+    onPointerUp: () => onControl(control, false),
+    onPointerCancel: () => onControl(control, false),
   });
 
   return (
@@ -50,6 +47,7 @@ function StageControls({ input }: { input: React.MutableRefObject<Record<Control
 
 function AdventureStage({ stage, onComplete }: { stage: CampaignStage; onComplete: (elapsedSeconds: number) => void }) {
   const input = useRef<Record<Control, boolean>>({ left: false, right: false, jump: false, interact: false });
+  const onCompleteRef = useRef(onComplete);
   const position = useRef<Position>({ x: stage.start.x, y: stage.start.y, velocityY: 0, grounded: true });
   const checkpoint = useRef({ ...stage.start });
   const collectedRef = useRef<string[]>([]);
@@ -63,6 +61,11 @@ function AdventureStage({ stage, onComplete }: { stage: CampaignStage; onComplet
   const [message, setMessage] = useState(stage.interaction.prompt);
   const [challengeOpen, setChallengeOpen] = useState(false);
   const [challengeFeedback, setChallengeFeedback] = useState<string | null>(null);
+  const [precision, setPrecision] = useState(0);
+  const [selectedFruits, setSelectedFruits] = useState<string[]>([]);
+  const [memorySteps, setMemorySteps] = useState<string[]>([]);
+
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
   const resetToCheckpoint = useCallback((text: string) => {
     position.current = { x: checkpoint.current.x, y: checkpoint.current.y, velocityY: 0, grounded: true };
@@ -80,8 +83,11 @@ function AdventureStage({ stage, onComplete }: { stage: CampaignStage; onComplet
       setMessage(stage.interaction.response);
       return;
     }
-    if (stage.interaction.question) {
+    if (stage.interaction.question || stage.interaction.challenge) {
       setChallengeFeedback(null);
+      setPrecision(0);
+      setSelectedFruits([]);
+      setMemorySteps([]);
       setChallengeOpen(true);
       return;
     }
@@ -109,8 +115,8 @@ function AdventureStage({ stage, onComplete }: { stage: CampaignStage; onComplet
       return;
     }
     finishing.current = true;
-    onComplete(Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)));
-  }, [onComplete, stage]);
+    onCompleteRef.current(Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)));
+  }, [stage]);
 
   useEffect(() => {
     const keyToControl: Record<string, Control | undefined> = {
@@ -200,6 +206,15 @@ function AdventureStage({ stage, onComplete }: { stage: CampaignStage; onComplet
     return () => cancelAnimationFrame(animationFrame);
   }, [challengeOpen, collectToken, handleInteraction, resetToCheckpoint, stage, tryFinish]);
 
+  const completeInteraction = (message: string) => {
+    interactedRef.current = true;
+    checkpoint.current = { x: Math.min(stage.interaction.x + 3, 88), y: stage.groundY - AVATAR_HEIGHT };
+    setInteracted(true);
+    setChallengeOpen(false);
+    setChallengeFeedback(null);
+    setMessage(message);
+  };
+
   const answerQuestion = (choice: number) => {
     const question = stage.interaction.question;
     if (!question) return;
@@ -207,13 +222,54 @@ function AdventureStage({ stage, onComplete }: { stage: CampaignStage; onComplet
       setChallengeFeedback("Todavía no. Lee la pregunta con calma y vuelve a intentarlo.");
       return;
     }
-    interactedRef.current = true;
-    checkpoint.current = { x: Math.min(stage.interaction.x + 3, 88), y: stage.groundY - AVATAR_HEIGHT };
-    setInteracted(true);
-    setChallengeOpen(false);
-    setChallengeFeedback(null);
-    setMessage(`${stage.interaction.response} ${question.explanation}`);
+    completeInteraction(`${stage.interaction.response} ${question.explanation}`);
   };
+
+  useEffect(() => {
+    if (!challengeOpen || stage.interaction.challenge?.kind !== "precision") return;
+    const timer = window.setInterval(() => setPrecision((value) => (value + 7) % 101), 100);
+    return () => window.clearInterval(timer);
+  }, [challengeOpen, stage]);
+
+  const submitPrecision = () => {
+    const challenge = stage.interaction.challenge;
+    if (!challenge || challenge.kind !== "precision") return;
+    if (precision < 42 || precision > 58) {
+      setChallengeFeedback("Casi. Espera a que la luz entre en el círculo dorado y vuelve a intentarlo.");
+      return;
+    }
+    completeInteraction(`${stage.interaction.response} ${challenge.explanation}`);
+  };
+
+  const toggleFruit = (fruit: string) => {
+    const challenge = stage.interaction.challenge;
+    if (!challenge || challenge.kind !== "collection") return;
+    const next = selectedFruits.includes(fruit) ? selectedFruits.filter((item) => item !== fruit) : [...selectedFruits, fruit];
+    setSelectedFruits(next);
+    if (challenge.requiredOptions.every((required) => next.includes(required))) completeInteraction(`${stage.interaction.response} ${challenge.explanation}`);
+  };
+
+  const pressMemory = (symbol: string) => {
+    const challenge = stage.interaction.challenge;
+    if (!challenge || challenge.kind !== "memory") return;
+    const expected = challenge.sequence[memorySteps.length];
+    if (symbol !== expected) {
+      setMemorySteps([]);
+      setChallengeFeedback("La secuencia se reinició. Mira las señales y prueba otra vez con calma.");
+      return;
+    }
+    const next = [...memorySteps, symbol];
+    setMemorySteps(next);
+    if (next.length === challenge.sequence.length) completeInteraction(`${stage.interaction.response} ${challenge.explanation}`);
+  };
+
+  const setControl = useCallback((control: Control, active: boolean) => {
+    input.current[control] = active;
+  }, []);
+
+  const triggerAction = useCallback((control: "jump" | "interact") => {
+    if (control === "interact") handleInteraction();
+  }, [handleInteraction]);
 
   return (
     <div className="rounded-[2rem] border border-ink/10 bg-white p-3 shadow-lift sm:p-5">
@@ -237,10 +293,10 @@ function AdventureStage({ stage, onComplete }: { stage: CampaignStage; onComplet
       </div>
 
       <p className="mt-4 hidden rounded-2xl bg-sky px-4 py-3 text-sm font-bold leading-6 text-ink lg:block">Controles: <kbd className="rounded bg-white px-1.5 py-1">A</kbd>/<kbd className="rounded bg-white px-1.5 py-1">D</kbd> o flechas para mover · <kbd className="rounded bg-white px-1.5 py-1">Espacio</kbd> para saltar · <kbd className="rounded bg-white px-1.5 py-1">E</kbd> para interactuar.</p>
-      <StageControls input={input} />
+      <StageControls onControl={setControl} onAction={triggerAction} />
       <p className="mt-4 px-1 text-sm leading-6 text-ink/65"><span className="font-extrabold text-ink">Objetivo:</span> reúne los {stage.tokens.length} destellos, conversa con {stage.interaction.label} y llega al {stage.goal.label}. {interacted && "✓ Mensaje del camino atendido."}</p>
 
-      {challengeOpen && stage.interaction.question && <div className="absolute inset-0 z-30 grid place-items-center bg-ink/55 p-4"><section role="dialog" aria-modal="true" aria-label="Pregunta de sabiduría" className="w-full max-w-md rounded-[1.8rem] bg-white p-6 shadow-lift"><p className="text-xs font-black uppercase tracking-[.18em] text-violet">Baliza de sabiduría</p><h3 className="mt-2 font-display text-2xl font-black text-ink">{stage.interaction.question.text}</h3><div className="mt-5 grid gap-3">{stage.interaction.question.options.map((option, index) => <button key={option} type="button" onClick={() => answerQuestion(index)} className="rounded-2xl border-2 border-ink/10 px-4 py-3 text-left text-sm font-bold text-ink transition hover:border-violet hover:bg-violet/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">{option}</button>)}</div>{challengeFeedback && <p className="mt-4 rounded-xl bg-coral/15 p-3 text-sm font-bold text-ink" role="status">{challengeFeedback}</p>}<button type="button" onClick={() => setChallengeOpen(false)} className="mt-5 text-sm font-extrabold text-violet hover:underline">Volver al nivel</button></section></div>}
+      {challengeOpen && <div className="fixed inset-0 z-[70] grid place-items-center bg-ink/55 p-4"><section role="dialog" aria-modal="true" aria-label="Desafío del camino" className="w-full max-w-md rounded-[1.8rem] bg-white p-6 shadow-lift"><p className="text-xs font-black uppercase tracking-[.18em] text-violet">{stage.interaction.label}</p>{stage.interaction.question && <><h3 className="mt-2 font-display text-2xl font-black text-ink">{stage.interaction.question.text}</h3><div className="mt-5 grid gap-3">{stage.interaction.question.options.map((option, index) => <button key={option} type="button" onClick={() => answerQuestion(index)} className="rounded-2xl border-2 border-ink/10 px-4 py-3 text-left text-sm font-bold text-ink transition hover:border-violet hover:bg-violet/5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">{option}</button>)}</div></>}{stage.interaction.challenge?.kind === "precision" && <><h3 className="mt-2 font-display text-2xl font-black text-ink">{stage.interaction.challenge.text}</h3><div className="mt-6 h-6 overflow-hidden rounded-full bg-sky p-1"><div className="h-full w-4 rounded-full bg-violet transition-transform" style={{ transform: `translateX(${precision * 5.5}%)` }} /></div><div className="mt-3 flex justify-center"><span className="rounded-lg bg-sun/35 px-4 py-2 text-xs font-black text-ink">Círculo dorado: 42–58</span></div><button type="button" onClick={submitPrecision} className="mt-5 w-full rounded-xl bg-violet px-4 py-3 text-sm font-extrabold text-white">Enviar destello</button></>}{stage.interaction.challenge?.kind === "collection" && <><h3 className="mt-2 font-display text-2xl font-black text-ink">{stage.interaction.challenge.text}</h3><div className="mt-5 grid grid-cols-2 gap-2">{stage.interaction.challenge.options.map((fruit) => <button key={fruit} type="button" onClick={() => toggleFruit(fruit)} className={`rounded-xl px-3 py-3 text-sm font-extrabold ${selectedFruits.includes(fruit) ? "bg-leaf text-white" : "bg-sky text-ink"}`}>{selectedFruits.includes(fruit) ? "✓ " : ""}{fruit}</button>)}</div></>}{stage.interaction.challenge?.kind === "memory" && <><h3 className="mt-2 font-display text-2xl font-black text-ink">{stage.interaction.challenge.text}</h3><p className="mt-3 text-sm font-bold text-ink/60">Progreso: {memorySteps.join(" · ") || "—"}</p><div className="mt-5 grid grid-cols-3 gap-2">{["Libro", "Escudo", "Estrella"].map((symbol) => <button key={symbol} type="button" onClick={() => pressMemory(symbol)} className="rounded-xl bg-sky px-2 py-4 text-sm font-extrabold text-ink hover:bg-sun/45">{symbol}</button>)}</div></>}{challengeFeedback && <p className="mt-4 rounded-xl bg-coral/15 p-3 text-sm font-bold text-ink" role="status">{challengeFeedback}</p>}<button type="button" onClick={() => setChallengeOpen(false)} className="mt-5 text-sm font-extrabold text-violet hover:underline">Volver al nivel</button></section></div>}
     </div>
   );
 }
@@ -251,11 +307,10 @@ function CampaignMap({ unlockedLevel, completedLevelIds, onSelect }: { unlockedL
       <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-[.2em] text-violet">Mapa de campaña</p><h2 className="mt-2 font-display text-4xl font-black tracking-tight text-ink">Sigue la luz</h2><p className="mt-2 max-w-xl text-sm leading-6 text-ink/65">Cada mundo muestra el próximo paso de Elián. Completa los niveles disponibles para encender una nueva ruta.</p></div><span className="rounded-full bg-white px-4 py-2 text-sm font-black text-ink shadow-card">7 mundos · progreso local</span></div>
       <ol className="mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-4">{armorCampaignWorlds.map((world) => {
         const requiredLevel = world.world;
-        const completed = world.world <= 2 && completedLevelIds.includes(`armadura-level-${world.world}`);
-        const playable = world.world <= 2 && unlockedLevel >= requiredLevel;
-        const unlockedFuture = world.world === 3 && unlockedLevel >= 3;
-        const stateLabel = completed ? "Completado" : playable ? "Disponible" : unlockedFuture ? "Desbloqueado pronto" : "Bloqueado";
-        return <li key={world.world} className="relative"><button type="button" disabled={!playable} onClick={() => onSelect(world.world as LevelNumber)} className={`group w-full rounded-[1.5rem] border-2 p-4 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25 ${playable ? "border-violet bg-white shadow-card hover:-translate-y-1" : unlockedFuture ? "border-sun bg-[#fffdf3]" : "border-ink/5 bg-white/65 opacity-75"}`}><div className="flex items-start justify-between gap-3"><span className={`grid h-10 w-10 place-items-center rounded-xl font-display text-lg font-black ${completed ? "bg-leaf text-white" : playable ? "bg-violet text-white" : unlockedFuture ? "bg-sun text-ink" : "bg-ink/10 text-ink/45"}`}>{completed ? "✓" : world.world}</span><span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ${completed ? "bg-leaf/10 text-leaf" : playable ? "bg-violet/10 text-violet" : unlockedFuture ? "bg-sun/30 text-ink" : "bg-ink/5 text-ink/45"}`}>{stateLabel}</span></div><p className="mt-4 text-xs font-black uppercase tracking-[.14em] text-ink/45">Mundo {world.world}</p><h3 className="mt-1 font-display text-xl font-black text-ink">{world.title}</h3><p className="mt-1 text-sm font-semibold text-ink/60">{world.subtitle}</p>{playable && <p className="mt-4 text-xs font-black text-violet">{completed ? "Jugar de nuevo" : "Comenzar aventura →"}</p>}{unlockedFuture && <p className="mt-4 text-xs font-black text-ink/60">Este desafío llegará en la próxima etapa.</p>}</button></li>;
+        const completed = completedLevelIds.includes(`armadura-level-${world.world}`);
+        const playable = unlockedLevel >= requiredLevel;
+        const stateLabel = completed ? "Completado" : playable ? "Disponible" : "Bloqueado";
+        return <li key={world.world} className="relative"><button type="button" disabled={!playable} onClick={() => onSelect(world.world as LevelNumber)} className={`group w-full rounded-[1.5rem] border-2 p-4 text-left transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25 ${playable ? "border-violet bg-white shadow-card hover:-translate-y-1" : "border-ink/5 bg-white/65 opacity-75"}`}><div className="flex items-start justify-between gap-3"><span className={`grid h-10 w-10 place-items-center rounded-xl font-display text-lg font-black ${completed ? "bg-leaf text-white" : playable ? "bg-violet text-white" : "bg-ink/10 text-ink/45"}`}>{completed ? "✓" : world.world}</span><span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ${completed ? "bg-leaf/10 text-leaf" : playable ? "bg-violet/10 text-violet" : "bg-ink/5 text-ink/45"}`}>{stateLabel}</span></div><p className="mt-4 text-xs font-black uppercase tracking-[.14em] text-ink/45">Mundo {world.world}</p><h3 className="mt-1 font-display text-xl font-black text-ink">{world.title}</h3><p className="mt-1 text-sm font-semibold text-ink/60">{world.subtitle}</p>{playable && <p className="mt-4 text-xs font-black text-violet">{completed ? "Jugar de nuevo" : "Comenzar aventura →"}</p>}</button></li>;
       })}</ol>
     </section>
   );
@@ -279,7 +334,7 @@ export function ArmaduraCampaign() {
     if (!stage) return;
     const result = completeCampaignLevel({
       levelId: stage.id,
-      unlocksLevel: stage.level + 1,
+      unlocksLevel: Math.min(7, stage.level + 1),
       points: stage.reward.points,
       xp: stage.reward.xp,
       faithTokens: stage.reward.faithTokens,
@@ -303,10 +358,11 @@ export function ArmaduraCampaign() {
         {screen === "intro" && <section className="mx-auto max-w-3xl rounded-[2rem] bg-white p-7 shadow-card sm:p-10"><p className="text-xs font-black uppercase tracking-[.18em] text-violet">{stage.worldLabel}</p><h2 className="mt-3 font-display text-4xl font-black text-ink">Nivel {stage.level}: {stage.title}</h2><p className="mt-4 text-base leading-7 text-ink/70">{stage.intro}</p><div className="mt-6 rounded-2xl bg-sky p-4 text-sm font-bold leading-6 text-ink"><span className="text-violet">Enseñanza del camino:</span> {stage.teaching}</div><div className="mt-7 flex flex-wrap gap-3"><button type="button" onClick={() => setScreen("playing")} className="rounded-2xl bg-violet px-6 py-3 text-sm font-black text-white shadow-card transition hover:bg-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">Comenzar nivel →</button><button type="button" onClick={() => setScreen("map")} className="rounded-2xl bg-sky px-5 py-3 text-sm font-black text-ink hover:bg-sky-500/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">Ver mapa</button></div></section>}
         {screen === "playing" && <AdventureStage key={stage.id} stage={stage} onComplete={completeStage} />}
         {screen === "reward" && <section className="mx-auto max-w-2xl rounded-[2rem] bg-white p-7 text-center shadow-lift sm:p-10"><div className="mx-auto grid h-20 w-20 place-items-center rounded-[1.7rem] bg-sun text-4xl text-ink shadow-card">✦</div><p className="mt-5 text-xs font-black uppercase tracking-[.2em] text-violet">Recompensa desbloqueada</p><h2 className="mt-2 font-display text-4xl font-black text-ink">{stage.reward.title}</h2><p className="mx-auto mt-4 max-w-lg text-base leading-7 text-ink/70">{stage.reward.description}</p><div className="mx-auto mt-6 grid max-w-md grid-cols-3 gap-3"><div className="rounded-2xl bg-sky p-3 text-sm font-black text-ink">+{stage.reward.xp}<span className="mt-1 block text-[10px] uppercase text-ink/55">XP</span></div><div className="rounded-2xl bg-sun/30 p-3 text-sm font-black text-ink">+{stage.reward.points}<span className="mt-1 block text-[10px] uppercase text-ink/55">Puntos</span></div><div className="rounded-2xl bg-leaf/15 p-3 text-sm font-black text-ink">+{stage.reward.faithTokens}<span className="mt-1 block text-[10px] uppercase text-ink/55">Destellos</span></div></div>{lastReward && <p className="mt-5 text-sm font-bold text-ink/60">Total: {lastReward.totalXp} XP · Nivel {lastReward.level} · Racha {lastReward.streak}</p>}<button type="button" onClick={() => setScreen("narrative")} className="mt-8 rounded-2xl bg-violet px-6 py-3 text-sm font-black text-white shadow-card transition hover:bg-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">Continuar la historia →</button></section>}
-        {screen === "narrative" && <section className="mx-auto max-w-2xl overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#edeaff_0%,#e9fbff_100%)] p-7 text-center shadow-card sm:p-10"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-white text-3xl shadow-card">🧭</div><p className="mt-5 text-xs font-black uppercase tracking-[.2em] text-violet">Historia desbloqueada</p><h2 className="mt-2 font-display text-4xl font-black text-ink">{stage.nextNarrative.title}</h2><p className="mx-auto mt-4 max-w-lg text-base leading-7 text-ink/70">{stage.nextNarrative.text}</p><button type="button" onClick={() => stage.level === 1 ? selectLevel(2) : setScreen("map")} className="mt-8 rounded-2xl bg-ink px-6 py-3 text-sm font-black text-white shadow-card transition hover:bg-violet focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">{stage.nextNarrative.action} →</button></section>}
+        {screen === "narrative" && <section className="mx-auto max-w-2xl overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#edeaff_0%,#e9fbff_100%)] p-7 text-center shadow-card sm:p-10"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-white text-3xl shadow-card">🧭</div><p className="mt-5 text-xs font-black uppercase tracking-[.2em] text-violet">Historia desbloqueada</p><h2 className="mt-2 font-display text-4xl font-black text-ink">{stage.nextNarrative.title}</h2><p className="mx-auto mt-4 max-w-lg text-base leading-7 text-ink/70">{stage.nextNarrative.text}</p><button type="button" onClick={() => stage.level < 7 ? selectLevel((stage.level + 1) as LevelNumber) : setScreen("final")} className="mt-8 rounded-2xl bg-ink px-6 py-3 text-sm font-black text-white shadow-card transition hover:bg-violet focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">{stage.nextNarrative.action} →</button></section>}
+        {screen === "final" && <section className="mx-auto max-w-2xl overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#fff2b9_0%,#e9fbff_52%,#eeeaff_100%)] p-7 text-center shadow-lift sm:p-10"><div className="mx-auto grid h-20 w-20 place-items-center rounded-[1.7rem] bg-sun text-4xl text-ink shadow-card">🏆</div><p className="mt-5 text-xs font-black uppercase tracking-[.2em] text-violet">La Gran Aventura</p><h2 className="mt-2 font-display text-4xl font-black text-ink">¡AVENTURA COMPLETADA!</h2><p className="mx-auto mt-4 max-w-lg text-base leading-7 text-ink/70">Elián llegó a la Ciudad Celestial. Cada paso, cada destello y cada decisión se guardaron como parte de tu camino.</p><div className="mx-auto mt-6 grid max-w-md grid-cols-3 gap-3"><div className="rounded-2xl bg-white p-3 text-sm font-black text-ink">{campaign.completedLevelIds.length}/7<span className="mt-1 block text-[10px] uppercase text-ink/55">niveles</span></div><div className="rounded-2xl bg-white p-3 text-sm font-black text-ink">{campaign.armorPieces.length}/6<span className="mt-1 block text-[10px] uppercase text-ink/55">armaduras</span></div><div className="rounded-2xl bg-white p-3 text-sm font-black text-ink">{timeLabel(campaign.adventureSeconds)}<span className="mt-1 block text-[10px] uppercase text-ink/55">tiempo</span></div></div><button type="button" onClick={() => setScreen("map")} className="mt-8 rounded-2xl bg-ink px-6 py-3 text-sm font-black text-white shadow-card hover:bg-violet">Explorar el mapa</button></section>}
       </div>
 
-      <section className="mt-10 grid gap-4 rounded-[1.8rem] border border-ink/5 bg-white p-5 shadow-card md:grid-cols-3"><div><p className="text-xs font-black uppercase tracking-[.16em] text-violet">Progreso guardado</p><p className="mt-1 text-sm font-semibold leading-6 text-ink/65">Esta aventura usa el mismo progreso local del perfil: XP, puntos, racha, logros y partidas completadas.</p></div><div><p className="text-xs font-black uppercase tracking-[.16em] text-violet">Próximos desafíos</p><p className="mt-1 text-sm font-semibold leading-6 text-ink/65">Los Mundos 3–7 ya están modelados en el mapa para añadir nuevos niveles sin rehacer la campaña.</p></div><div><p className="text-xs font-black uppercase tracking-[.16em] text-violet">Tiempo de aventura</p><p className="mt-1 font-display text-2xl font-black text-ink">{timeLabel(campaign.adventureSeconds)}</p></div></section>
+      <section className="mt-10 grid gap-4 rounded-[1.8rem] border border-ink/5 bg-white p-5 shadow-card md:grid-cols-3"><div><p className="text-xs font-black uppercase tracking-[.16em] text-violet">Progreso guardado</p><p className="mt-1 text-sm font-semibold leading-6 text-ink/65">Esta aventura usa el mismo progreso local del perfil: XP, puntos, racha, logros y partidas completadas.</p></div><div><p className="text-xs font-black uppercase tracking-[.16em] text-violet">Siete niveles jugables</p><p className="mt-1 text-sm font-semibold leading-6 text-ink/65">Los siete mundos están abiertos durante la fase de pruebas; también puedes seguir la historia sin volver al menú.</p></div><div><p className="text-xs font-black uppercase tracking-[.16em] text-violet">Tiempo de aventura</p><p className="mt-1 font-display text-2xl font-black text-ink">{timeLabel(campaign.adventureSeconds)}</p></div></section>
     </div>
   );
 }

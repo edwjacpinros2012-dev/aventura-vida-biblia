@@ -2,6 +2,7 @@
 
 import type { Game } from "@/types/content";
 import { ColoringGame } from "@/components/games/coloring-game";
+import { GardenHelpersGame, LightCollectorGame, RiverPathGame, StarMapGame } from "@/components/games/catalog-adventure-games";
 import { GameLoading, GameShell, useReadyGame } from "@/components/games/game-shell";
 import { IqGame } from "@/components/games/iq-game";
 import { MemoryGame } from "@/components/games/memory-game";
@@ -23,6 +24,10 @@ export function GamePlayer({ game }: { game: Game }) {
     iq: <IqGame />,
     verse: <VerseGame />,
     puzzle: <PuzzleGame />,
+    "light-collector": <LightCollectorGame />,
+    "garden-helpers": <GardenHelpersGame />,
+    "river-path": <RiverPathGame />,
+    "star-map": <StarMapGame />,
   }[game.gameKey ?? "word-search"];
   return <GameShell game={game}>{content}</GameShell>;
 }

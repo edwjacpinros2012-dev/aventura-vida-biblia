@@ -15,7 +15,8 @@ import {
 const STORAGE_KEY = "aventura-vida.player-progress.v2";
 
 const initialArmorCampaign: ArmorCampaignProgress = {
-  unlockedLevel: 1,
+  // Los siete niveles están disponibles durante la fase de pruebas de la campaña.
+  unlockedLevel: 7,
   completedLevelIds: [],
   faithTokens: 0,
   badges: [],
@@ -63,7 +64,8 @@ function safeProgress(value: unknown): PlayerProgress {
   const storedCampaign = candidate.armorCampaign;
   const campaignCandidate = storedCampaign && typeof storedCampaign === "object" ? storedCampaign : initialArmorCampaign;
   const armorPieces = Array.isArray(campaignCandidate.armorPieces)
-    ? campaignCandidate.armorPieces.filter((item): item is ArmorPieceId => item === "coraza-de-justicia")
+    ? campaignCandidate.armorPieces.filter((item): item is ArmorPieceId =>
+      item === "cinturon-de-verdad" || item === "coraza-de-justicia" || item === "calzado-de-paz" || item === "escudo-de-fe" || item === "yelmo-de-salvacion" || item === "espada-de-la-palabra")
     : [];
   return {
     ...initialProgress,
@@ -78,7 +80,7 @@ function safeProgress(value: unknown): PlayerProgress {
     gameProgress: candidate.gameProgress && typeof candidate.gameProgress === "object" ? candidate.gameProgress : {},
     level: Number.isFinite(candidate.level) ? Math.max(1, Number(candidate.level)) : 1,
     armorCampaign: {
-      unlockedLevel: Number.isFinite(campaignCandidate.unlockedLevel) ? Math.max(1, Number(campaignCandidate.unlockedLevel)) : 1,
+      unlockedLevel: Number.isFinite(campaignCandidate.unlockedLevel) ? Math.max(7, Number(campaignCandidate.unlockedLevel)) : 7,
       completedLevelIds: Array.isArray(campaignCandidate.completedLevelIds)
         ? campaignCandidate.completedLevelIds.filter((item): item is string => typeof item === "string")
         : [],

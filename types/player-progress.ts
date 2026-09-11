@@ -1,6 +1,12 @@
 export type PlayerAchievementId = "first-adventure" | "curious-explorer" | "verse-keeper" | "steady-light" | "game-master";
 
-export type ArmorPieceId = "coraza-de-justicia";
+export type ArmorPieceId =
+  | "cinturon-de-verdad"
+  | "coraza-de-justicia"
+  | "calzado-de-paz"
+  | "escudo-de-fe"
+  | "yelmo-de-salvacion"
+  | "espada-de-la-palabra";
 
 export type ArmorCampaignProgress = {
   unlockedLevel: number;
