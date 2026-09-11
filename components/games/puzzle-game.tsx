@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { VictoryPanel, useGameCompletion } from "@/components/games/game-shell";
 
 type Tile = number | null;

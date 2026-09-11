@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from "react";
+import { Component, type ReactNode, useEffect, useState } from "react";
 import { usePlayerProgress } from "@/components/player-progress-provider";
 import { achievementDetails, levelTitleFor, xpProgressFor, type GameReward, type RewardResult } from "@/types/player-progress";
 import type { Game } from "@/types/content";
@@ -49,7 +49,7 @@ type BoundaryState = { hasError: boolean };
 class GameErrorBoundary extends Component<BoundaryProps, BoundaryState> {
   state: BoundaryState = { hasError: false };
   static getDerivedStateFromError() { return { hasError: true }; }
-  componentDidCatch(_error: Error, _info: ErrorInfo) {}
+  componentDidCatch() {}
   render() {
     if (!this.state.hasError) return this.props.children;
     return <div className="mt-6 rounded-[1.7rem] border border-coral/20 bg-white p-8 text-center shadow-card"><span className="text-4xl">🧭</span><h2 className="mt-3 font-display text-2xl font-black text-ink">Esta aventura necesita reiniciarse</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink/65">No se perdió ningún dato. Actualiza la página para volver a intentarlo.</p><button type="button" onClick={() => window.location.reload()} className="mt-5 rounded-xl bg-violet px-4 py-3 text-sm font-extrabold text-white">Reintentar</button></div>;
