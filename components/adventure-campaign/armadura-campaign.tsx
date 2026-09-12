@@ -29,6 +29,7 @@ function StageControls({ onControl, onAction }: { onControl: (control: Control, 
     },
     onPointerUp: () => onControl(control, false),
     onPointerCancel: () => onControl(control, false),
+    onPointerLeave: () => onControl(control, false),
   });
 
   return (
@@ -38,8 +39,8 @@ function StageControls({ onControl, onAction }: { onControl: (control: Control, 
         <button type="button" aria-label="Mover a la derecha" className="grid h-14 w-14 place-items-center rounded-2xl bg-white text-2xl font-black text-ink shadow-card touch-none active:scale-95" {...hold("right")}>→</button>
       </div>
       <div className="flex gap-2">
-        <button type="button" aria-label="Interactuar" className="grid h-14 min-w-14 place-items-center rounded-2xl bg-violet px-3 text-sm font-black text-white shadow-card touch-none active:scale-95" {...hold("interact")}>E</button>
-        <button type="button" aria-label="Saltar" className="grid h-14 min-w-20 place-items-center rounded-2xl bg-sun px-3 text-sm font-black text-ink shadow-card touch-none active:scale-95" {...hold("jump")}>SALTAR</button>
+        <button type="button" aria-label="Interactuar" onClick={() => onAction("interact")} className="grid h-14 min-w-14 place-items-center rounded-2xl bg-violet px-3 text-sm font-black text-white shadow-card touch-none active:scale-95" {...hold("interact")}>E</button>
+        <button type="button" aria-label="Saltar" onClick={() => onAction("jump")} className="grid h-14 min-w-20 place-items-center rounded-2xl bg-sun px-3 text-sm font-black text-ink shadow-card touch-none active:scale-95" {...hold("jump")}>SALTAR</button>
       </div>
     </div>
   );
@@ -71,6 +72,15 @@ function AdventureStage({ stage, onComplete }: { stage: CampaignStage; onComplet
     position.current = { x: checkpoint.current.x, y: checkpoint.current.y, velocityY: 0, grounded: true };
     setView(position.current);
     setMessage(text);
+  }, []);
+
+  const requestJump = useCallback(() => {
+    const current = position.current;
+    if (!current.grounded || finishing.current) return;
+    current.velocityY = -2.2;
+    current.grounded = false;
+    input.current.jump = false;
+    setView({ ...current });
   }, []);
 
   const handleInteraction = useCallback(() => {
@@ -125,23 +135,31 @@ function AdventureStage({ stage, onComplete }: { stage: CampaignStage; onComplet
       ArrowRight: "right",
       KeyD: "right",
       Space: "jump",
+      ArrowUp: "jump",
       KeyE: "interact",
     };
     const setKey = (event: KeyboardEvent, active: boolean) => {
       const control = keyToControl[event.code];
       if (!control) return;
       event.preventDefault();
+      if (active && control === "jump") {
+        if (!event.repeat) requestJump();
+        return;
+      }
       input.current[control] = active;
     };
     const down = (event: KeyboardEvent) => setKey(event, true);
     const up = (event: KeyboardEvent) => setKey(event, false);
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
+    const clearControls = () => { input.current = { left: false, right: false, jump: false, interact: false }; };
+    window.addEventListener("blur", clearControls);
     return () => {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", clearControls);
     };
-  }, []);
+  }, [requestJump]);
 
   useEffect(() => {
     if (challengeOpen || finishing.current) return;
@@ -155,10 +173,6 @@ function AdventureStage({ stage, onComplete }: { stage: CampaignStage; onComplet
       const horizontal = (input.current.right ? 1 : 0) - (input.current.left ? 1 : 0);
       current.x = Math.max(0, Math.min(100 - AVATAR_WIDTH, current.x + horizontal * 0.48 * multiplier));
 
-      if (input.current.jump && current.grounded) {
-        current.velocityY = -1.6;
-        current.grounded = false;
-      }
       const previousBottom = current.y + AVATAR_HEIGHT;
       current.velocityY = Math.min(2.6, current.velocityY + 0.115 * multiplier);
       current.y += current.velocityY * multiplier;
@@ -268,8 +282,9 @@ function AdventureStage({ stage, onComplete }: { stage: CampaignStage; onComplet
   }, []);
 
   const triggerAction = useCallback((control: "jump" | "interact") => {
-    if (control === "interact") handleInteraction();
-  }, [handleInteraction]);
+    if (control === "jump") requestJump();
+    else handleInteraction();
+  }, [handleInteraction, requestJump]);
 
   return (
     <div className="rounded-[2rem] border border-ink/10 bg-white p-3 shadow-lift sm:p-5">

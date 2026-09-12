@@ -1,5 +1,5 @@
 /**
- * Registro de módulos internos revisados. Los ocho adaptadores de interfaz
+ * Registro de módulos internos revisados. Los adaptadores de interfaz
  * viven en components/games y usan el shell común de progreso local. La
  * siguiente fase sustituirá la concesión local por eventos validados del SDK.
  */
@@ -19,4 +19,8 @@ export const internalGameRegistry: Record<string, InternalGameManifest> = {
   iq: { key: "iq", version: "1.0.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
   verse: { key: "verse", version: "1.0.0", supportedEvents: ["objective", "progress", "finish"], trusted: true },
   puzzle: { key: "puzzle", version: "1.0.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
+  "light-collector": { key: "light-collector", version: "1.0.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
+  "garden-helpers": { key: "garden-helpers", version: "1.0.0", supportedEvents: ["objective", "progress", "finish"], trusted: true },
+  "river-path": { key: "river-path", version: "1.0.0", supportedEvents: ["objective", "progress", "finish"], trusted: true },
+  "star-map": { key: "star-map", version: "1.0.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
 };
