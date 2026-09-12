@@ -1,6 +1,7 @@
 "use client";
 
 import type { Game } from "@/types/content";
+import { BibleMazeGame } from "@/components/games/bible-maze-game";
 import { ColoringGame } from "@/components/games/coloring-game";
 import { GardenHelpersGame, LightCollectorGame, RiverPathGame, StarMapGame } from "@/components/games/catalog-adventure-games";
 import { GameLoading, GameShell, useReadyGame } from "@/components/games/game-shell";
@@ -28,6 +29,7 @@ export function GamePlayer({ game }: { game: Game }) {
     "garden-helpers": <GardenHelpersGame />,
     "river-path": <RiverPathGame />,
     "star-map": <StarMapGame />,
+    "bible-maze": <BibleMazeGame />,
   }[game.gameKey ?? "word-search"];
   return <GameShell game={game}>{content}</GameShell>;
 }

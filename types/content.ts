@@ -25,7 +25,7 @@ export type Game = {
   objectives: string[];
 };
 
-export type BiblicalGameKey = "word-search" | "coloring" | "quiz" | "story" | "memory" | "iq" | "verse" | "puzzle" | "light-collector" | "garden-helpers" | "river-path" | "star-map";
+export type BiblicalGameKey = "word-search" | "coloring" | "quiz" | "story" | "memory" | "iq" | "verse" | "puzzle" | "light-collector" | "garden-helpers" | "river-path" | "star-map" | "bible-maze";
 
 export type Adventure = {
   slug: string;
