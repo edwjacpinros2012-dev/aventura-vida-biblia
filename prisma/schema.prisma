@@ -88,6 +88,89 @@ enum MultiplayerParticipantStatus {
   LEFT
 }
 
+enum ChatMessageStatus {
+  VISIBLE
+  FILTERED
+  HIDDEN
+  REMOVED
+}
+
+enum ReportReason {
+  INAPPROPRIATE_LANGUAGE
+  HARASSMENT
+  INSULT
+  SEXUAL_CONTENT
+  THREAT
+  SPAM
+  PERSONAL_INFORMATION
+  INAPPROPRIATE_BEHAVIOR
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+enum SanctionType {
+  WARNING
+  SHORT_SUSPENSION
+  LONG_SUSPENSION
+  BAN
+}
+
+enum SanctionStatus {
+  ACTIVE
+  LIFTED
+  EXPIRED
+}
+
+enum InventoryItemType {
+  AVATAR
+  CHARACTER_STYLE
+  EFFECT
+  SCENERY
+  COSMETIC
+  SPECIAL_CONTENT
+}
+
+enum ItemRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+}
+
+enum GiftStatus {
+  SENT
+  RECEIVED
+  REJECTED
+  CANCELLED
+}
+
+enum MatchMode {
+  COOPERATIVE
+  PVP_FUTURE
+}
+
+enum MatchStatus {
+  WAITING
+  ACTIVE
+  FINISHED
+  ABANDONED
+}
+
+enum MatchPlayerStatus {
+  ACTIVE
+  DISCONNECTED
+  LEFT
+  WON
+  LOST
+  DRAW
+}
+
 model User {
   id             String           @id @default(cuid())
   email          String?          @unique
@@ -105,8 +188,45 @@ model User {
   rewards        Reward[]
   notifications  Notification[]
   auditLogs      AuditLog[]       @relation("AuditActor")
+  credential     UserCredential?
+  sessions       UserSession[]
+  wallet         PlayerWallet?
+  inventory      PlayerInventoryItem[]
+  coinTransactions AdventureCoinTransaction[]
+  sentGifts      AdventureGift[]  @relation("GiftSender")
+  receivedGifts  AdventureGift[]  @relation("GiftRecipient")
+  blocksCreated  PlayerBlock[]    @relation("Blocker")
+  blocksReceived PlayerBlock[]    @relation("Blocked")
+  reportsFiled   CommunityReport[] @relation("ReportReporter")
+  reportsReceived CommunityReport[] @relation("ReportTarget")
+  reportsResolved CommunityReport[] @relation("ReportResolver")
+  sanctionsReceived ModerationSanction[] @relation("SanctionTarget")
+  sanctionsIssued ModerationSanction[] @relation("SanctionIssuer")
+  sanctionsLifted ModerationSanction[] @relation("SanctionLifter")
+  chatMessages   SafeChatMessage[]
+  matchPlayers   MatchPlayer[]
 
   @@index([role])
+}
+
+model UserCredential {
+  userId            String   @id
+  passwordHash      String
+  passwordUpdatedAt DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
 }
 
 model Profile {
@@ -122,6 +242,87 @@ model Profile {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([points(sort: Desc)])
+}
+
+model PlayerWallet {
+  userId         String   @id
+  adventureCoins Int      @default(0)
+  version        Int      @default(0)
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AdventureCoinTransaction {
+  id             String   @id @default(cuid())
+  userId         String
+  amount         Int
+  balanceAfter   Int
+  reason         String
+  sourceId       String?
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model StoreItem {
+  id          String            @id @default(cuid())
+  slug        String            @unique
+  name        String
+  description String
+  type        InventoryItemType
+  rarity      ItemRarity        @default(COMMON)
+  coinPrice   Int               @default(0)
+  criteria    Json?
+  active      Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  owners      PlayerInventoryItem[]
+
+  @@index([type, active])
+}
+
+model PlayerInventoryItem {
+  id         String    @id @default(cuid())
+  userId     String
+  itemId     String
+  source     String
+  acquiredAt DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item       StoreItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId])
+  @@index([userId, acquiredAt(sort: Desc)])
+}
+
+model AdventureGift {
+  id             String     @id @default(cuid())
+  senderId       String
+  recipientId    String
+  coins          Int        @default(0)
+  encouragement  String?
+  idempotencyKey String     @unique
+  status         GiftStatus @default(SENT)
+  createdAt      DateTime   @default(now())
+  receivedAt     DateTime?
+  sender         User       @relation("GiftSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient      User       @relation("GiftRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, createdAt(sort: Desc)])
+  @@index([recipientId, status])
+}
+
+model PlayerBlock {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+  blocker   User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
 }
 
 model GameCategory {
@@ -380,6 +581,66 @@ model AuditLog {
   @@index([actorId, createdAt(sort: Desc)])
 }
 
+model SafeChatMessage {
+  id              String            @id @default(cuid())
+  roomId          String?
+  authorId        String?
+  authorPlayerKey String
+  text            String
+  presetKey       String?
+  status          ChatMessageStatus @default(VISIBLE)
+  moderationNotes Json?
+  createdAt       DateTime          @default(now())
+  room            MultiplayerRoom?  @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  author          User?             @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  reports         CommunityReport[]
+
+  @@index([roomId, createdAt])
+  @@index([authorId, createdAt])
+}
+
+model CommunityReport {
+  id             String       @id @default(cuid())
+  reporterId     String
+  reportedUserId String?
+  roomId         String?
+  messageId      String?
+  reason         ReportReason
+  details        String?
+  status         ReportStatus @default(OPEN)
+  resolution     String?
+  resolvedById   String?
+  resolvedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  reporter       User         @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUser   User?        @relation("ReportTarget", fields: [reportedUserId], references: [id], onDelete: SetNull)
+  room           MultiplayerRoom? @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  message        SafeChatMessage? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  resolvedBy     User?        @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([reportedUserId, createdAt])
+}
+
+model ModerationSanction {
+  id          String         @id @default(cuid())
+  userId      String
+  issuedById  String?
+  type        SanctionType
+  status      SanctionStatus @default(ACTIVE)
+  reason      String
+  startsAt    DateTime       @default(now())
+  endsAt      DateTime?
+  liftedAt    DateTime?
+  liftedById  String?
+  createdAt   DateTime       @default(now())
+  user        User           @relation("SanctionTarget", fields: [userId], references: [id], onDelete: Cascade)
+  issuedBy    User?          @relation("SanctionIssuer", fields: [issuedById], references: [id], onDelete: SetNull)
+  liftedBy    User?          @relation("SanctionLifter", fields: [liftedById], references: [id], onDelete: SetNull)
+
+  @@index([userId, status, endsAt])
+}
+
 // Las salas no guardan nombres reales ni datos de contacto. `playerKey` es un
 // identificador efímero del dispositivo hasta que exista autenticación segura.
 model MultiplayerRoom {
@@ -395,6 +656,9 @@ model MultiplayerRoom {
   updatedAt     DateTime                @updatedAt
   participants  MultiplayerParticipant[]
   events        MultiplayerRoomEvent[]
+  chatMessages  SafeChatMessage[]
+  reports       CommunityReport[]
+  match         Match?
 
   @@index([gameKey, status, expiresAt])
 }
@@ -428,4 +692,43 @@ model MultiplayerRoomEvent {
 
   @@index([roomId, revision])
   @@index([createdAt])
+}
+
+// Contratos de persistencia compartidos por cooperativo ahora y PvP después.
+// El modo PVP_FUTURE no se expone al cliente hasta que exista reglamento y
+// validación específica de cada juego.
+model Match {
+  id          String      @id @default(cuid())
+  roomId      String?     @unique
+  gameKey     String
+  mode        MatchMode   @default(COOPERATIVE)
+  status      MatchStatus @default(WAITING)
+  state       Json
+  result      Json?
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  room        MultiplayerRoom? @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  players     MatchPlayer[]
+
+  @@index([gameKey, mode, status])
+}
+
+model MatchPlayer {
+  id        String            @id @default(cuid())
+  matchId   String
+  userId    String?
+  playerKey String
+  team      Int?
+  status    MatchPlayerStatus @default(ACTIVE)
+  score     Int               @default(0)
+  state     Json?
+  joinedAt  DateTime          @default(now())
+  leftAt    DateTime?
+  match     Match             @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user      User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([matchId, playerKey])
+  @@index([userId, joinedAt(sort: Desc)])
 }

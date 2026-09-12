@@ -37,7 +37,7 @@ async function main() {
     if (joined.players.filter((player) => player.status === "CONNECTED").length !== 2 || joinedFour.players.filter((player) => player.status === "CONNECTED").length !== 4) throw new Error("Las cuatro personas no se sincronizaron.");
     const started = requireRoom(await request(host, "room:start", { code: created.code }));
     if (started.status !== "PLAYING") throw new Error("La sala no inició.");
-    const moved = requireRoom(await request(guest, "room:action", { code: created.code, action: { type: "maze.move", level: 1, row: 0, column: 1, moves: 1 } }));
+    const moved = requireRoom(await request(guest, "room:action", { code: created.code, action: { type: "maze.move", direction: "right" } }));
     const guestState = moved.players.find((player) => player.id === "verify_guest_0002")?.state;
     if (guestState?.row !== 0 || guestState?.column !== 1) throw new Error("El movimiento no se sincronizó.");
     const disconnectedPromise = new Promise<MultiplayerResponse>((resolve, reject) => {

@@ -30,6 +30,7 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="hidden items-center gap-3 lg:flex">
+          <Link href="/login" className="rounded-xl px-3 py-2 text-sm font-extrabold text-ink/65 hover:bg-sky hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">Cuenta</Link>
           <Link href="/perfil" className="grid h-10 w-10 place-items-center rounded-full bg-sun text-lg outline-none transition-transform hover:scale-105 focus-visible:ring-4 focus-visible:ring-violet/25" aria-label="Ver perfil">🦊</Link>
           <Link href="/juegos" className="rounded-xl bg-ink px-4 py-2.5 text-sm font-extrabold text-white transition-transform hover:-translate-y-0.5 hover:bg-violet focus-visible:ring-4 focus-visible:ring-violet/25">Jugar ahora</Link>
         </div>
@@ -45,6 +46,7 @@ export function SiteHeader() {
                 {item.label}
               </Link>
             ))}
+            <Link href="/login" onClick={() => setOpen(false)} className="rounded-xl px-4 py-3 font-bold text-ink hover:bg-sky">Cuenta</Link>
             <Link href="/perfil" onClick={() => setOpen(false)} className="mt-1 rounded-xl bg-ink px-4 py-3 text-center font-extrabold text-white">Ver perfil</Link>
           </div>
         </nav>

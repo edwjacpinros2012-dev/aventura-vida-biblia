@@ -9,8 +9,10 @@ import type {
   MultiplayerRoomAction,
   MultiplayerRoomSnapshot,
   PublicPlayerIdentity,
+  RoomChatMessage,
   ServerToClientEvents,
 } from "@/lib/multiplayer/contracts";
+import type { SafeAccount } from "@/lib/auth/contracts";
 
 const DEVICE_KEY = "aventura-vida.multiplayer-device.v1";
 const defaultIdentity: PublicPlayerIdentity = { id: "", nickname: "Luz viajera", avatar: "✦" };
@@ -38,6 +40,7 @@ export function useMultiplayerRoom(gameKey: MultiplayerGameKey) {
   const [room, setRoom] = useState<MultiplayerRoomSnapshot | null>(null);
   const [connection, setConnection] = useState<MultiplayerConnection>("connecting");
   const [error, setError] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<RoomChatMessage[]>([]);
 
   useEffect(() => { roomRef.current = room; }, [room]);
 
@@ -45,8 +48,14 @@ export function useMultiplayerRoom(gameKey: MultiplayerGameKey) {
     const nextIdentity = readIdentity();
     identityRef.current = nextIdentity;
     setIdentity(nextIdentity);
+    void fetch("/api/auth/me").then((response) => response.ok ? response.json() as Promise<{ account: SafeAccount | null }> : null).then((result) => {
+      if (!result?.account) return;
+      const accountIdentity = { id: `user_${result.account.id}`, nickname: result.account.nickname, avatar: result.account.avatarKey };
+      identityRef.current = accountIdentity;
+      setIdentity(accountIdentity);
+    }).catch(() => undefined);
     const serverUrl = process.env.NEXT_PUBLIC_MULTIPLAYER_SERVER_URL ?? "http://localhost:3001";
-    const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(serverUrl, { transports: ["websocket", "polling"], reconnectionAttempts: 4, timeout: 5_000 });
+    const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(serverUrl, { transports: ["websocket", "polling"], reconnectionAttempts: 4, timeout: 5_000, withCredentials: true });
     socketRef.current = socket;
     socket.on("connect", () => {
       setConnection("connected");
@@ -61,6 +70,7 @@ export function useMultiplayerRoom(gameKey: MultiplayerGameKey) {
     socket.on("connect_error", () => setConnection("offline"));
     socket.on("room:state", (nextRoom) => setRoom(nextRoom));
     socket.on("room:error", (nextError) => setError(nextError.message));
+    socket.on("room:chat", (message) => setChatMessages((current) => current.some((item) => item.id === message.id) ? current : [...current.slice(-49), message]));
     return () => { socket.disconnect(); socketRef.current = null; };
   }, []);
 
@@ -79,6 +89,15 @@ export function useMultiplayerRoom(gameKey: MultiplayerGameKey) {
   const leaveRoom = useCallback(() => { if (roomRef.current) request("room:leave", { code: roomRef.current.code }); }, [request]);
   const startRoom = useCallback(() => { if (roomRef.current) request("room:start", { code: roomRef.current.code }); }, [request]);
   const sendAction = useCallback((action: MultiplayerRoomAction) => { if (roomRef.current?.status === "PLAYING") request("room:action", { code: roomRef.current.code, action }); }, [request]);
+  const sendPositiveMessage = useCallback((presetKey: "great_job" | "keep_going" | "good_game" | "you_can_do_it" | "bless_you") => {
+    const socket = socketRef.current;
+    const activeRoom = roomRef.current;
+    if (!socket?.connected || !activeRoom) { setError("Primero entra a una sala."); return; }
+    socket.emit("room:chat", { code: activeRoom.code, presetKey }, (response) => {
+      if (response.error) setError(response.error.message);
+      else setError(null);
+    });
+  }, []);
 
-  return { identity, room, connection, error, createRoom, joinRoom, leaveRoom, startRoom, sendAction };
+  return { identity, room, connection, error, chatMessages, createRoom, joinRoom, leaveRoom, startRoom, sendAction, sendPositiveMessage };
 }

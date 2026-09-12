@@ -102,15 +102,14 @@ export function BibleMazeGame() {
     collectedRef.current = nextCollected;
     setPosition(next);
     if (foundNewToken) setCollected(nextCollected);
-    const nextMoves = moves + 1;
-    setMoves(nextMoves);
-    multiplayer.sendAction({ type: "maze.move", level: levelNumber, row: next.row, column: next.column, moves: nextMoves });
+    setMoves((value) => value + 1);
+    multiplayer.sendAction({ type: "maze.move", direction });
     if (foundNewToken) setMessage(`¡Destello encontrado! Llevas ${nextCollected.length}/${tokenKeys.length}.`);
     if (cell === "E") {
       if (nextCollected.length < tokenKeys.length) setMessage(`La salida se abrirá al reunir los ${tokenKeys.length} destellos.`);
       else completeLevel();
     }
-  }, [completeLevel, layout, levelNumber, moves, multiplayer, result, screen, tokenKeys.length]);
+  }, [completeLevel, layout, multiplayer, result, screen, tokenKeys.length]);
 
   useEffect(() => {
     const codeToDirection: Record<string, MazeDirection | undefined> = {

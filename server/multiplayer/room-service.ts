@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { bibleMazeLevels, mazeCellAt, mazePointFor, mazeTokenKeys, nextMazePoint, type MazePoint } from "@/lib/bible-maze";
 import type {
   MultiplayerError,
   MultiplayerParticipant,
@@ -42,6 +43,31 @@ function statusForDatabase(status: MultiplayerRoomSnapshot["status"]) {
 
 function participantStatusForDatabase(status: MultiplayerParticipant["status"]) {
   return status;
+}
+
+function matchStatusForRoom(status: MultiplayerRoomSnapshot["status"]) {
+  if (status === "LOBBY") return "WAITING" as const;
+  if (status === "PLAYING") return "ACTIVE" as const;
+  return status === "FINISHED" ? "FINISHED" as const : "ABANDONED" as const;
+}
+
+function matchPlayerStatusForParticipant(status: MultiplayerParticipant["status"]) {
+  return status === "LEFT" ? "LEFT" as const : status === "DISCONNECTED" ? "DISCONNECTED" as const : "ACTIVE" as const;
+}
+
+function mazeState(value: Record<string, unknown>) {
+  const level = typeof value.level === "number" && Number.isInteger(value.level) ? value.level : 1;
+  const route = typeof value.route === "number" && Number.isInteger(value.route) ? value.route : 0;
+  const board = bibleMazeLevels[level - 1];
+  if (!board) throw new RoomServiceError("INVALID_STATE", "Ese nivel del laberinto no existe.");
+  const layout = board.layouts[route % board.layouts.length];
+  const start = mazePointFor(layout, "S");
+  const point: MazePoint = typeof value.row === "number" && typeof value.column === "number"
+    ? { row: value.row, column: value.column }
+    : start;
+  const collected = Array.isArray(value.collected) ? value.collected.filter((item): item is string => typeof item === "string") : [];
+  const moves = typeof value.moves === "number" && Number.isInteger(value.moves) ? value.moves : 0;
+  return { board, layout, level, route, point, collected, moves };
 }
 
 class RoomPersistence {
@@ -118,6 +144,29 @@ class RoomPersistence {
         state: player.state as Prisma.InputJsonValue,
         leftAt: player.status === "LEFT" ? new Date() : null,
       },
+    })));
+    // La sala cooperativa persiste un Match de la misma base. El futuro PvP
+    // reutilizará estos contratos, eventos y participantes, sin otro servidor.
+    const match = await prisma.match.upsert({
+      where: { roomId: databaseRoom.id },
+      update: {
+        status: matchStatusForRoom(room.status),
+        state: { revision: room.revision, state: room.state } as Prisma.InputJsonValue,
+        startedAt: room.status === "PLAYING" ? new Date() : undefined,
+      },
+      create: {
+        roomId: databaseRoom.id,
+        gameKey: room.gameKey,
+        mode: "COOPERATIVE",
+        status: matchStatusForRoom(room.status),
+        state: { revision: room.revision, state: room.state } as Prisma.InputJsonValue,
+        startedAt: room.status === "PLAYING" ? new Date() : null,
+      },
+    });
+    await Promise.all(room.players.map((player) => prisma.matchPlayer.upsert({
+      where: { matchId_playerKey: { matchId: match.id, playerKey: player.id } },
+      update: { status: matchPlayerStatusForParticipant(player.status), state: player.state as Prisma.InputJsonValue, leftAt: player.status === "LEFT" ? new Date() : null },
+      create: { matchId: match.id, playerKey: player.id, status: matchPlayerStatusForParticipant(player.status), state: player.state as Prisma.InputJsonValue, leftAt: player.status === "LEFT" ? new Date() : null },
     })));
   }
 
@@ -219,7 +268,12 @@ export class MultiplayerRoomService {
     if (room.hostPlayerId !== playerId) throw new RoomServiceError("NOT_HOST", "Solo quien creó la sala puede iniciar el recorrido.");
     if (room.status !== "LOBBY") throw new RoomServiceError("INVALID_STATE", "La sala ya comenzó.");
     room.status = "PLAYING";
-    room.state = { ...room.state, activeLevel: 1, startedAt: new Date().toISOString() };
+    room.state = { ...room.state, activeLevel: 1, route: 0, startedAt: new Date().toISOString() };
+    for (const player of room.players) {
+      const layout = bibleMazeLevels[0].layouts[0];
+      const start = mazePointFor(layout, "S");
+      player.state = { level: 1, route: 0, row: start.row, column: start.column, moves: 0, collected: [] };
+    }
     room.revision += 1;
     await this.persist(room, playerId, "room.started", { activeLevel: 1 });
     return cloneRoom(room);
@@ -230,8 +284,33 @@ export class MultiplayerRoomService {
     if (room.status !== "PLAYING") throw new RoomServiceError("INVALID_STATE", "Inicia el recorrido antes de enviar acciones.");
     const player = room.players.find((item) => item.id === playerId && item.status === "CONNECTED");
     if (!player) throw new RoomServiceError("ROOM_NOT_FOUND", "El jugador ya no está conectado a la sala.");
-    if (action.type === "maze.move") player.state = { ...player.state, level: action.level, row: action.row, column: action.column, moves: action.moves };
-    if (action.type === "maze.level-complete") player.state = { ...player.state, completedLevel: action.level };
+    if (action.type === "maze.move") {
+      const current = mazeState(player.state);
+      const destination = nextMazePoint(current.point, action.direction);
+      const destinationCell = mazeCellAt(current.layout, destination);
+      if (!destinationCell || destinationCell === "#" || destinationCell === "~") throw new RoomServiceError("INVALID_STATE", "Ese movimiento no tiene un camino válido.");
+      const destinationKey = `${destination.row}-${destination.column}`;
+      const collected = destinationCell === "*" && !current.collected.includes(destinationKey) ? [...current.collected, destinationKey] : current.collected;
+      const requiredTokens = mazeTokenKeys(current.layout);
+      if (destinationCell === "E" && collected.length < requiredTokens.length) throw new RoomServiceError("INVALID_STATE", "Todavía faltan destellos antes de llegar a la salida.");
+      player.state = {
+        ...player.state,
+        level: current.level,
+        route: current.route,
+        row: destination.row,
+        column: destination.column,
+        moves: current.moves + 1,
+        collected,
+        ...(destinationCell === "E" ? { completedLevel: current.level } : {}),
+      };
+    }
+    if (action.type === "maze.level-complete") {
+      const current = mazeState(player.state);
+      const exit = mazePointFor(current.layout, "E");
+      const requiredTokens = mazeTokenKeys(current.layout);
+      if (action.level !== current.level || current.point.row !== exit.row || current.point.column !== exit.column || current.collected.length < requiredTokens.length) throw new RoomServiceError("INVALID_STATE", "El nivel no está listo para completarse.");
+      player.state = { ...player.state, completedLevel: current.level };
+    }
     room.revision += 1;
     await this.persist(room, playerId, action.type, action);
     return cloneRoom(room);
