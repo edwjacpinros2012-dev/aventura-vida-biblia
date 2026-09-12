@@ -75,6 +75,19 @@ enum AuditAction {
   LOGIN
 }
 
+enum MultiplayerRoomStatus {
+  LOBBY
+  PLAYING
+  FINISHED
+  CLOSED
+}
+
+enum MultiplayerParticipantStatus {
+  CONNECTED
+  DISCONNECTED
+  LEFT
+}
+
 model User {
   id             String           @id @default(cuid())
   email          String?          @unique
@@ -365,4 +378,54 @@ model AuditLog {
 
   @@index([entity, entityId, createdAt(sort: Desc)])
   @@index([actorId, createdAt(sort: Desc)])
+}
+
+// Las salas no guardan nombres reales ni datos de contacto. `playerKey` es un
+// identificador efímero del dispositivo hasta que exista autenticación segura.
+model MultiplayerRoom {
+  id            String                  @id @default(cuid())
+  code          String                  @unique
+  gameKey       String
+  maxPlayers    Int
+  hostPlayerKey String
+  status        MultiplayerRoomStatus   @default(LOBBY)
+  state         Json
+  expiresAt     DateTime
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  participants  MultiplayerParticipant[]
+  events        MultiplayerRoomEvent[]
+
+  @@index([gameKey, status, expiresAt])
+}
+
+model MultiplayerParticipant {
+  id          String                       @id @default(cuid())
+  roomId      String
+  playerKey   String
+  nickname    String
+  avatarKey   String                       @default("spark")
+  status      MultiplayerParticipantStatus @default(CONNECTED)
+  state       Json?
+  connectedAt DateTime                     @default(now())
+  lastSeenAt  DateTime                     @updatedAt
+  leftAt      DateTime?
+  room        MultiplayerRoom              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, playerKey])
+  @@index([roomId, status])
+}
+
+model MultiplayerRoomEvent {
+  id        String           @id @default(cuid())
+  roomId    String
+  playerKey String?
+  type      String
+  revision  Int
+  payload   Json
+  createdAt DateTime         @default(now())
+  room      MultiplayerRoom  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, revision])
+  @@index([createdAt])
 }
