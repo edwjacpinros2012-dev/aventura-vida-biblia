@@ -33,5 +33,9 @@ export type SafeAccount = {
   level: number;
   totalXp: number;
   points: number;
+  streak: number;
+  gamesPlayed: number;
+  adventuresCompleted: number;
+  learnedVerses: number;
   adventureCoins: number;
 };

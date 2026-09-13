@@ -1,5 +1,6 @@
 import { io, type Socket } from "socket.io-client";
-import type { ClientToServerEvents, MultiplayerResponse, ServerToClientEvents } from "@/lib/multiplayer/contracts";
+import { duelQuestions } from "./pvp-questions";
+import type { ClientToServerEvents, MultiplayerResponse, PvpResponse, ServerToClientEvents } from "@/lib/multiplayer/contracts";
 
 const url = process.env.MULTIPLAYER_VERIFY_URL ?? "http://localhost:3001";
 type TestSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
@@ -22,6 +23,23 @@ function request(socket: TestSocket, event: string, payload: unknown): Promise<M
 function requireRoom(response: MultiplayerResponse) {
   if (!response.room) throw new Error(response.error?.message ?? "El servidor no devolvió una sala.");
   return response.room;
+}
+
+function pvpRequest(socket: TestSocket, event: string, payload: unknown): Promise<PvpResponse> {
+  return new Promise((resolve) => {
+    (socket.emit as (name: string, data: unknown, callback: (response: PvpResponse) => void) => void)(event, payload, resolve);
+  });
+}
+
+function requireDuel(response: PvpResponse) {
+  if (!response.match) throw new Error(response.error?.message ?? "El servidor no devolvió un duelo.");
+  return response.match;
+}
+
+function correctOption(questionId: string) {
+  const question = duelQuestions.find((item) => item.id === questionId);
+  if (!question) throw new Error("Pregunta PvP desconocida.");
+  return question.correct;
 }
 
 async function main() {
@@ -58,6 +76,45 @@ async function main() {
     guest.disconnect();
     third.disconnect();
     fourth.disconnect();
+  }
+
+  const duelistA = await connect();
+  const duelistB = await connect();
+  let reconnectedA: TestSocket | undefined;
+  try {
+    const playerA = { id: "verify_duelist_0001", nickname: "Duelista Uno", avatar: "✦" };
+    const playerB = { id: "verify_duelist_0002", nickname: "Duelista Dos", avatar: "☀" };
+    const queued = await pvpRequest(duelistA, "pvp:queue", { gameKey: "bible-quiz-duel", player: playerA });
+    if (!queued.queued) throw new Error("El primer duelista no entró a la cola.");
+    let duel = requireDuel(await pvpRequest(duelistB, "pvp:queue", { gameKey: "bible-quiz-duel", player: playerB }));
+    if (duel.status !== "PLAYING" || duel.players.length !== 2 || !duel.question) throw new Error("No se creó el duelo 1 vs 1.");
+
+    const disconnectedPvp = new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("No llegó la desconexión PvP.")), 5_000);
+      duelistB.on("pvp:state", function state(next) {
+        if (next.id !== duel.id || next.players.find((player) => player.id === playerA.id)?.status !== "DISCONNECTED") return;
+        clearTimeout(timer); duelistB.off("pvp:state", state); resolve();
+      });
+    });
+    duelistA.disconnect();
+    await disconnectedPvp;
+    reconnectedA = await connect();
+    duel = requireDuel(await pvpRequest(reconnectedA, "pvp:rejoin", { matchId: duel.id, player: playerA }));
+    if (duel.players.find((player) => player.id === playerA.id)?.status !== "CONNECTED") throw new Error("La reconexión PvP no restauró al jugador.");
+
+    for (let round = 1; round <= 3; round += 1) {
+      if (!duel.question) throw new Error("Falta una pregunta del duelo.");
+      const correct = correctOption(duel.question.id);
+      await pvpRequest(reconnectedA, "pvp:answer", { matchId: duel.id, round, option: correct });
+      duel = requireDuel(await pvpRequest(duelistB, "pvp:answer", { matchId: duel.id, round, option: (correct + 1) % 4 }));
+      if (duel.status !== "ROUND_RESULT") throw new Error("El servidor no cerró la ronda PvP.");
+      await pvpRequest(reconnectedA, "pvp:continue", { matchId: duel.id, round });
+      duel = requireDuel(await pvpRequest(duelistB, "pvp:continue", { matchId: duel.id, round }));
+    }
+    if (duel.status !== "FINISHED" || duel.result?.winnerId !== playerA.id) throw new Error("El servidor no validó la victoria del duelo.");
+    console.log("PASS: matchmaking 1 vs 1, acciones validadas, reconexión y victoria PvP.");
+  } finally {
+    duelistA.disconnect(); duelistB.disconnect(); reconnectedA?.disconnect();
   }
 }
 

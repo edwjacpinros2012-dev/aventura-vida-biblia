@@ -15,7 +15,7 @@ export class AccountError extends Error {
 type AccountRecord = {
   id: string;
   role: SafeAccount["role"];
-  profile: { nickname: string; avatarKey: string; level: number; totalXp: number; points: number } | null;
+  profile: { nickname: string; avatarKey: string; level: number; totalXp: number; points: number; streak: number; gamesPlayed: number; adventuresCompleted: number; learnedVerses: number } | null;
   wallet: { adventureCoins: number } | null;
 };
 
@@ -29,6 +29,10 @@ function safeAccount(account: AccountRecord): SafeAccount {
     level: account.profile.level,
     totalXp: account.profile.totalXp,
     points: account.profile.points,
+    streak: account.profile.streak,
+    gamesPlayed: account.profile.gamesPlayed,
+    adventuresCompleted: account.profile.adventuresCompleted,
+    learnedVerses: account.profile.learnedVerses,
     adventureCoins: account.wallet?.adventureCoins ?? 0,
   };
 }
@@ -97,6 +101,10 @@ export async function accountFromSessionToken(token: string | undefined | null) 
 export async function revokeSession(token: string | undefined | null) {
   if (!token) return;
   await prisma.userSession.updateMany({ where: { tokenHash: tokenHash(token), revokedAt: null }, data: { revokedAt: new Date() } });
+}
+
+export async function revokeAllSessions(userId: string) {
+  await prisma.userSession.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: new Date() } });
 }
 
 export const sessionCookie = {

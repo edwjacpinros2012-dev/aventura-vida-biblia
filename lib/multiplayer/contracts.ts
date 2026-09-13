@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const MULTIPLAYER_GAME_KEYS = ["bible-maze"] as const;
+export const MULTIPLAYER_GAME_KEYS = ["bible-maze", "bible-quiz-duel"] as const;
 export type MultiplayerGameKey = (typeof MULTIPLAYER_GAME_KEYS)[number];
 export type MultiplayerRoomStatus = "LOBBY" | "PLAYING" | "FINISHED" | "CLOSED";
 export type MultiplayerParticipantStatus = "CONNECTED" | "DISCONNECTED" | "LEFT";
@@ -96,6 +96,51 @@ export const roomChatSchema = z.object({
 
 export type RoomChatResponse = { message?: RoomChatMessage; error?: MultiplayerError };
 
+export type PvpPlayerSnapshot = {
+  id: string;
+  nickname: string;
+  avatar: string;
+  score: number;
+  status: "CONNECTED" | "DISCONNECTED" | "LEFT";
+  answered: boolean;
+};
+
+export type PvpQuestionSnapshot = {
+  id: string;
+  prompt: string;
+  options: string[];
+  category: string;
+};
+
+export type PvpDuelSnapshot = {
+  id: string;
+  code: string;
+  status: "QUEUED" | "PLAYING" | "ROUND_RESULT" | "FINISHED" | "ABANDONED";
+  revision: number;
+  round: number;
+  totalRounds: number;
+  question?: PvpQuestionSnapshot;
+  players: PvpPlayerSnapshot[];
+  lastRound?: { correctOption: number; explanations: string; scores: Record<string, number> };
+  result?: { winnerId?: string; outcome: "WIN" | "LOSS" | "DRAW" | "ABANDONED"; reason: "SCORE" | "DISCONNECT" | "DRAW" };
+  disconnectDeadline?: string;
+};
+
+export const pvpQueueSchema = z.object({
+  gameKey: z.literal("bible-quiz-duel"),
+  player: playerIdentitySchema,
+});
+
+export const pvpAnswerSchema = z.object({
+  matchId: z.string().min(8).max(100),
+  round: z.number().int().min(1).max(10),
+  option: z.number().int().min(0).max(3),
+});
+
+export const pvpContinueSchema = z.object({ matchId: z.string().min(8).max(100), round: z.number().int().min(1).max(10) });
+export const pvpRejoinSchema = z.object({ matchId: z.string().min(8).max(100), player: playerIdentitySchema });
+export type PvpResponse = { match?: PvpDuelSnapshot; queued?: true; error?: MultiplayerError };
+
 export type ClientToServerEvents = {
   "room:create": (payload: z.infer<typeof createRoomSchema>, respond: (response: MultiplayerResponse) => void) => void;
   "room:join": (payload: z.infer<typeof joinRoomSchema>, respond: (response: MultiplayerResponse) => void) => void;
@@ -103,10 +148,18 @@ export type ClientToServerEvents = {
   "room:start": (payload: z.infer<typeof roomCommandSchema>, respond: (response: MultiplayerResponse) => void) => void;
   "room:action": (payload: z.infer<typeof roomActionRequestSchema>, respond: (response: MultiplayerResponse) => void) => void;
   "room:chat": (payload: z.infer<typeof roomChatSchema>, respond: (response: RoomChatResponse) => void) => void;
+  "pvp:queue": (payload: z.infer<typeof pvpQueueSchema>, respond: (response: PvpResponse) => void) => void;
+  "pvp:cancel": (payload: Record<string, never>, respond: (response: PvpResponse) => void) => void;
+  "pvp:answer": (payload: z.infer<typeof pvpAnswerSchema>, respond: (response: PvpResponse) => void) => void;
+  "pvp:continue": (payload: z.infer<typeof pvpContinueSchema>, respond: (response: PvpResponse) => void) => void;
+  "pvp:rejoin": (payload: z.infer<typeof pvpRejoinSchema>, respond: (response: PvpResponse) => void) => void;
 };
 
 export type ServerToClientEvents = {
   "room:state": (room: MultiplayerRoomSnapshot) => void;
   "room:error": (error: MultiplayerError) => void;
   "room:chat": (message: RoomChatMessage) => void;
+  "pvp:state": (match: PvpDuelSnapshot) => void;
+  "pvp:queued": () => void;
+  "pvp:error": (error: MultiplayerError) => void;
 };

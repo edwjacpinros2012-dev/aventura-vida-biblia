@@ -6,9 +6,14 @@ import {
   roomActionRequestSchema,
   roomChatSchema,
   roomCommandSchema,
+  pvpAnswerSchema,
+  pvpContinueSchema,
+  pvpQueueSchema,
+  pvpRejoinSchema,
   type ClientToServerEvents,
   type MultiplayerError,
   type MultiplayerResponse,
+  type PvpResponse,
   type ServerToClientEvents,
 } from "@/lib/multiplayer/contracts";
 import { MultiplayerRoomService, RoomServiceError } from "./multiplayer/room-service";
@@ -16,6 +21,7 @@ import { accountFromSessionToken } from "@/lib/auth/service";
 import { assertCommunityAccess, CommunityError, isBlocked } from "@/lib/community/service";
 import { ChatError, createRoomChatMessage } from "@/lib/community/chat-service";
 import type { SafeAccount } from "@/lib/auth/contracts";
+import { PvpDuelService, PvpServiceError } from "./multiplayer/pvp-service";
 
 const port = Number(process.env.MULTIPLAYER_PORT ?? 3001);
 const allowedOrigin = process.env.MULTIPLAYER_ALLOWED_ORIGIN ?? "http://localhost:3000";
@@ -35,6 +41,7 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   cors: { origin: allowedOrigin.split(",").map((origin) => origin.trim()), methods: ["GET", "POST"], credentials: true },
   transports: ["websocket", "polling"],
 });
+const duels = new PvpDuelService((match) => io.to(`pvp:${match.id}`).emit("pvp:state", match));
 
 function sessionTokenFromCookie(cookieHeader: string | undefined) {
   return cookieHeader?.match(/(?:^|;\s*)aventura_vida_session=([^;]+)/)?.[1];
@@ -57,6 +64,17 @@ function errorResponse(error: unknown): MultiplayerResponse {
 
 function sendError(socket: { emit: (event: "room:error", error: MultiplayerError) => boolean }, response: MultiplayerResponse) {
   if (response.error) socket.emit("room:error", response.error);
+}
+
+function pvpErrorResponse(error: unknown): PvpResponse {
+  if (error instanceof PvpServiceError) return { error: { code: error.code, message: error.message } };
+  if (error instanceof CommunityError) return { error: { code: "NOT_ALLOWED", message: error.message } };
+  console.error("Error de duelo PvP", error);
+  return { error: { code: "INVALID_STATE", message: "No pudimos actualizar el duelo. Intenta nuevamente." } };
+}
+
+function sendPvpError(socket: { emit: (event: "pvp:error", error: MultiplayerError) => boolean }, response: PvpResponse) {
+  if (response.error) socket.emit("pvp:error", response.error);
 }
 
 function currentPlayerId(socket: { data: Record<string, unknown> }) {
@@ -89,6 +107,19 @@ function actionAllowed(socket: { data: Record<string, unknown> }) {
 
 async function broadcastRoom(code: string, room: MultiplayerResponse["room"]) {
   if (room) io.to(code).emit("room:state", room);
+}
+
+function socketForPvpPlayer(playerId: string) {
+  return [...io.sockets.sockets.values()].find((socket) => socket.data.pvpPlayerId === playerId);
+}
+
+async function attachPvpSockets(match: NonNullable<PvpResponse["match"]>) {
+  for (const player of match.players) {
+    const playerSocket = socketForPvpPlayer(player.id);
+    if (!playerSocket) continue;
+    playerSocket.data.pvpMatchId = match.id;
+    playerSocket.join(`pvp:${match.id}`);
+  }
 }
 
 async function start() {
@@ -197,18 +228,76 @@ async function start() {
       }
     });
 
+    socket.on("pvp:queue", async (rawPayload, respond) => {
+      const payload = pvpQueueSchema.safeParse(rawPayload);
+      if (!payload.success) { const response: PvpResponse = { error: { code: "INVALID_INPUT", message: "No pudimos preparar el duelo." } }; sendPvpError(socket, response); respond(response); return; }
+      try {
+        const account = socketAccount(socket);
+        if (account) await assertCommunityAccess(account.id, "multiplayer");
+        const player = socketPlayer(socket, payload.data.player);
+        socket.data.pvpPlayerId = player.id;
+        const response = await duels.queuePlayer(player, account?.id);
+        if (response.queued) socket.emit("pvp:queued");
+        if (response.match) await attachPvpSockets(response.match);
+        respond(response);
+      } catch (error) { const response = pvpErrorResponse(error); sendPvpError(socket, response); respond(response); }
+    });
+
+    socket.on("pvp:cancel", async (_payload, respond) => {
+      const playerId = typeof socket.data.pvpPlayerId === "string" ? socket.data.pvpPlayerId : undefined;
+      if (!playerId) { respond({ error: { code: "INVALID_INPUT", message: "No hay una búsqueda activa." } }); return; }
+      try { respond(await duels.cancel(playerId)); }
+      catch (error) { const response = pvpErrorResponse(error); sendPvpError(socket, response); respond(response); }
+    });
+
+    socket.on("pvp:answer", async (rawPayload, respond) => {
+      const payload = pvpAnswerSchema.safeParse(rawPayload);
+      const playerId = typeof socket.data.pvpPlayerId === "string" ? socket.data.pvpPlayerId : undefined;
+      if (!actionAllowed(socket) || !payload.success || !playerId || socket.data.pvpMatchId !== payload.data.matchId) { const response: PvpResponse = { error: { code: "INVALID_INPUT", message: "La respuesta no corresponde a tu duelo." } }; sendPvpError(socket, response); respond(response); return; }
+      try { respond({ match: await duels.answer(payload.data.matchId, playerId, payload.data.round, payload.data.option) }); }
+      catch (error) { const response = pvpErrorResponse(error); sendPvpError(socket, response); respond(response); }
+    });
+
+    socket.on("pvp:continue", async (rawPayload, respond) => {
+      const payload = pvpContinueSchema.safeParse(rawPayload);
+      const playerId = typeof socket.data.pvpPlayerId === "string" ? socket.data.pvpPlayerId : undefined;
+      if (!payload.success || !playerId || socket.data.pvpMatchId !== payload.data.matchId) { const response: PvpResponse = { error: { code: "INVALID_INPUT", message: "No encontramos este duelo." } }; sendPvpError(socket, response); respond(response); return; }
+      try { respond({ match: await duels.continue(payload.data.matchId, playerId, payload.data.round) }); }
+      catch (error) { const response = pvpErrorResponse(error); sendPvpError(socket, response); respond(response); }
+    });
+
+    socket.on("pvp:rejoin", async (rawPayload, respond) => {
+      const payload = pvpRejoinSchema.safeParse(rawPayload);
+      if (!payload.success) { const response: PvpResponse = { error: { code: "INVALID_INPUT", message: "No encontramos este duelo." } }; sendPvpError(socket, response); respond(response); return; }
+      try {
+        const account = socketAccount(socket);
+        if (account) await assertCommunityAccess(account.id, "multiplayer");
+        const player = socketPlayer(socket, payload.data.player);
+        socket.data.pvpPlayerId = player.id;
+        const match = await duels.rejoin(payload.data.matchId, player, account?.id);
+        socket.data.pvpMatchId = match.id;
+        socket.join(`pvp:${match.id}`);
+        respond({ match });
+      } catch (error) { const response = pvpErrorResponse(error); sendPvpError(socket, response); respond(response); }
+    });
+
     socket.on("disconnect", async () => {
       const code = typeof socket.data.roomCode === "string" ? socket.data.roomCode : undefined;
       const playerId = currentPlayerId(socket);
-      if (!code || !playerId) return;
-      try {
-        const room = await rooms.disconnect(code, playerId);
-        if (room) await broadcastRoom(code, room);
-      } catch (error) { console.error("No se pudo registrar una desconexión", error); }
+      if (code && playerId) {
+        try {
+          const room = await rooms.disconnect(code, playerId);
+          if (room) await broadcastRoom(code, room);
+        } catch (error) { console.error("No se pudo registrar una desconexión", error); }
+      }
+      const pvpMatchId = typeof socket.data.pvpMatchId === "string" ? socket.data.pvpMatchId : undefined;
+      const pvpPlayerId = typeof socket.data.pvpPlayerId === "string" ? socket.data.pvpPlayerId : undefined;
+      try { await duels.disconnect(pvpMatchId, pvpPlayerId); }
+      catch (error) { console.error("No se pudo registrar la desconexión PvP", error); }
     });
   });
 
-  setInterval(() => rooms.sweepExpired(), 60_000).unref();
+  setInterval(() => { rooms.sweepExpired(); duels.sweep(); }, 60_000).unref();
   httpServer.listen(port, () => console.log(`Aventura Vida multiplayer listo en http://localhost:${port}`));
 }
 

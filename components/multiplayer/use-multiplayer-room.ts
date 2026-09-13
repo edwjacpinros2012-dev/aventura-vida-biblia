@@ -17,7 +17,7 @@ import type { SafeAccount } from "@/lib/auth/contracts";
 const DEVICE_KEY = "aventura-vida.multiplayer-device.v1";
 const defaultIdentity: PublicPlayerIdentity = { id: "", nickname: "Luz viajera", avatar: "✦" };
 
-function readIdentity(): PublicPlayerIdentity {
+export function readMultiplayerIdentity(): PublicPlayerIdentity {
   try {
     const stored = window.localStorage.getItem(DEVICE_KEY);
     if (stored) {
@@ -45,7 +45,7 @@ export function useMultiplayerRoom(gameKey: MultiplayerGameKey) {
   useEffect(() => { roomRef.current = room; }, [room]);
 
   useEffect(() => {
-    const nextIdentity = readIdentity();
+    const nextIdentity = readMultiplayerIdentity();
     identityRef.current = nextIdentity;
     setIdentity(nextIdentity);
     void fetch("/api/auth/me").then((response) => response.ok ? response.json() as Promise<{ account: SafeAccount | null }> : null).then((result) => {
