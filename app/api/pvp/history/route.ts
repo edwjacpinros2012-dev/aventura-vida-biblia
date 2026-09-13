@@ -7,7 +7,21 @@ export async function GET(request: Request) {
   if (!account) return NextResponse.json({ error: "Inicia sesión para ver tu historial PvP." }, { status: 401 });
   const rows = await prisma.matchPlayer.findMany({
     where: { userId: account.id, match: { mode: "PVP", status: "FINISHED" } },
-    include: { match: { include: { players: { include: { user: { select: { profile: { select: { nickname: true, avatarKey: true } } } } } } } },
+    include: {
+      match: {
+        include: {
+          players: {
+            include: {
+              user: {
+                select: {
+                  profile: { select: { nickname: true, avatarKey: true } },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     orderBy: { joinedAt: "desc" },
     take: 50,
   });

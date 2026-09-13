@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import { readMultiplayerIdentity } from "./use-multiplayer-room";
 import type { SafeAccount } from "@/lib/auth/contracts";
-import type { ClientToServerEvents, MultiplayerError, PublicPlayerIdentity, PvpDuelSnapshot, PvpResponse, ServerToClientEvents } from "@/lib/multiplayer/contracts";
+import type { ClientToServerEvents, PublicPlayerIdentity, PvpDuelSnapshot, PvpResponse, ServerToClientEvents } from "@/lib/multiplayer/contracts";
 
 type Connection = "connecting" | "connected" | "offline";
 

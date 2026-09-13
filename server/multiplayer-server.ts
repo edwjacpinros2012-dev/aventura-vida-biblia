@@ -41,7 +41,9 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   cors: { origin: allowedOrigin.split(",").map((origin) => origin.trim()), methods: ["GET", "POST"], credentials: true },
   transports: ["websocket", "polling"],
 });
-const duels = new PvpDuelService((match) => io.to(`pvp:${match.id}`).emit("pvp:state", match));
+const duels = new PvpDuelService((match) => {
+  io.to(`pvp:${match.id}`).emit("pvp:state", match);
+});
 
 function sessionTokenFromCookie(cookieHeader: string | undefined) {
   return cookieHeader?.match(/(?:^|;\s*)aventura_vida_session=([^;]+)/)?.[1];
