@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
+import { usePlayerProgress } from "@/components/player-progress-provider";
 import { readMultiplayerIdentity } from "./use-multiplayer-room";
 import type { SafeAccount } from "@/lib/auth/contracts";
 import type { ClientToServerEvents, PublicPlayerIdentity, PvpDuelSnapshot, PvpResponse, ServerToClientEvents } from "@/lib/multiplayer/contracts";
@@ -9,6 +10,7 @@ import type { ClientToServerEvents, PublicPlayerIdentity, PvpDuelSnapshot, PvpRe
 type Connection = "connecting" | "connected" | "offline";
 
 export function usePvpDuel() {
+  const { identity: globalIdentity } = usePlayerProgress();
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
   const matchRef = useRef<PvpDuelSnapshot | null>(null);
   const identityRef = useRef<PublicPlayerIdentity>({ id: "", nickname: "Explorador", avatar: "✦" });
@@ -19,6 +21,14 @@ export function usePvpDuel() {
   const [error, setError] = useState<string | null>(null);
 
   const setCurrentMatch = useCallback((next: PvpDuelSnapshot | null) => { matchRef.current = next; setMatch(next); }, []);
+
+  // PvP conserva su id de cuenta/dispositivo, pero el avatar siempre viene
+  // de la identidad global y no de una selección propia del duelo.
+  useEffect(() => {
+    const next = { ...identityRef.current, nickname: globalIdentity.nickname, avatar: globalIdentity.avatarKey };
+    identityRef.current = next;
+    setIdentity(next);
+  }, [globalIdentity.avatarKey, globalIdentity.nickname]);
 
   useEffect(() => {
     const fallback = readMultiplayerIdentity();

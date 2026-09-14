@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { CharacterAvatar } from "@/components/character-avatar";
 import { usePlayerProgress } from "@/components/player-progress-provider";
+import { avatarFallbackFor } from "@/lib/characters/catalog";
 import { armorCampaignWorlds, getArmorCampaignStage, type CampaignStage } from "@/lib/armadura-campaign";
 import type { RewardResult } from "@/types/player-progress";
 
@@ -332,7 +334,7 @@ function CampaignMap({ unlockedLevel, completedLevelIds, onSelect }: { unlockedL
 }
 
 export function ArmaduraCampaign() {
-  const { progress, completeCampaignLevel } = usePlayerProgress();
+  const { progress, completeCampaignLevel, identity } = usePlayerProgress();
   const [screen, setScreen] = useState<CampaignScreen>("map");
   const [activeLevel, setActiveLevel] = useState<LevelNumber>(1);
   const [lastReward, setLastReward] = useState<RewardResult | null>(null);
@@ -366,7 +368,7 @@ export function ArmaduraCampaign() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
       <Link href="/aventuras" className="text-sm font-extrabold text-violet hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">← Volver a aventuras</Link>
-      <section className="mt-6 overflow-hidden rounded-[2.3rem] bg-ink px-6 py-9 text-white shadow-lift sm:px-10"><div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end"><div><p className="text-xs font-black uppercase tracking-[.22em] text-sun">Aventura Vida: La Gran Aventura</p><h1 className="mt-3 max-w-3xl font-display text-4xl font-black tracking-tight sm:text-6xl">En busca de la Armadura del Espíritu</h1><p className="mt-4 max-w-2xl text-base leading-7 text-white/70">Acompaña a Elián por un mundo original de senderos luminosos, decisiones sabias y desafíos de esperanza.</p></div><div className="grid grid-cols-2 gap-2 text-center text-xs font-black"><div className="rounded-2xl bg-white/10 p-3"><span className="block text-xl text-sun">✦ {campaign.faithTokens}</span>destellos</div><div className="rounded-2xl bg-white/10 p-3"><span className="block text-xl text-sun">{campaign.armorPieces.length}/6</span>armaduras</div></div></div></section>
+      <section className="mt-6 overflow-hidden rounded-[2.3rem] bg-ink px-6 py-9 text-white shadow-lift sm:px-10"><div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end"><div><p className="text-xs font-black uppercase tracking-[.22em] text-sun">Aventura Vida: La Gran Aventura</p><h1 className="mt-3 max-w-3xl font-display text-4xl font-black tracking-tight sm:text-6xl">En busca de la Armadura del Espíritu</h1><p className="mt-4 max-w-2xl text-base leading-7 text-white/70">Acompaña a Elián por un mundo original de senderos luminosos, decisiones sabias y desafíos de esperanza.</p><div className="mt-4 inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-xs font-bold text-white/80"><CharacterAvatar avatarKey={identity.avatarKey} fallback={avatarFallbackFor(identity.avatarKey)} alt={`Avatar de ${identity.nickname}`} imageSizes="32px" className="grid h-8 w-8 place-items-center rounded-lg bg-sun text-base" />{identity.nickname}</div></div><div className="grid grid-cols-2 gap-2 text-center text-xs font-black"><div className="rounded-2xl bg-white/10 p-3"><span className="block text-xl text-sun">✦ {campaign.faithTokens}</span>destellos</div><div className="rounded-2xl bg-white/10 p-3"><span className="block text-xl text-sun">{campaign.armorPieces.length}/6</span>armaduras</div></div></div></section>
 
       <div className="mt-8" aria-live="polite">
         {screen === "map" && <CampaignMap unlockedLevel={campaign.unlockedLevel} completedLevelIds={campaign.completedLevelIds} onSelect={selectLevel} />}

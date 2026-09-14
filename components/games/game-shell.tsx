@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 import { Component, type ReactNode, useEffect, useState } from "react";
+import { CharacterAvatar } from "@/components/character-avatar";
 import { usePlayerProgress } from "@/components/player-progress-provider";
+import { avatarFallbackFor } from "@/lib/characters/catalog";
 import { achievementDetails, levelTitleFor, xpProgressFor, type GameReward, type RewardResult } from "@/types/player-progress";
 import type { Game } from "@/types/content";
 
 export function GameShell({ game, children }: { game: Game; children: ReactNode }) {
-  const { progress, hydrated } = usePlayerProgress();
+  const { progress, hydrated, identity } = usePlayerProgress();
   const xpProgress = xpProgressFor(progress.level, progress.xp);
   return (
     <section className="mx-auto max-w-7xl px-4 pb-12 pt-8 sm:px-6 lg:px-8">
       <Link href={`/juegos/${game.slug}`} className="text-sm font-extrabold text-violet outline-none hover:underline focus-visible:ring-4 focus-visible:ring-violet/25">← Volver a la ficha</Link>
       <div className="mt-5 grid gap-5 rounded-[1.7rem] bg-ink p-5 text-white shadow-lift sm:p-6 lg:grid-cols-[1fr_auto] lg:items-center">
-        <div><p className="text-xs font-black uppercase tracking-[.2em] text-sun">Jugando ahora</p><h1 className="mt-2 font-display text-3xl font-black sm:text-4xl">{game.name}</h1><p className="mt-2 text-sm text-white/70">{game.tagline}</p></div>
+        <div><p className="text-xs font-black uppercase tracking-[.2em] text-sun">Jugando ahora</p><h1 className="mt-2 font-display text-3xl font-black sm:text-4xl">{game.name}</h1><p className="mt-2 text-sm text-white/70">{game.tagline}</p><div className="mt-4 inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-xs font-bold text-white/80"><CharacterAvatar avatarKey={identity.avatarKey} fallback={avatarFallbackFor(identity.avatarKey)} alt={`Avatar de ${identity.nickname}`} imageSizes="32px" className="grid h-8 w-8 place-items-center rounded-lg bg-sun text-base" /><span>{identity.nickname}</span></div></div>
         <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold sm:min-w-72"><div className="rounded-xl bg-white/10 p-3"><p className="font-display text-xl text-sun">{hydrated ? progress.level : "—"}</p><p className="mt-1 text-white/55">{hydrated ? levelTitleFor(progress.level) : "Cargando"}</p></div><div className="rounded-xl bg-white/10 p-3"><p className="font-display text-xl text-sun">{hydrated ? progress.points : "—"}</p><p className="mt-1 text-white/55">Puntos</p></div><div className="rounded-xl bg-white/10 p-3"><p className="font-display text-xl text-sun">{hydrated ? progress.streak : "—"}</p><p className="mt-1 text-white/55">Racha</p></div><div className="col-span-3 rounded-xl bg-white/10 px-3 py-2 text-left"><div className="flex justify-between text-[11px] text-white/65"><span>Próximo nivel</span><span>{xpProgress.current}/{xpProgress.needed} XP</span></div><div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-sun" style={{ width: `${Math.min(100, (xpProgress.current / xpProgress.needed) * 100)}%` }} /></div></div></div>
       </div>
       <section className="mt-5 rounded-[1.5rem] border border-violet/10 bg-sky p-4 sm:p-5" aria-label="Cómo jugar">

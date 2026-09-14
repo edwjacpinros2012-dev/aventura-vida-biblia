@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isSelectableAvatarKey } from "@/lib/characters/catalog";
 
 // Los apodos son la única identidad que se muestra a otros jugadores. No se
 // solicitan nombres, correos ni otros datos personales para abrir una cuenta.
@@ -14,9 +15,16 @@ export const passwordSchema = z
   .min(12, "Usa una contraseña de al menos 12 caracteres.")
   .max(128, "La contraseña es demasiado larga.");
 
+export const avatarKeySchema = z
+  .string()
+  .trim()
+  .min(1, "Elige un avatar.")
+  .max(80, "Ese avatar no es válido.")
+  .refine(isSelectableAvatarKey, "Ese avatar no está disponible.");
+
 export const registerAccountSchema = z.object({
   nickname: nicknameSchema,
-  avatarKey: z.string().trim().min(1).max(24).default("fox"),
+  avatarKey: avatarKeySchema.default("fox"),
   password: passwordSchema,
 });
 

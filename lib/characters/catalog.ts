@@ -62,3 +62,12 @@ export function selectableAvatarOptions() {
       .map((character) => ({ id: character.id, label: character.name, symbol: "✦" })),
   ];
 }
+
+export function isSelectableAvatarKey(avatarKey: string) {
+  return selectableAvatarOptions().some((avatar) => avatar.id === avatarKey);
+}
+
+export function avatarFallbackFor(avatarKey: string) {
+  return legacyAvatarOptions.find((avatar) => avatar.id === avatarKey)?.symbol
+    ?? (avatarKey.length <= 8 ? avatarKey : "✦");
+}

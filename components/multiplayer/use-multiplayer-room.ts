@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
+import { usePlayerProgress } from "@/components/player-progress-provider";
 import type {
   ClientToServerEvents,
   MultiplayerError,
@@ -33,6 +34,7 @@ export function readMultiplayerIdentity(): PublicPlayerIdentity {
 type MultiplayerConnection = "connecting" | "connected" | "offline";
 
 export function useMultiplayerRoom(gameKey: MultiplayerGameKey) {
+  const { identity: globalIdentity } = usePlayerProgress();
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
   const roomRef = useRef<MultiplayerRoomSnapshot | null>(null);
   const identityRef = useRef<PublicPlayerIdentity>(defaultIdentity);
@@ -43,6 +45,14 @@ export function useMultiplayerRoom(gameKey: MultiplayerGameKey) {
   const [chatMessages, setChatMessages] = useState<RoomChatMessage[]>([]);
 
   useEffect(() => { roomRef.current = room; }, [room]);
+
+  // La clave de avatar es global: la sala conserva solo el identificador de
+  // dispositivo o cuenta, pero toma apodo y avatar del perfil central.
+  useEffect(() => {
+    const next = { ...identityRef.current, nickname: globalIdentity.nickname, avatar: globalIdentity.avatarKey };
+    identityRef.current = next;
+    setIdentity(next);
+  }, [globalIdentity.avatarKey, globalIdentity.nickname]);
 
   useEffect(() => {
     const nextIdentity = readMultiplayerIdentity();

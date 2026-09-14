@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     take: 50,
   });
   return NextResponse.json({ history: rows.map((row) => {
-    const opponent = row.match.players.find((player) => player.id !== row.id)?.user?.profile;
+    const opponent = row.match.players.find((player) => player.playerKey !== row.playerKey)?.user?.profile;
     const result = row.match.result && typeof row.match.result === "object" ? row.match.result as { winnerId?: string } : {};
     const ownWinner = result.winnerId === row.playerKey;
     return { id: row.match.id, playedAt: row.match.endedAt ?? row.joinedAt, score: row.score, opponent: opponent ? { nickname: opponent.nickname, avatar: opponent.avatarKey } : { nickname: "Explorador", avatar: "✦" }, result: result.winnerId ? ownWinner ? "WIN" : "LOSS" : "DRAW" };

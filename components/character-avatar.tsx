@@ -1,9 +1,10 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 import { officialCharacterForAvatar } from "@/lib/characters/catalog";
 
 type CharacterAvatarProps = {
   avatarKey: string;
-  fallback: React.ReactNode;
+  fallback: ReactNode;
   alt?: string;
   className?: string;
   imageSizes?: string;

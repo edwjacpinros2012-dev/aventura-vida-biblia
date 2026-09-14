@@ -11,8 +11,22 @@ import {
   type PlayerProgress,
   type RewardResult,
 } from "@/types/player-progress";
+import { isSelectableAvatarKey } from "@/lib/characters/catalog";
 
 const STORAGE_KEY = "aventura-vida.player-progress.v2";
+const IDENTITY_STORAGE_KEY = "aventura-vida.player-identity.v1";
+
+export type GlobalPlayerIdentity = {
+  nickname: string;
+  avatarKey: string;
+  authenticated: boolean;
+};
+
+const guestIdentity: GlobalPlayerIdentity = {
+  nickname: "AventureroLuz",
+  avatarKey: "fox",
+  authenticated: false,
+};
 
 const initialArmorCampaign: ArmorCampaignProgress = {
   // Los siete niveles están disponibles durante la fase de pruebas de la campaña.
@@ -40,9 +54,12 @@ const initialProgress: PlayerProgress = {
 type PlayerProgressContextValue = {
   progress: PlayerProgress;
   hydrated: boolean;
+  identity: GlobalPlayerIdentity;
+  identityReady: boolean;
   completeGame: (reward: GameReward) => RewardResult;
   completeCampaignLevel: (reward: CampaignLevelReward) => RewardResult;
   saveGameProgress: (gameId: string, data: Record<string, unknown>) => void;
+  selectAvatar: (avatarKey: string) => Promise<void>;
   resetProgress: () => void;
 };
 
@@ -92,6 +109,16 @@ function safeProgress(value: unknown): PlayerProgress {
   };
 }
 
+function safeGuestIdentity(value: unknown): GlobalPlayerIdentity {
+  if (!value || typeof value !== "object") return guestIdentity;
+  const candidate = value as Partial<GlobalPlayerIdentity>;
+  return {
+    nickname: typeof candidate.nickname === "string" && candidate.nickname.trim() ? candidate.nickname.slice(0, 20) : guestIdentity.nickname,
+    avatarKey: typeof candidate.avatarKey === "string" && isSelectableAvatarKey(candidate.avatarKey) ? candidate.avatarKey : guestIdentity.avatarKey,
+    authenticated: false,
+  };
+}
+
 function calculateNewAchievements(progress: PlayerProgress): PlayerAchievementId[] {
   const eligible: PlayerAchievementId[] = [];
   if (progress.gamesCompleted >= 1) eligible.push("first-adventure");
@@ -105,22 +132,40 @@ function calculateNewAchievements(progress: PlayerProgress): PlayerAchievementId
 export function PlayerProgressProvider({ children }: { children: React.ReactNode }) {
   const [progress, setProgress] = useState<PlayerProgress>(initialProgress);
   const [hydrated, setHydrated] = useState(false);
+  const [identity, setIdentity] = useState<GlobalPlayerIdentity>(guestIdentity);
+  const [identityReady, setIdentityReady] = useState(false);
 
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored) setProgress(safeProgress(JSON.parse(stored)));
+      const storedIdentity = window.localStorage.getItem(IDENTITY_STORAGE_KEY);
+      if (storedIdentity) setIdentity(safeGuestIdentity(JSON.parse(storedIdentity)));
     } catch {
       setProgress(initialProgress);
     } finally {
       setHydrated(true);
     }
+    void fetch("/api/auth/me")
+      .then((response) => response.ok ? response.json() as Promise<{ account: { nickname: string; avatarKey: string } | null }> : null)
+      .then((result) => {
+        if (result?.account && result.account.avatarKey.trim()) {
+          setIdentity({ nickname: result.account.nickname, avatarKey: result.account.avatarKey, authenticated: true });
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => setIdentityReady(true));
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
   }, [hydrated, progress]);
+
+  useEffect(() => {
+    if (!identityReady || identity.authenticated) return;
+    window.localStorage.setItem(IDENTITY_STORAGE_KEY, JSON.stringify(identity));
+  }, [identity, identityReady]);
 
   const completeGame = useCallback((reward: GameReward): RewardResult => {
     const today = localDay();
@@ -189,11 +234,27 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
     setProgress((current) => ({ ...current, gameProgress: { ...current.gameProgress, [gameId]: { ...current.gameProgress[gameId], ...data } } }));
   }, []);
 
+  const selectAvatar = useCallback(async (avatarKey: string) => {
+    if (!isSelectableAvatarKey(avatarKey)) throw new Error("Ese avatar no está disponible.");
+    if (identity.authenticated) {
+      const response = await fetch("/api/auth/profile", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ avatarKey }),
+      });
+      const result = await response.json() as { profile?: { nickname: string; avatarKey: string }; error?: string };
+      if (!response.ok || !result.profile) throw new Error(result.error ?? "No pudimos guardar tu avatar.");
+      setIdentity({ nickname: result.profile.nickname, avatarKey: result.profile.avatarKey, authenticated: true });
+      return;
+    }
+    setIdentity((current) => ({ ...current, avatarKey, authenticated: false }));
+  }, [identity.authenticated]);
+
   const resetProgress = useCallback(() => setProgress(initialProgress), []);
 
   const value = useMemo(
-    () => ({ progress, hydrated, completeGame, completeCampaignLevel, saveGameProgress, resetProgress }),
-    [completeCampaignLevel, completeGame, hydrated, progress, resetProgress, saveGameProgress],
+    () => ({ progress, hydrated, identity, identityReady, completeGame, completeCampaignLevel, saveGameProgress, selectAvatar, resetProgress }),
+    [completeCampaignLevel, completeGame, hydrated, identity, identityReady, progress, resetProgress, saveGameProgress, selectAvatar],
   );
   return <PlayerProgressContext.Provider value={value}>{children}</PlayerProgressContext.Provider>;
 }
