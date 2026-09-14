@@ -139,7 +139,7 @@ export const pvpAnswerSchema = z.object({
 
 export const pvpContinueSchema = z.object({ matchId: z.string().min(8).max(100), round: z.number().int().min(1).max(10) });
 export const pvpRejoinSchema = z.object({ matchId: z.string().min(8).max(100), player: playerIdentitySchema });
-export type PvpResponse = { match?: PvpDuelSnapshot; queued?: true; error?: MultiplayerError };
+export type PvpResponse = { match?: PvpDuelSnapshot; queued?: boolean; error?: MultiplayerError };
 
 export type ClientToServerEvents = {
   "room:create": (payload: z.infer<typeof createRoomSchema>, respond: (response: MultiplayerResponse) => void) => void;

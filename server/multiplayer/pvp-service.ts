@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import type { MatchPlayerStatus, Prisma } from "@prisma/client";
+import { Prisma, type MatchPlayerStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { awardAdventureCoins } from "@/lib/economy/service";
 import type { MultiplayerError, PublicPlayerIdentity, PvpDuelSnapshot } from "@/lib/multiplayer/contracts";
