@@ -16,7 +16,7 @@ import type {
 import type { SafeAccount } from "@/lib/auth/contracts";
 
 const DEVICE_KEY = "aventura-vida.multiplayer-device.v1";
-const defaultIdentity: PublicPlayerIdentity = { id: "", nickname: "Luz viajera", avatar: "✦" };
+const defaultIdentity: PublicPlayerIdentity = { id: "", nickname: "Luz viajera", avatar: "spark" };
 
 export function readMultiplayerIdentity(): PublicPlayerIdentity {
   try {
@@ -25,10 +25,10 @@ export function readMultiplayerIdentity(): PublicPlayerIdentity {
       const candidate = JSON.parse(stored) as Partial<PublicPlayerIdentity>;
       if (typeof candidate.id === "string" && /^[a-zA-Z0-9_-]{12,80}$/.test(candidate.id) && typeof candidate.nickname === "string" && typeof candidate.avatar === "string") return { id: candidate.id, nickname: candidate.nickname.slice(0, 20), avatar: candidate.avatar.slice(0, 80) };
     }
-    const identity = { id: `device_${crypto.randomUUID().replaceAll("-", "")}`, nickname: `Luz${Math.floor(100 + Math.random() * 900)}`, avatar: "✦" };
+    const identity = { id: `device_${crypto.randomUUID().replaceAll("-", "")}`, nickname: `Luz${Math.floor(100 + Math.random() * 900)}`, avatar: "spark" };
     window.localStorage.setItem(DEVICE_KEY, JSON.stringify(identity));
     return identity;
-  } catch { return { id: `device_${Date.now()}${Math.floor(Math.random() * 99999)}`, nickname: "Luz viajera", avatar: "✦" }; }
+  } catch { return { id: `device_${Date.now()}${Math.floor(Math.random() * 99999)}`, nickname: "Luz viajera", avatar: "spark" }; }
 }
 
 type MultiplayerConnection = "connecting" | "connected" | "offline";

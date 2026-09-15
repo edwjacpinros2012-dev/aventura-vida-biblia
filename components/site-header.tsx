@@ -5,6 +5,9 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { CloseIcon, MenuIcon } from "@/components/icons";
 import { Logo } from "@/components/logo";
+import { CharacterAvatar } from "@/components/character-avatar";
+import { usePlayerProgress } from "@/components/player-progress-provider";
+import { avatarFallbackFor } from "@/lib/characters/catalog";
 
 const navItems = [
   { href: "/", label: "Inicio" },
@@ -17,6 +20,7 @@ const navItems = [
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { identity } = usePlayerProgress();
 
   return (
     <header className="sticky top-0 z-50 border-b border-ink/5 bg-white/90 backdrop-blur-xl">
@@ -31,7 +35,7 @@ export function SiteHeader() {
         </nav>
         <div className="hidden items-center gap-3 lg:flex">
           <Link href="/login" className="rounded-xl px-3 py-2 text-sm font-extrabold text-ink/65 hover:bg-sky hover:text-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">Cuenta</Link>
-          <Link href="/perfil" className="grid h-10 w-10 place-items-center rounded-full bg-sun text-lg outline-none transition-transform hover:scale-105 focus-visible:ring-4 focus-visible:ring-violet/25" aria-label="Ver perfil">🦊</Link>
+          <Link href="/perfil" className="grid h-10 w-10 place-items-center rounded-full bg-sun text-lg outline-none transition-transform hover:scale-105 focus-visible:ring-4 focus-visible:ring-violet/25" aria-label={`Ver perfil de ${identity.nickname}`}><CharacterAvatar avatarKey={identity.avatarKey} fallback={avatarFallbackFor(identity.avatarKey)} alt={`Avatar de ${identity.nickname}`} imageSizes="40px" className="grid h-10 w-10 place-items-center rounded-full text-lg" /></Link>
           <Link href="/juegos" className="rounded-xl bg-ink px-4 py-2.5 text-sm font-extrabold text-white transition-transform hover:-translate-y-0.5 hover:bg-violet focus-visible:ring-4 focus-visible:ring-violet/25">Jugar ahora</Link>
         </div>
         <button type="button" aria-label={open ? "Cerrar menú" : "Abrir menú"} aria-expanded={open} onClick={() => setOpen(!open)} className="grid h-11 w-11 place-items-center rounded-xl text-ink outline-none hover:bg-sky focus-visible:ring-4 focus-visible:ring-violet/25 lg:hidden">

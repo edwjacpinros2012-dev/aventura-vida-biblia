@@ -48,11 +48,13 @@ async function main() {
   const third = await connect();
   const fourth = await connect();
   try {
-    const created = requireRoom(await request(host, "room:create", { gameKey: "bible-maze", maxPlayers: 4, player: { id: "verify_host_0001", nickname: "Luz Host", avatar: "✦" } }));
-    const joined = requireRoom(await request(guest, "room:join", { code: created.code, player: { id: "verify_guest_0002", nickname: "Luz Guest", avatar: "☀" } }));
-    requireRoom(await request(third, "room:join", { code: created.code, player: { id: "verify_guest_0003", nickname: "Luz Tres", avatar: "☁" } }));
+    const created = requireRoom(await request(host, "room:create", { gameKey: "bible-maze", maxPlayers: 4, player: { id: "verify_host_0001", nickname: "Luz Host", avatar: "vida-kids-01-rosa-morado" } }));
+    const joined = requireRoom(await request(guest, "room:join", { code: created.code, player: { id: "verify_guest_0002", nickname: "Luz Guest", avatar: "avatar-inventado" } }));
+    requireRoom(await request(third, "room:join", { code: created.code, player: { id: "verify_guest_0003", nickname: "Luz Tres", avatar: "vida-kids-05-verde" } }));
     const joinedFour = requireRoom(await request(fourth, "room:join", { code: created.code, player: { id: "verify_guest_0004", nickname: "Luz Cuatro", avatar: "🌿" } }));
     if (joined.players.filter((player) => player.status === "CONNECTED").length !== 2 || joinedFour.players.filter((player) => player.status === "CONNECTED").length !== 4) throw new Error("Las cuatro personas no se sincronizaron.");
+    if (joined.players.find((player) => player.id === "verify_host_0001")?.avatar !== "vida-kids-01-rosa-morado") throw new Error("El avatar oficial no se conservó en la sala.");
+    if (joined.players.find((player) => player.id === "verify_guest_0002")?.avatar !== "spark") throw new Error("El servidor aceptó una clave de avatar inventada.");
     const started = requireRoom(await request(host, "room:start", { code: created.code }));
     if (started.status !== "PLAYING") throw new Error("La sala no inició.");
     const moved = requireRoom(await request(guest, "room:action", { code: created.code, action: { type: "maze.move", direction: "right" } }));
@@ -82,8 +84,8 @@ async function main() {
   const duelistB = await connect();
   let reconnectedA: TestSocket | undefined;
   try {
-    const playerA = { id: "verify_duelist_0001", nickname: "Duelista Uno", avatar: "✦" };
-    const playerB = { id: "verify_duelist_0002", nickname: "Duelista Dos", avatar: "☀" };
+    const playerA = { id: "verify_duelist_0001", nickname: "Duelista Uno", avatar: "vida-kids-03-azul" };
+    const playerB = { id: "verify_duelist_0002", nickname: "Duelista Dos", avatar: "vida-kids-06-rojo" };
     const queued = await pvpRequest(duelistA, "pvp:queue", { gameKey: "bible-quiz-duel", player: playerA });
     if (!queued.queued) throw new Error("El primer duelista no entró a la cola.");
     let duel = requireDuel(await pvpRequest(duelistB, "pvp:queue", { gameKey: "bible-quiz-duel", player: playerB }));

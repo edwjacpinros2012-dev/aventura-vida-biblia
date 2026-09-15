@@ -13,7 +13,7 @@ export function usePvpDuel() {
   const { identity: globalIdentity } = usePlayerProgress();
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
   const matchRef = useRef<PvpDuelSnapshot | null>(null);
-  const identityRef = useRef<PublicPlayerIdentity>({ id: "", nickname: "Explorador", avatar: "✦" });
+  const identityRef = useRef<PublicPlayerIdentity>({ id: "", nickname: "Explorador", avatar: "spark" });
   const globalIdentityRef = useRef(globalIdentity);
   const [identity, setIdentity] = useState(identityRef.current);
   const [connection, setConnection] = useState<Connection>("connecting");

@@ -20,6 +20,7 @@ import { MultiplayerRoomService, RoomServiceError } from "./multiplayer/room-ser
 import { accountFromSessionToken } from "@/lib/auth/service";
 import { assertCommunityAccess, CommunityError, isBlocked } from "@/lib/community/service";
 import { ChatError, createRoomChatMessage } from "@/lib/community/chat-service";
+import { isSelectableAvatarKey } from "@/lib/characters/catalog";
 import type { SafeAccount } from "@/lib/auth/contracts";
 import { PvpDuelService, PvpServiceError } from "./multiplayer/pvp-service";
 
@@ -55,7 +56,10 @@ function socketAccount(socket: { data: Record<string, unknown> }) {
 
 function socketPlayer(socket: { data: Record<string, unknown> }, player: { id: string; nickname: string; avatar: string }) {
   const account = socketAccount(socket);
-  return account ? { id: `user_${account.id}`, nickname: account.nickname, avatar: account.avatarKey } : player;
+  if (account) return { id: `user_${account.id}`, nickname: account.nickname, avatar: account.avatarKey };
+  // Las identidades de invitado no pueden inyectar rutas, URLs ni claves de
+  // avatar inventadas: se acepta únicamente el catálogo compartido.
+  return { ...player, avatar: isSelectableAvatarKey(player.avatar) ? player.avatar : "spark" };
 }
 
 function errorResponse(error: unknown): MultiplayerResponse {
