@@ -52,7 +52,9 @@ export type RoomChatMessage = {
 export const playerIdentitySchema = z.object({
   id: z.string().trim().min(12).max(80).regex(/^[a-zA-Z0-9_-]+$/),
   nickname: z.string().trim().min(2).max(20).regex(/^[\p{L}\p{N}_ -]+$/u),
-  avatar: z.string().trim().min(1).max(8),
+  // Las claves oficiales viven en el catálogo global y pueden ser más largas
+  // que un emoji heredado. Nunca contiene una URL ni datos personales.
+  avatar: z.string().trim().min(1).max(80),
 });
 
 export const createRoomSchema = z.object({

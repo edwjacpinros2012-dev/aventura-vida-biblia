@@ -32,3 +32,12 @@ Después agregue una única entrada con ese mismo `id` en
 ```
 
 Al marcar la entrada como `active`, el mismo `id` puede guardarse en `Profile.avatarKey` y se resolverá automáticamente en las vistas que usan `CharacterAvatar`.
+
+## Láminas oficiales recibidas
+
+Las láminas originales entregadas el 15 de septiembre de 2026 se conservan sin
+cambios en `source-sheets/`. Las carpetas `vida-kids-01-*` a
+`vida-kids-06-*` contienen recortes derivados para su uso en la interfaz. Sus
+claves son descripciones neutrales, no nombres de personajes: se podrán
+renombrar en el catálogo cuando Proyecto Vida Kids entregue los nombres
+oficiales.

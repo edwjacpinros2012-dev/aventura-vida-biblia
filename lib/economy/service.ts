@@ -13,7 +13,12 @@ const MAX_GIFT_COINS = 100;
 
 type CoinChange = { userId: string; amount: number; reason: string; sourceId?: string; idempotencyKey: string };
 
-async function applyCoinChange(tx: Prisma.TransactionClient, input: CoinChange) {
+/**
+ * Solo para servicios de servidor que ya están dentro de una transacción de
+ * Prisma. Mantiene el libro mayor y el saldo en la misma unidad atómica que
+ * la acción que concede o descuenta las monedas.
+ */
+export async function applyAdventureCoinChange(tx: Prisma.TransactionClient, input: CoinChange) {
   if (!Number.isSafeInteger(input.amount) || input.amount === 0) throw new EconomyError("La cantidad de monedas no es válida.");
   const alreadyApplied = await tx.adventureCoinTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey } });
   if (alreadyApplied) return { balance: alreadyApplied.balanceAfter, repeated: true };
@@ -32,7 +37,7 @@ async function applyCoinChange(tx: Prisma.TransactionClient, input: CoinChange) 
 /** Recompensa exclusiva de servicios de servidor (misiones, juegos, eventos). */
 export async function awardAdventureCoins(input: CoinChange) {
   if (input.amount < 1) throw new EconomyError("Una recompensa debe ser positiva.");
-  return prisma.$transaction((tx) => applyCoinChange(tx, input), { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  return prisma.$transaction((tx) => applyAdventureCoinChange(tx, input), { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }
 
 export async function walletForPlayer(userId: string) {
@@ -51,7 +56,7 @@ export async function purchaseStoreItem(input: { userId: string; slug: string; i
       const profile = await tx.profile.findUnique({ where: { userId: input.userId }, select: { level: true } });
       if (!profile || profile.level < criteria.minLevel) throw new EconomyError("Aún no has alcanzado el nivel para desbloquear este objeto.", 403);
     }
-    await applyCoinChange(tx, { userId: input.userId, amount: -item.coinPrice, reason: "STORE_PURCHASE", sourceId: item.id, idempotencyKey: input.idempotencyKey });
+    await applyAdventureCoinChange(tx, { userId: input.userId, amount: -item.coinPrice, reason: "STORE_PURCHASE", sourceId: item.id, idempotencyKey: input.idempotencyKey });
     await tx.playerInventoryItem.create({ data: { userId: input.userId, itemId: item.id, source: "STORE" } });
     return { item, alreadyOwned: false };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
@@ -64,7 +69,11 @@ export async function giftAdventureCoins(input: { senderId: string; recipientNic
   const recipient = await prisma.profile.findUnique({ where: { nickname: input.recipientNickname }, select: { userId: true, nickname: true } });
   if (!recipient) throw new EconomyError("No encontramos a ese jugador.", 404);
   if (recipient.userId === input.senderId) throw new EconomyError("No puedes enviarte monedas a ti mismo.");
-  if (await isBlocked(recipient.userId, input.senderId)) throw new EconomyError("No puedes enviar un regalo a este jugador.", 403);
+  const [recipientBlockedSender, senderBlockedRecipient] = await Promise.all([
+    isBlocked(recipient.userId, input.senderId),
+    isBlocked(input.senderId, recipient.userId),
+  ]);
+  if (recipientBlockedSender || senderBlockedRecipient) throw new EconomyError("No puedes enviar un regalo a este jugador.", 403);
 
   return prisma.$transaction(async (tx) => {
     const duplicate = await tx.adventureGift.findUnique({ where: { idempotencyKey: input.idempotencyKey } });
@@ -75,8 +84,8 @@ export async function giftAdventureCoins(input: { senderId: string; recipientNic
     const gift = await tx.adventureGift.create({
       data: { senderId: input.senderId, recipientId: recipient.userId, coins: input.coins, encouragement: input.encouragement, idempotencyKey: input.idempotencyKey, status: GiftStatus.RECEIVED, receivedAt: new Date() },
     });
-    await applyCoinChange(tx, { userId: input.senderId, amount: -input.coins, reason: "GIFT_SENT", sourceId: gift.id, idempotencyKey: `${input.idempotencyKey}:debit` });
-    await applyCoinChange(tx, { userId: recipient.userId, amount: input.coins, reason: "GIFT_RECEIVED", sourceId: gift.id, idempotencyKey: `${input.idempotencyKey}:credit` });
+    await applyAdventureCoinChange(tx, { userId: input.senderId, amount: -input.coins, reason: "GIFT_SENT", sourceId: gift.id, idempotencyKey: `${input.idempotencyKey}:debit` });
+    await applyAdventureCoinChange(tx, { userId: recipient.userId, amount: input.coins, reason: "GIFT_RECEIVED", sourceId: gift.id, idempotencyKey: `${input.idempotencyKey}:credit` });
     return { gift, repeated: false };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }

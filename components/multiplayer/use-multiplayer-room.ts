@@ -23,7 +23,7 @@ export function readMultiplayerIdentity(): PublicPlayerIdentity {
     const stored = window.localStorage.getItem(DEVICE_KEY);
     if (stored) {
       const candidate = JSON.parse(stored) as Partial<PublicPlayerIdentity>;
-      if (typeof candidate.id === "string" && /^[a-zA-Z0-9_-]{12,80}$/.test(candidate.id) && typeof candidate.nickname === "string" && typeof candidate.avatar === "string") return { id: candidate.id, nickname: candidate.nickname.slice(0, 20), avatar: candidate.avatar.slice(0, 8) };
+      if (typeof candidate.id === "string" && /^[a-zA-Z0-9_-]{12,80}$/.test(candidate.id) && typeof candidate.nickname === "string" && typeof candidate.avatar === "string") return { id: candidate.id, nickname: candidate.nickname.slice(0, 20), avatar: candidate.avatar.slice(0, 80) };
     }
     const identity = { id: `device_${crypto.randomUUID().replaceAll("-", "")}`, nickname: `Luz${Math.floor(100 + Math.random() * 900)}`, avatar: "✦" };
     window.localStorage.setItem(DEVICE_KEY, JSON.stringify(identity));
@@ -38,6 +38,7 @@ export function useMultiplayerRoom(gameKey: MultiplayerGameKey) {
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
   const roomRef = useRef<MultiplayerRoomSnapshot | null>(null);
   const identityRef = useRef<PublicPlayerIdentity>(defaultIdentity);
+  const globalIdentityRef = useRef(globalIdentity);
   const [identity, setIdentity] = useState<PublicPlayerIdentity>(defaultIdentity);
   const [room, setRoom] = useState<MultiplayerRoomSnapshot | null>(null);
   const [connection, setConnection] = useState<MultiplayerConnection>("connecting");
@@ -49,13 +50,15 @@ export function useMultiplayerRoom(gameKey: MultiplayerGameKey) {
   // La clave de avatar es global: la sala conserva solo el identificador de
   // dispositivo o cuenta, pero toma apodo y avatar del perfil central.
   useEffect(() => {
+    globalIdentityRef.current = globalIdentity;
     const next = { ...identityRef.current, nickname: globalIdentity.nickname, avatar: globalIdentity.avatarKey };
     identityRef.current = next;
     setIdentity(next);
   }, [globalIdentity.avatarKey, globalIdentity.nickname]);
 
   useEffect(() => {
-    const nextIdentity = readMultiplayerIdentity();
+    const deviceIdentity = readMultiplayerIdentity();
+    const nextIdentity = { ...deviceIdentity, nickname: globalIdentityRef.current.nickname, avatar: globalIdentityRef.current.avatarKey };
     identityRef.current = nextIdentity;
     setIdentity(nextIdentity);
     void fetch("/api/auth/me").then((response) => response.ok ? response.json() as Promise<{ account: SafeAccount | null }> : null).then((result) => {

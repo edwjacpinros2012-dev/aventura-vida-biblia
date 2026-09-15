@@ -1,7 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { Prisma, type MatchPlayerStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { awardAdventureCoins } from "@/lib/economy/service";
+import { applyAdventureCoinChange } from "@/lib/economy/service";
+import { isBlocked } from "@/lib/community/service";
 import type { MultiplayerError, PublicPlayerIdentity, PvpDuelSnapshot } from "@/lib/multiplayer/contracts";
 import { duelQuestionFor } from "./pvp-questions";
 
@@ -131,13 +132,16 @@ export class PvpDuelService {
             update: { rating: { increment: ratingChange }, wins: { increment: outcome === "WIN" ? 1 : 0 }, losses: { increment: outcome === "LOSS" ? 1 : 0 }, draws: { increment: outcome === "DRAW" ? 1 : 0 }, gamesPlayed: { increment: 1 } },
           });
           await tx.profile.update({ where: { userId: player.accountId }, data: { totalXp: { increment: xp }, points: { increment: points } } });
+          await applyAdventureCoinChange(tx, {
+            userId: player.accountId,
+            amount: outcome === "WIN" ? 30 : outcome === "DRAW" ? 20 : 10,
+            reason: "PVP_DUEL",
+            sourceId: match.id,
+            idempotencyKey: `pvp:${match.id}:${player.accountId}`,
+          });
         }
         await tx.match.update({ where: { id: match.id }, data: { result: { ...(match.result ?? {}), rewardsApplied: true } as Prisma.InputJsonValue, endedAt: new Date(), status: "FINISHED" } });
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-      await Promise.all(accounts.map((player) => {
-        const outcome = winner ? (player.id === winner ? "WIN" : "LOSS") : "DRAW";
-        return awardAdventureCoins({ userId: player.accountId, amount: outcome === "WIN" ? 30 : outcome === "DRAW" ? 20 : 10, reason: "PVP_DUEL", sourceId: match.id, idempotencyKey: `pvp:${match.id}:${player.accountId}` });
-      }));
     } catch (error) {
       match.rewarded = false;
       console.error("No se pudieron persistir las recompensas PvP", error);
@@ -152,7 +156,20 @@ export class PvpDuelService {
   async queuePlayer(player: PublicPlayerIdentity, accountId?: string) {
     const existing = this.queue.find((item) => item.id === player.id);
     if (existing) return { queued: true as const };
-    const opponentIndex = this.queue.findIndex((item) => item.id !== player.id);
+    let opponentIndex = -1;
+    for (let index = 0; index < this.queue.length; index += 1) {
+      const queuedPlayer = this.queue[index];
+      if (queuedPlayer.id === player.id) continue;
+      if (accountId && queuedPlayer.accountId) {
+        const [playerBlockedOpponent, opponentBlockedPlayer] = await Promise.all([
+          isBlocked(accountId, queuedPlayer.accountId),
+          isBlocked(queuedPlayer.accountId, accountId),
+        ]);
+        if (playerBlockedOpponent || opponentBlockedPlayer) continue;
+      }
+      opponentIndex = index;
+      break;
+    }
     const nextPlayer: DuelPlayer = { ...player, accountId, status: "CONNECTED", score: 0 };
     if (opponentIndex < 0) { this.queue.push(nextPlayer); return { queued: true as const }; }
     const opponent = this.queue.splice(opponentIndex, 1)[0];

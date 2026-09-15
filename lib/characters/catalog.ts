@@ -1,9 +1,9 @@
 /**
  * Fuente única para el arte oficial de personajes de Proyecto Vida Kids.
  *
- * No se incluyen personajes ni imágenes de sustitución: el catálogo queda
- * vacío hasta recibir el material autorizado. Los avatares emoji existentes
- * se conservan como compatibilidad para cuentas y datos de demostración.
+ * Las entradas se añaden únicamente cuando Proyecto Vida Kids entrega el
+ * material autorizado. Los avatares emoji existentes se conservan como
+ * compatibilidad para cuentas y datos de demostración.
  */
 
 export const OFFICIAL_CHARACTER_ASSET_DIRECTORY = "/assets/proyecto-vida-kids/characters";
@@ -29,11 +29,72 @@ export type OfficialCharacter = {
 };
 
 /**
- * Añadir aquí únicamente personajes autorizados por Proyecto Vida Kids.
- * Consulte public/assets/proyecto-vida-kids/characters/README.md para la
- * convención de archivos. No agregar entradas sin material oficial.
+ * Estas seis variantes proceden de las láminas oficiales entregadas por
+ * Proyecto Vida Kids. No se asignan nombres de personajes: las claves y
+ * etiquetas descriptivas son neutrales hasta recibir nombres oficiales.
  */
-export const officialCharacters: readonly OfficialCharacter[] = [];
+export const officialCharacters: readonly OfficialCharacter[] = [
+  {
+    id: "vida-kids-01-rosa-morado",
+    name: "Avatar oficial · rosa y morado",
+    description: "Variante oficial con camiseta rosada y falda morada.",
+    asset: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-01-rosa-morado/full.png`,
+    avatar: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-01-rosa-morado/avatar.png`,
+    thumbnail: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-01-rosa-morado/thumbnail.png`,
+    status: "active",
+    metadata: { version: 1, tags: ["oficial", "rosa", "morado"] },
+  },
+  {
+    id: "vida-kids-02-blanco",
+    name: "Avatar oficial · camiseta blanca",
+    description: "Variante oficial con camiseta blanca y pantalón corto.",
+    asset: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-02-blanco/full.png`,
+    avatar: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-02-blanco/avatar.png`,
+    thumbnail: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-02-blanco/thumbnail.png`,
+    status: "active",
+    metadata: { version: 1, tags: ["oficial", "blanco"] },
+  },
+  {
+    id: "vida-kids-03-azul",
+    name: "Avatar oficial · sudadera azul",
+    description: "Variante oficial con sudadera azul.",
+    asset: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-03-azul/full.png`,
+    avatar: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-03-azul/avatar.png`,
+    thumbnail: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-03-azul/thumbnail.png`,
+    status: "active",
+    metadata: { version: 1, tags: ["oficial", "azul"] },
+  },
+  {
+    id: "vida-kids-04-beige",
+    name: "Avatar oficial · camiseta beige",
+    description: "Variante oficial con camiseta beige.",
+    asset: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-04-beige/full.png`,
+    avatar: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-04-beige/avatar.png`,
+    thumbnail: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-04-beige/thumbnail.png`,
+    status: "active",
+    metadata: { version: 1, tags: ["oficial", "beige"] },
+  },
+  {
+    id: "vida-kids-05-verde",
+    name: "Avatar oficial · camiseta verde",
+    description: "Variante oficial con camiseta verde.",
+    asset: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-05-verde/full.png`,
+    avatar: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-05-verde/avatar.png`,
+    thumbnail: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-05-verde/thumbnail.png`,
+    status: "active",
+    metadata: { version: 1, tags: ["oficial", "verde"] },
+  },
+  {
+    id: "vida-kids-06-rojo",
+    name: "Avatar oficial · camiseta roja",
+    description: "Variante oficial con camiseta roja.",
+    asset: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-06-rojo/full.png`,
+    avatar: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-06-rojo/avatar.png`,
+    thumbnail: `${OFFICIAL_CHARACTER_ASSET_DIRECTORY}/vida-kids-06-rojo/thumbnail.png`,
+    status: "active",
+    metadata: { version: 1, tags: ["oficial", "rojo"] },
+  },
+];
 
 export type LegacyAvatarOption = {
   id: string;

@@ -65,12 +65,16 @@ export async function createReport(input: {
   const target = input.reportedNickname
     ? await prisma.profile.findUnique({ where: { nickname: input.reportedNickname }, select: { userId: true } })
     : null;
+  if (input.reportedNickname && !target) throw new CommunityError("No encontramos al jugador reportado.", 404);
   if (target?.userId === input.reporterId) throw new CommunityError("No puedes reportarte a ti mismo.");
   const room = input.roomCode ? await prisma.multiplayerRoom.findUnique({ where: { code: input.roomCode }, select: { id: true } }) : null;
+  if (input.roomCode && !room) throw new CommunityError("No encontramos la sala del reporte.", 404);
   const message = input.messageId
-    ? await prisma.safeChatMessage.findUnique({ where: { id: input.messageId }, select: { id: true, authorId: true } })
+    ? await prisma.safeChatMessage.findUnique({ where: { id: input.messageId }, select: { id: true, authorId: true, roomId: true } })
     : null;
   if (input.messageId && !message) throw new CommunityError("No encontramos el mensaje a reportar.", 404);
+  if (target && message?.authorId && target.userId !== message.authorId) throw new CommunityError("El jugador y el mensaje del reporte no coinciden.");
+  if (room && message && room.id !== message.roomId) throw new CommunityError("El mensaje no pertenece a esa sala.");
   return prisma.communityReport.create({
     data: {
       reporterId: input.reporterId,

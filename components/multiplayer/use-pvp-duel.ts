@@ -14,6 +14,7 @@ export function usePvpDuel() {
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
   const matchRef = useRef<PvpDuelSnapshot | null>(null);
   const identityRef = useRef<PublicPlayerIdentity>({ id: "", nickname: "Explorador", avatar: "✦" });
+  const globalIdentityRef = useRef(globalIdentity);
   const [identity, setIdentity] = useState(identityRef.current);
   const [connection, setConnection] = useState<Connection>("connecting");
   const [match, setMatch] = useState<PvpDuelSnapshot | null>(null);
@@ -25,13 +26,15 @@ export function usePvpDuel() {
   // PvP conserva su id de cuenta/dispositivo, pero el avatar siempre viene
   // de la identidad global y no de una selección propia del duelo.
   useEffect(() => {
+    globalIdentityRef.current = globalIdentity;
     const next = { ...identityRef.current, nickname: globalIdentity.nickname, avatar: globalIdentity.avatarKey };
     identityRef.current = next;
     setIdentity(next);
   }, [globalIdentity.avatarKey, globalIdentity.nickname]);
 
   useEffect(() => {
-    const fallback = readMultiplayerIdentity();
+    const deviceIdentity = readMultiplayerIdentity();
+    const fallback = { ...deviceIdentity, nickname: globalIdentityRef.current.nickname, avatar: globalIdentityRef.current.avatarKey };
     identityRef.current = fallback; setIdentity(fallback);
     void fetch("/api/auth/me").then((response) => response.ok ? response.json() as Promise<{ account: SafeAccount | null }> : null).then((result) => {
       if (!result?.account) return;
