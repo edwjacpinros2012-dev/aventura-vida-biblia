@@ -1,6 +1,8 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { officialCharacterForAvatar } from "@/lib/characters/catalog";
+import { customAvatarConfigFromKey } from "@/lib/characters/custom-avatar";
+import { CustomCharacterAvatar } from "@/components/custom-character-avatar";
 
 type CharacterAvatarProps = {
   avatarKey: string;
@@ -18,6 +20,8 @@ type CharacterAvatarProps = {
  */
 export function CharacterAvatar({ avatarKey, fallback, alt = "Avatar", className = "", imageSizes = "96px", variant = "avatar" }: CharacterAvatarProps) {
   const character = officialCharacterForAvatar(avatarKey);
+  const customAvatar = customAvatarConfigFromKey(avatarKey);
+  if (customAvatar) return <CustomCharacterAvatar config={customAvatar} alt={alt} className={className} variant={variant} />;
   if (!character) return <span className={className} aria-hidden="true">{fallback}</span>;
 
   return <span className={`relative overflow-hidden ${className}`}>

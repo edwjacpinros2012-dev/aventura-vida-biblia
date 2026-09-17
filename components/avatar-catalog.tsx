@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { AvatarCreator } from "@/components/avatar-creator";
 import { CharacterAvatar } from "@/components/character-avatar";
 import { usePlayerProgress } from "@/components/player-progress-provider";
 import { avatarFallbackFor, officialCharacters } from "@/lib/characters/catalog";
@@ -41,5 +42,6 @@ export function AvatarCatalog() {
         </article>;
       })}
     </div>
+    <AvatarCreator identity={identity} identityReady={identityReady} saving={saving !== null} onSave={(avatarKey) => { void choose(avatarKey); }} />
   </section>;
 }

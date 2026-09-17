@@ -59,19 +59,32 @@ export async function createSession(userId: string) {
 
 export async function registerAccount(input: { nickname: string; avatarKey: string; password: string }) {
   const passwordHash = await bcrypt.hash(input.password, 12);
+  const token = newSessionToken();
   try {
-    const account = await prisma.user.create({
-      data: {
-        profile: { create: { nickname: input.nickname, avatarKey: input.avatarKey } },
-        credential: { create: { passwordHash } },
-        wallet: { create: {} },
-      },
-      include: { profile: true, wallet: true },
+    const account = await prisma.$transaction(async (transaction) => {
+      const created = await transaction.user.create({
+        data: {
+          profile: { create: { nickname: input.nickname, avatarKey: input.avatarKey } },
+          credential: { create: { passwordHash } },
+          wallet: { create: {} },
+        },
+        include: { profile: true, wallet: true },
+      });
+      await transaction.userSession.create({
+        data: { userId: created.id, tokenHash: tokenHash(token), expiresAt: expiresAt() },
+      });
+      return created;
     });
-    return { account: safeAccount(account), token: await createSession(account.id) };
+    return { account: safeAccount(account), token };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       throw new AccountError("Ese apodo ya está en uso. Elige otro.", 409);
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError && (error.code === "P2021" || error.code === "P2022")) {
+      throw new AccountError("Las cuentas se están preparando. Vuelve a intentarlo en unos minutos.", 503);
+    }
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+      throw new AccountError("No pudimos conectar las cuentas todavía. Vuelve a intentarlo en unos minutos.", 503);
     }
     throw error;
   }

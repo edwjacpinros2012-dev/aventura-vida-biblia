@@ -125,10 +125,12 @@ export function selectableAvatarOptions() {
 }
 
 export function isSelectableAvatarKey(avatarKey: string) {
-  return selectableAvatarOptions().some((avatar) => avatar.id === avatarKey);
+  return isCustomAvatarKey(avatarKey) || selectableAvatarOptions().some((avatar) => avatar.id === avatarKey);
 }
 
 export function avatarFallbackFor(avatarKey: string) {
+  if (isCustomAvatarKey(avatarKey)) return "🧑";
   return legacyAvatarOptions.find((avatar) => avatar.id === avatarKey)?.symbol
     ?? (avatarKey.length <= 8 ? avatarKey : "✦");
 }
+import { isCustomAvatarKey } from "@/lib/characters/custom-avatar";
