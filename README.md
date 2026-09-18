@@ -40,11 +40,11 @@ Plataforma web de juegos, misiones y aventuras para **Proyecto Vida Kids**. Incl
 
    También puedes usar `npm install` si esa es tu herramienta habitual.
 
-5. Genera el cliente y crea la base de datos:
+5. Genera el cliente, aplica las migraciones y carga datos de desarrollo:
 
    ```bash
    pnpm db:generate
-   pnpm db:migrate --name init
+   pnpm exec prisma migrate deploy
    pnpm db:seed
    ```
 
@@ -63,6 +63,25 @@ pnpm lint
 pnpm typecheck
 pnpm build
 ```
+
+## PostgreSQL en producción
+
+El registro de cuentas depende de PostgreSQL: `User`, `Profile`, credenciales,
+sesiones y cartera se crean dentro de una transacción. Antes de publicar una
+versión que habilite **Crear cuenta**, configura `DATABASE_URL` en Vercel y
+aplica las migraciones desde una terminal autorizada con acceso a esa misma
+base:
+
+```bash
+pnpm exec prisma migrate deploy
+pnpm exec prisma migrate status
+```
+
+No se ejecutan migraciones automáticamente durante el build de Vercel: esto
+evita que una compilación cambie la base de datos sin revisión. Si la base ya
+contiene las tablas pero no tiene historial de Prisma, no ejecutes estas órdenes
+a ciegas; primero hay que registrar la línea de base con `prisma migrate
+resolve` para no alterar datos existentes.
 
 ## Rutas implementadas en Fase 1
 

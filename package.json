@@ -13,6 +13,8 @@
     "multiplayer:verify": "tsx server/multiplayer/verify.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:status": "prisma migrate status",
     "db:seed": "prisma db seed",
     "admin:bootstrap": "tsx scripts/bootstrap-admin.ts"
   },
