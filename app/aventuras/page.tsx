@@ -2,10 +2,6 @@ import type { Metadata } from "next";
 import { AdventureCard } from "@/components/adventure-card";
 import { adventures } from "@/lib/content";
 
-export const metadata: Metadata = { title: "Aventuras | Aventura Vida", description: "Historias largas para explorar capítulo a capítulo." };
+export const metadata: Metadata = { title: "Aventuras | Aventura Vida Biblia", description: "Historias largas para explorar capítulo a capítulo." };
 
-export default function AdventuresPage() {
-  return (
-    <section className="mx-auto max-w-7xl px-4 pb-12 pt-12 sm:px-6 sm:pt-16 lg:px-8"><div className="max-w-2xl"><p className="text-xs font-black uppercase tracking-[.2em] text-violet">Mapas, historias y desafíos</p><h1 className="mt-3 font-display text-5xl font-black tracking-tight text-ink sm:text-6xl">Aventuras grandes</h1><p className="mt-4 text-base leading-7 text-ink/65">Las aventuras unen varios capítulos, objetivos y juegos relacionados. Explora a tu ritmo y ve descubriendo el mapa.</p></div><div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">{adventures.map((adventure) => <AdventureCard key={adventure.slug} adventure={adventure} />)}</div><div className="mt-10 rounded-2xl bg-sky p-5 text-sm leading-6 text-ink/70"><span className="font-extrabold text-ink">La Gran Aventura:</span> la campaña de la Armadura del Espíritu guarda su avance en este dispositivo. Los demás mapas se mantienen como rutas de exploración que crecerán por capítulos.</div></section>
-  );
-}
+export default function AdventuresPage() { return <section className="av-page"><div className="mx-auto max-w-[1500px] px-4 pb-12 pt-12 sm:px-6 sm:pt-16 lg:px-8"><div className="av-panel rounded-[2rem] p-6 sm:p-10"><p className="av-kicker text-xs font-black uppercase tracking-[.2em]">Mapas, historias y desafíos</p><h1 className="av-title mt-3 font-display text-5xl font-black tracking-tight sm:text-6xl">La Gran Aventura</h1><p className="mt-4 max-w-2xl text-base leading-7 text-white/70">Cada aventura une capítulos, objetivos y juegos reales. El mapa visual acompaña el progreso sin inventar desbloqueos.</p></div><div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">{adventures.map((adventure) => <AdventureCard key={adventure.slug} adventure={adventure} />)}</div></div></section>; }

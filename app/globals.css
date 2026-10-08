@@ -4,32 +4,50 @@
 
 :root {
   --font-display: "Arial Rounded MT Bold", "Nunito", "Trebuchet MS", ui-rounded, system-ui, sans-serif;
+  --av-night: #061923;
+  --av-deep: #092a38;
+  --av-panel: #0b2634;
+  --av-panel-soft: #103747;
+  --av-teal: #13bfc6;
+  --av-gold: #f5bd4d;
+  --av-cream: #f5e5b9;
 }
 
 * { box-sizing: border-box; }
-
 html { scroll-behavior: smooth; }
-
 body {
   margin: 0;
-  background: #f8fbff;
-  color: #172147;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(34, 151, 165, .18), transparent 28rem),
+    radial-gradient(circle at 87% 22%, rgba(221, 160, 51, .1), transparent 24rem),
+    linear-gradient(145deg, #061923 0%, #092a38 45%, #071b27 100%);
+  color: #edf7f4;
   font-family: Arial, Helvetica, sans-serif;
 }
 
 button, a, input, select { -webkit-tap-highlight-color: transparent; }
-
-::selection { background: #cfc8ff; color: #172147; }
-
-.cloud-dots {
-  background-image: radial-gradient(circle at 12px 12px, rgba(255,255,255,.75) 2px, transparent 2.5px);
-  background-size: 33px 33px;
-}
-
-.hero-grid {
-  background-image: linear-gradient(rgba(118,100,233,.075) 1px, transparent 1px), linear-gradient(90deg, rgba(118,100,233,.075) 1px, transparent 1px);
-  background-size: 29px 29px;
-}
-
+::selection { background: #18bfc7; color: #061923; }
+.cloud-dots { background-image: radial-gradient(circle at 12px 12px, rgba(255,255,255,.75) 2px, transparent 2.5px); background-size: 33px 33px; }
+.hero-grid { background-image: linear-gradient(rgba(244, 191, 78, .08) 1px, transparent 1px), linear-gradient(90deg, rgba(27, 193, 198, .08) 1px, transparent 1px); background-size: 29px 29px; }
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.av-page { position: relative; isolation: isolate; min-height: calc(100vh - 74px); }
+.av-page::before { position: fixed; z-index: -1; inset: 74px 0 0; pointer-events: none; content: ""; background: linear-gradient(rgba(5, 22, 31, .55), rgba(5, 22, 31, .8)), radial-gradient(ellipse at 50% 0%, rgba(31, 122, 124, .22), transparent 55%); }
+.av-panel { border: 1px solid rgba(244, 191, 78, .35); background: linear-gradient(145deg, rgba(14, 53, 68, .96), rgba(6, 25, 35, .98)); box-shadow: inset 0 1px 0 rgba(255,255,255,.11), 0 18px 45px rgba(0,0,0,.32); }
+.av-panel-soft { border: 1px solid rgba(24, 191, 199, .28); background: linear-gradient(145deg, rgba(14, 55, 70, .88), rgba(7, 30, 42, .94)); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 14px 34px rgba(0,0,0,.22); }
+.av-card { border: 1px solid rgba(244, 191, 78, .27); background: linear-gradient(180deg, rgba(15, 49, 64, .98), rgba(6, 27, 38, .98)); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 16px 35px rgba(0,0,0,.26); }
+.av-title { color: var(--av-cream); text-shadow: 0 3px 0 rgba(0,0,0,.28), 0 0 24px rgba(245, 189, 77, .18); }
+.av-kicker { color: #68e1df; }
+.av-muted { color: rgba(237,247,244,.68); }
+.av-gold-button { border: 1px solid rgba(255,231,151,.72); background: linear-gradient(180deg, #f8d268, #bd7412); color: #172147; box-shadow: inset 0 1px 0 rgba(255,255,255,.68), 0 6px 0 #6d420c, 0 12px 24px rgba(0,0,0,.28); }
+.av-gold-button:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.av-teal-button { border: 1px solid rgba(100,239,238,.65); background: linear-gradient(180deg, #1bcdd1, #087e93); color: #f3ffff; box-shadow: inset 0 1px 0 rgba(255,255,255,.38), 0 5px 0 #06495a, 0 10px 20px rgba(0,0,0,.25); }
+.av-teal-button:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.av-chip { border: 1px solid rgba(94,229,229,.32); background: rgba(6, 25, 35, .65); color: #dffbfb; }
+.av-progress { background: rgba(1, 15, 23, .72); box-shadow: inset 0 2px 5px rgba(0,0,0,.38); }
+.av-progress > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #16bfc5, #8cead3); box-shadow: 0 0 12px rgba(27, 205, 209, .72); }
+.av-divider { border-color: rgba(245, 189, 77, .18); }
+
+@media (max-width: 1023px) { body { padding-bottom: 76px; } }
