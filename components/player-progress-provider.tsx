@@ -20,6 +20,8 @@ export type GlobalPlayerIdentity = {
   nickname: string;
   avatarKey: string;
   authenticated: boolean;
+  /** Saldo devuelto por la cuenta autenticada; nunca se modifica desde el cliente. */
+  adventureCoins?: number;
 };
 
 const guestIdentity: GlobalPlayerIdentity = {
@@ -147,10 +149,15 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
       setHydrated(true);
     }
     void fetch("/api/auth/me")
-      .then((response) => response.ok ? response.json() as Promise<{ account: { nickname: string; avatarKey: string } | null }> : null)
+      .then((response) => response.ok ? response.json() as Promise<{ account: { nickname: string; avatarKey: string; adventureCoins: number } | null }> : null)
       .then((result) => {
         if (result?.account && result.account.avatarKey.trim()) {
-          setIdentity({ nickname: result.account.nickname, avatarKey: result.account.avatarKey, authenticated: true });
+          setIdentity({
+            nickname: result.account.nickname,
+            avatarKey: result.account.avatarKey,
+            authenticated: true,
+            adventureCoins: Math.max(0, Number(result.account.adventureCoins) || 0),
+          });
         }
       })
       .catch(() => undefined)
@@ -243,8 +250,14 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
         body: JSON.stringify({ avatarKey }),
       });
       const result = await response.json() as { profile?: { nickname: string; avatarKey: string }; error?: string };
-      if (!response.ok || !result.profile) throw new Error(result.error ?? "No pudimos guardar tu avatar.");
-      setIdentity({ nickname: result.profile.nickname, avatarKey: result.profile.avatarKey, authenticated: true });
+      const profile = result.profile;
+      if (!response.ok || !profile) throw new Error(result.error ?? "No pudimos guardar tu avatar.");
+      setIdentity((current) => ({
+        nickname: profile.nickname,
+        avatarKey: profile.avatarKey,
+        authenticated: true,
+        adventureCoins: current.adventureCoins,
+      }));
       return;
     }
     setIdentity((current) => ({ ...current, avatarKey, authenticated: false }));

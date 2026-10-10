@@ -30,7 +30,7 @@ export function usePvpDuel() {
     const next = { ...identityRef.current, nickname: globalIdentity.nickname, avatar: globalIdentity.avatarKey };
     identityRef.current = next;
     setIdentity(next);
-  }, [globalIdentity.avatarKey, globalIdentity.nickname]);
+  }, [globalIdentity]);
 
   useEffect(() => {
     const deviceIdentity = readMultiplayerIdentity();
