@@ -16,6 +16,27 @@ export const categories: Array<{ name: GameCategory; icon: string; color: string
 
 export const games: Game[] = [
   {
+    id: "vowel-light",
+    slug: "vocales-de-luz",
+    name: "Vocales de luz",
+    tagline: "Escucha, repite y descubre A, E, I, O, U",
+    description: "Una actividad alegre de primeras palabras para descubrir las vocales con ejemplos sencillos.",
+    longDescription: "Escucha cada vocal, repítela junto a tu familia y toca la letra correcta. Esta actividad no usa micrófono ni guarda voces: está pensada para practicar con calma y alegría.",
+    category: "Palabras",
+    difficulty: "Inicial",
+    suggestedAge: "2–5 años",
+    maxPoints: 150,
+    xp: 60,
+    playMinutes: 5,
+    coverTheme: "sky",
+    isNew: true,
+    isFeatured: true,
+    isPlayable: true,
+    gameKey: "vowels",
+    lesson: "Las palabras empiezan con sonidos que podemos escuchar, repetir y celebrar.",
+    objectives: ["Escucha cada vocal", "Encuentra la letra correcta", "Practica A, E, I, O y U"],
+  },
+  {
     id: "memory-bible",
     slug: "memoria-biblica",
     name: "Memoria bíblica",

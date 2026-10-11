@@ -24,4 +24,5 @@ export const internalGameRegistry: Record<string, InternalGameManifest> = {
   "river-path": { key: "river-path", version: "1.0.0", supportedEvents: ["objective", "progress", "finish"], trusted: true },
   "star-map": { key: "star-map", version: "1.0.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
   "bible-maze": { key: "bible-maze", version: "1.0.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
+  vowels: { key: "vowels", version: "1.0.0", supportedEvents: ["score", "progress", "finish"], trusted: true },
 };
