@@ -11,7 +11,7 @@ import { PuzzleGame } from "@/components/games/puzzle-game";
 import { QuizGame } from "@/components/games/quiz-game";
 import { StoryGame } from "@/components/games/story-game";
 import { VerseGame } from "@/components/games/verse-game";
-import { VowelsGame } from "@/components/games/vowels-game";
+import { BabyAbcGame } from "@/components/games/baby-abc-game";
 import { WordSearchGame } from "@/components/games/word-search-game";
 
 export function GamePlayer({ game }: { game: Game }) {
@@ -31,7 +31,7 @@ export function GamePlayer({ game }: { game: Game }) {
     "river-path": <RiverPathGame />,
     "star-map": <StarMapGame />,
     "bible-maze": <BibleMazeGame />,
-    vowels: <VowelsGame />,
+    vowels: <BabyAbcGame />,
   }[game.gameKey ?? "word-search"];
   return <GameShell game={game}>{content}</GameShell>;
 }

@@ -65,6 +65,37 @@ enum NotificationStatus {
   READ
 }
 
+// El contenido creado por el programador diario conserva su origen y pasa
+// por estados editoriales. Los contenidos de IA nunca se publican por el
+// simple hecho de haberse generado.
+enum GeneratedContentSource {
+  TEMPLATE
+  AI
+}
+
+enum GeneratedContentStatus {
+  DRAFT
+  APPROVED
+  PUBLISHED
+  REJECTED
+  FAILED
+}
+
+enum ScheduledJobStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+}
+
+// Una operación procede de un dispositivo offline. El id es generado por el
+// cliente y queda registrado para que el servidor pueda aplicar una sola vez
+// una actualización al recuperar conexión.
+enum OfflineSyncOperationStatus {
+  APPLIED
+  REJECTED
+}
+
 enum AuditAction {
   CREATE
   UPDATE
@@ -206,6 +237,7 @@ model User {
   chatMessages   SafeChatMessage[]
   matchPlayers   MatchPlayer[]
   pvpStats       PvpProfile?
+  offlineSyncOperations OfflineSyncOperation[]
 
   @@index([role])
 }
@@ -448,8 +480,74 @@ model Mission {
   updatedAt   DateTime      @updatedAt
   game        Game?         @relation(fields: [gameId], references: [id], onDelete: SetNull)
   progress    MissionProgress[]
+  generatedContent GeneratedContent?
 
   @@index([status, startsAt])
+}
+
+// Bitácora idempotente de cada ejecución del cron. jobKey + dateKey impide
+// que dos invocaciones concurrentes publiquen la misma misión del día.
+model ContentGenerationRun {
+  id         String                 @id @default(cuid())
+  jobKey     String
+  dateKey    String
+  version    Int                    @default(1)
+  source     GeneratedContentSource
+  status     ScheduledJobStatus     @default(RUNNING)
+  attempt    Int                    @default(1)
+  output     Json?
+  error      String?
+  startedAt  DateTime               @default(now())
+  finishedAt DateTime?
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  content    GeneratedContent[]
+
+  @@unique([jobKey, dateKey])
+  @@index([status, createdAt(sort: Desc)])
+}
+
+// Representación versionada y auditable del contenido programado. El payload
+// es un contrato validado; Mission conserva la parte que el producto ya usa.
+model GeneratedContent {
+  id            String                 @id @default(cuid())
+  contentKey    String                 @unique
+  kind          String
+  dateKey       String?
+  version       Int                    @default(1)
+  source        GeneratedContentSource
+  status        GeneratedContentStatus @default(DRAFT)
+  payload       Json
+  validation    Json?
+  reviewNotes   String?
+  reviewerId    String?
+  reviewedAt    DateTime?
+  publishedAt   DateTime?
+  missionId     String?                @unique
+  runId         String?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  mission       Mission?                @relation(fields: [missionId], references: [id], onDelete: SetNull)
+  run           ContentGenerationRun?  @relation(fields: [runId], references: [id], onDelete: SetNull)
+
+  @@unique([kind, dateKey, version])
+  @@index([status, publishedAt])
+  @@index([dateKey, kind])
+}
+
+// Cola persistida en el servidor para operaciones de progreso aceptadas al
+// reconectar. Nunca contiene XP, monedas o recompensas decididas por cliente.
+model OfflineSyncOperation {
+  id          String                     @id
+  userId      String
+  kind        String
+  payload     Json
+  status      OfflineSyncOperationStatus @default(APPLIED)
+  processedAt DateTime                   @default(now())
+  createdAt   DateTime                   @default(now())
+  user        User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model MissionProgress {

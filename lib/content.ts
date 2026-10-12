@@ -1,4 +1,5 @@
 import type { Adventure, Game, GameCategory, Player } from "@/types/content";
+import { dailyBibleChallengeFor } from "@/lib/daily-bible-challenge";
 
 export const categories: Array<{ name: GameCategory; icon: string; color: string; description: string }> = [
   { name: "Memoria", icon: "✦", color: "bg-sun", description: "Recuerda y descubre" },
@@ -335,15 +336,23 @@ export const adventures: Adventure[] = [
   },
 ];
 
-export const missionOfTheDay = {
-  title: "Enciende tres balizas",
-  description: "Responde con sabiduría y ayuda a guiar la expedición hasta la Isla Clara.",
-  gameSlug: "preguntas-de-aventura",
-  gameName: "Preguntas bíblicas",
-  rewardXp: 150,
-  rewardPoints: 75,
-  objective: "Completa 3 retos de preguntas",
-};
+/** Fuente central para Inicio y Misión. Cambia por fecha sin un despliegue. */
+export function getMissionOfTheDay(date = new Date()) {
+  const daily = dailyBibleChallengeFor(date);
+  return {
+    title: daily.title,
+    description: daily.description,
+    gameSlug: daily.gameSlug,
+    gameName: daily.gameName,
+    rewardXp: daily.rewardXp,
+    rewardPoints: daily.rewardPoints,
+    objective: daily.objective,
+  };
+}
+
+// Compatibilidad para componentes heredados. Las nuevas vistas llaman a la
+// función anterior al renderizar, de modo que no quedan congeladas al compilar.
+export const missionOfTheDay = getMissionOfTheDay();
 
 export const leaderboard: Player[] = [
   { nickname: "SolExplorador", avatar: "🦊", points: 2_480, trend: "up" },

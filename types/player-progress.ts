@@ -26,6 +26,8 @@ export type PlayerProgress = {
   gamesCompleted: number;
   completedGameIds: string[];
   learnedVerses: string[];
+  /** Identificadores de niveles diarios que ya entregaron recompensa local. */
+  dailyChallengeIds: string[];
   achievementIds: PlayerAchievementId[];
   gameProgress: Record<string, Record<string, unknown>>;
   armorCampaign: ArmorCampaignProgress;

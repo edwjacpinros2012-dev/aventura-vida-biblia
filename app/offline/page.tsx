@@ -1,0 +1,5 @@
+import Link from "next/link";
+
+export default function OfflinePage() {
+  return <section className="av-page"><div className="mx-auto max-w-xl px-4 py-16 sm:px-6"><div className="av-panel rounded-[2rem] p-8 text-center shadow-lift"><p className="text-5xl" aria-hidden="true">✦</p><p className="mt-5 text-xs font-black uppercase tracking-[.18em] text-[#67e5e0]">Modo sin conexión</p><h1 className="av-title mt-3 font-display text-4xl font-black">Tu aventura sigue aquí</h1><p className="mt-4 text-sm font-semibold leading-6 text-white/70">Puedes abrir los juegos y el contenido que ya descargaste. El progreso no premiable se pondrá en cola y se sincronizará cuando vuelva la conexión.</p><div className="mt-7 flex flex-wrap justify-center gap-3"><Link href="/juegos" className="av-gold-button rounded-xl px-5 py-3 text-sm font-extrabold">Ver juegos descargados</Link><Link href="/" className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/10">Volver al inicio</Link></div></div></div></section>;
+}

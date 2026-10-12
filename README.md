@@ -7,12 +7,14 @@ Plataforma web de juegos, misiones y aventuras para **Proyecto Vida Kids**. Incl
 - Inicio público responsive con hero, misión diaria, aventura destacada, novedades y catálogo navegable.
 - Catálogo de juegos con búsqueda, filtros por categoría/dificultad/edad y vistas de nuevos/populares.
 - Fichas individuales, rutas de aventuras, misión diaria, ranking por apodo y perfil de jugador local.
-- Ocho minijuegos funcionales: Sopa de Letras, Colorear, Preguntas Bíblicas, Historias Interactivas, Memoria, IQ Bíblico, Aprende el Versículo y Rompecabezas.
+- Catorce juegos funcionales, incluida la colección bíblica, Laberinto Bíblico, Gran Aventura, Vocales de luz y los minijuegos de aprendizaje.
 - Shell común de juego con pantalla de carga/error/victoria, puntos, XP, racha, progreso, logros, partidas completadas y versículos aprendidos, guardado localmente por navegador.
 - Sistema visual original: no usa personajes ni recursos de franquicias de terceros.
 - Esquema Prisma para usuarios, perfiles, juegos, sesiones, progreso, puntuaciones, XP, misiones, logros, aventuras, recompensas, notificaciones, configuración y auditoría.
 - Semilla con contenido y usuarios enteramente ficticios.
 - Registro de módulos internos y contratos de Game SDK para sustituir las recompensas locales por validación de servidor.
+- PWA instalable con carcasa descargable, caché de contenido público y una cola IndexedDB para sincronizar avance no premiable de cuentas cuando recuperen conexión.
+- Automatización diaria preparada: contenido bíblico de plantillas revisadas, registros idempotentes, revisión editorial para futuras propuestas de IA y ruta de Cron protegida.
 
 ## Stack
 
@@ -83,6 +85,12 @@ contiene las tablas pero no tiene historial de Prisma, no ejecutes estas órdene
 a ciegas; primero hay que registrar la línea de base con `prisma migrate
 resolve` para no alterar datos existentes.
 
+## Persistencia, contenido diario y modo offline
+
+Consulta [la guía de operaciones](docs/PERSISTENCE_AND_AUTOMATION.md) antes
+de configurar PostgreSQL, ejecutar el Cron o activar sincronización en
+producción. Ninguna clave se guarda en el navegador ni en el repositorio.
+
 ## Rutas implementadas en Fase 1
 
 | Ruta | Estado |
@@ -90,19 +98,16 @@ resolve` para no alterar datos existentes.
 | `/` | Implementada |
 | `/juegos`, `/juegos/[slug]` y `/juegos/[slug]/jugar` | Implementadas |
 | `/aventuras` y `/aventuras/[slug]` | Implementadas como estructura de contenido |
-| `/mision` | Implementada como demostración de misión diaria |
+| `/mision` | Nivel bíblico diario determinista, con respaldo para visitante/offline |
 | `/ranking` | Implementada con apodos ficticios y puntuación local del jugador |
 | `/perfil` | Implementada con progreso local y sin datos personales |
 
 ## Pendiente de Fases 2–7
 
-- Autenticación, registro, perfiles persistentes y roles del servidor.
-- `/admin` protegido y CRUD de juegos/categorías/contenido.
-- Game SDK de servidor, sesiones autenticadas y validación de puntuaciones, XP y logros reales.
-- Misión diaria automática y recompensas verificadas. Los minijuegos ya disponibles guardan sólo en este navegador.
-- Misiones programadas, rankings reales, PWA, pruebas de seguridad y optimizaciones finales.
-
-Los cuatro juegos heredados que todavía no tienen módulo se muestran claramente como próximos; no otorgan puntos ni fingen estar disponibles.
+- Validación de resultados y recompensas de todos los minijuegos en servidor (hoy el progreso de juego individual continúa local, con sincronización de estado no premiable).
+- Configurar PostgreSQL, ejecutar las migraciones y verificar una primera ejecución real de Vercel Cron.
+- Integrar un proveedor de IA opcional y una pantalla editorial antes de publicar contenido generado por IA.
+- Pruebas E2E en dispositivo real del modo offline/reconexión y de las operaciones de economía.
 
 ## Documentación de diseño
 

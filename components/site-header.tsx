@@ -14,7 +14,8 @@ const navItems = [
   { href: "/", label: "Inicio", icon: "⌂" },
   { href: "/juegos", label: "Juegos", icon: "🎮" },
   { href: "/aventuras", label: "Aventura", icon: "🗺" },
-  { href: "/juegos/preguntas-de-aventura/jugar", label: "PvP", icon: "⚔" },
+  { href: "/pvp", label: "PvP", icon: "⚔" },
+  { href: "/multiplayer", label: "Equipo", icon: "👥" },
   { href: "/ranking", label: "Ranking", icon: "♜" },
 ];
 

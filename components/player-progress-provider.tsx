@@ -12,6 +12,8 @@ import {
   type RewardResult,
 } from "@/types/player-progress";
 import { isSelectableAvatarKey } from "@/lib/characters/catalog";
+import { games } from "@/lib/content";
+import { flushPendingProgress, queueGameProgress } from "@/lib/offline/sync-client";
 
 const STORAGE_KEY = "aventura-vida.player-progress.v2";
 const IDENTITY_STORAGE_KEY = "aventura-vida.player-identity.v1";
@@ -48,6 +50,7 @@ const initialProgress: PlayerProgress = {
   gamesCompleted: 0,
   completedGameIds: [],
   learnedVerses: [],
+  dailyChallengeIds: [],
   achievementIds: [],
   gameProgress: {},
   armorCampaign: initialArmorCampaign,
@@ -59,6 +62,7 @@ type PlayerProgressContextValue = {
   identity: GlobalPlayerIdentity;
   identityReady: boolean;
   completeGame: (reward: GameReward) => RewardResult;
+  completeDailyChallenge: (reward: GameReward) => RewardResult | null;
   completeCampaignLevel: (reward: CampaignLevelReward) => RewardResult;
   saveGameProgress: (gameId: string, data: Record<string, unknown>) => void;
   selectAvatar: (avatarKey: string) => Promise<void>;
@@ -95,6 +99,7 @@ function safeProgress(value: unknown): PlayerProgress {
     streak: Number.isFinite(candidate.streak) ? Math.max(0, Number(candidate.streak)) : 0,
     completedGameIds: Array.isArray(candidate.completedGameIds) ? candidate.completedGameIds.filter((item): item is string => typeof item === "string") : [],
     learnedVerses: Array.isArray(candidate.learnedVerses) ? candidate.learnedVerses.filter((item): item is string => typeof item === "string") : [],
+    dailyChallengeIds: Array.isArray(candidate.dailyChallengeIds) ? candidate.dailyChallengeIds.filter((item): item is string => /^nivel-diario-\d{4}-\d{2}-\d{2}$/.test(item)) : [],
     achievementIds: Array.isArray(candidate.achievementIds) ? candidate.achievementIds.filter((item): item is PlayerAchievementId => typeof item === "string") : [],
     gameProgress: candidate.gameProgress && typeof candidate.gameProgress === "object" ? candidate.gameProgress : {},
     level: Number.isFinite(candidate.level) ? Math.max(1, Number(candidate.level)) : 1,
@@ -237,9 +242,39 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
     return { totalPoints: completed.points, totalXp: completed.xp, level: completed.level, streak: completed.streak, newAchievementIds };
   }, [progress]);
 
+  // Los niveles diarios del modo visitante se guardan junto al mismo progreso
+  // local. Un mismo id de fecha solo puede otorgar la recompensa una vez.
+  const completeDailyChallenge = useCallback((reward: GameReward): RewardResult | null => {
+    if (!/^nivel-diario-\d{4}-\d{2}-\d{2}$/.test(reward.gameId) || progress.dailyChallengeIds.includes(reward.gameId)) return null;
+    const today = localDay();
+    const streak = progress.lastPlayedOn === today ? progress.streak : progress.lastPlayedOn === previousDay() ? progress.streak + 1 : 1;
+    const learnedVerses = reward.verseReference && !progress.learnedVerses.includes(reward.verseReference) ? [...progress.learnedVerses, reward.verseReference] : progress.learnedVerses;
+    const partial: PlayerProgress = {
+      ...progress,
+      points: progress.points + Math.max(0, Math.round(reward.points)),
+      xp: progress.xp + Math.max(0, Math.round(reward.xp)),
+      streak,
+      lastPlayedOn: today,
+      gamesCompleted: progress.gamesCompleted + 1,
+      completedGameIds: progress.completedGameIds.includes(reward.gameId) ? progress.completedGameIds : [...progress.completedGameIds, reward.gameId],
+      dailyChallengeIds: [...progress.dailyChallengeIds, reward.gameId],
+      learnedVerses,
+    };
+    const newAchievementIds = calculateNewAchievements(partial);
+    const withAchievements = { ...partial, xp: partial.xp + newAchievementIds.length * 25, achievementIds: [...partial.achievementIds, ...newAchievementIds] };
+    const completed = { ...withAchievements, level: levelForXp(withAchievements.xp) };
+    setProgress(completed);
+    return { totalPoints: completed.points, totalXp: completed.xp, level: completed.level, streak: completed.streak, newAchievementIds };
+  }, [progress]);
+
   const saveGameProgress = useCallback((gameId: string, data: Record<string, unknown>) => {
     setProgress((current) => ({ ...current, gameProgress: { ...current.gameProgress, [gameId]: { ...current.gameProgress[gameId], ...data } } }));
-  }, []);
+    // Para cuentas solo sincronizamos estado no premiable. XP, puntos,
+    // monedas y recompensas siguen siendo decisiones del servidor.
+    const game = games.find((candidate) => candidate.id === gameId);
+    if (!identity.authenticated || !game) return;
+    void queueGameProgress(game.slug, data).then(() => flushPendingProgress()).catch(() => undefined);
+  }, [identity.authenticated]);
 
   const selectAvatar = useCallback(async (avatarKey: string) => {
     if (!isSelectableAvatarKey(avatarKey)) throw new Error("Ese avatar no está disponible.");
@@ -266,8 +301,8 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
   const resetProgress = useCallback(() => setProgress(initialProgress), []);
 
   const value = useMemo(
-    () => ({ progress, hydrated, identity, identityReady, completeGame, completeCampaignLevel, saveGameProgress, selectAvatar, resetProgress }),
-    [completeCampaignLevel, completeGame, hydrated, identity, identityReady, progress, resetProgress, saveGameProgress, selectAvatar],
+    () => ({ progress, hydrated, identity, identityReady, completeGame, completeDailyChallenge, completeCampaignLevel, saveGameProgress, selectAvatar, resetProgress }),
+    [completeCampaignLevel, completeDailyChallenge, completeGame, hydrated, identity, identityReady, progress, resetProgress, saveGameProgress, selectAvatar],
   );
   return <PlayerProgressContext.Provider value={value}>{children}</PlayerProgressContext.Provider>;
 }
