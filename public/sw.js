@@ -1,4 +1,4 @@
-const CACHE = "aventura-vida-shell-v2";
+const CACHE = "aventura-vida-shell-v3";
 const SHELL = ["/", "/juegos", "/mision", "/perfil", "/offline", "/manifest.webmanifest", "/icon"];
 
 self.addEventListener("install", (event) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Component, type ReactNode, useEffect, useState } from "react";
+import { Component, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { CharacterAvatar } from "@/components/character-avatar";
 import { usePlayerProgress } from "@/components/player-progress-provider";
 import { avatarFallbackFor } from "@/lib/characters/catalog";
@@ -29,22 +29,45 @@ export function GameShell({ game, children }: { game: Game; children: ReactNode 
 }
 
 export function useGameCompletion(gameId: string) {
-  const { completeGame, saveGameProgress } = usePlayerProgress();
+  const { completeGame, confirmAuthenticatedGame, identity, saveGameProgress, startAuthenticatedGame } = usePlayerProgress();
   const [result, setResult] = useState<RewardResult | null>(null);
+  const session = useRef<Promise<string | null> | null>(null);
+
+  const ensureSession = useCallback(() => {
+    if (!identity.authenticated) return Promise.resolve(null);
+    if (!session.current) session.current = startAuthenticatedGame(gameId);
+    return session.current;
+  }, [gameId, identity.authenticated, startAuthenticatedGame]);
+
+  useEffect(() => {
+    void ensureSession().catch(() => undefined);
+  }, [ensureSession]);
+
   const finish = (reward: Omit<GameReward, "gameId">) => {
     if (result) return result;
     const next = completeGame({ gameId, ...reward });
     setResult(next);
     saveGameProgress(gameId, { completedAt: new Date().toISOString(), lastReward: reward });
+    // El cliente puede terminar la experiencia visual, pero el resultado de
+    // una cuenta no se concede hasta que la sesión es validada por el servidor.
+    if (identity.authenticated) {
+      void ensureSession()
+        .then((sessionId) => sessionId ? confirmAuthenticatedGame(sessionId) : null)
+        .catch(() => undefined);
+    }
     return next;
   };
-  const resetCompletion = () => setResult(null);
+  const resetCompletion = () => { session.current = null; setResult(null); };
   return { result, finish, saveGameProgress, resetCompletion };
 }
 
 export function VictoryPanel({ title = "¡Aventura completada!", description, result, points, xp, onPlayAgain, actionLabel = "Jugar otra vez", secondaryAction }: { title?: string; description: string; result: RewardResult | null; points: number; xp: number; onPlayAgain: () => void; actionLabel?: string; secondaryAction?: { label: string; onAction: () => void } }) {
-  const { identity } = usePlayerProgress();
-  return <div className="av-panel mx-auto mt-6 max-w-2xl overflow-hidden rounded-[1.7rem] p-6 text-center shadow-card sm:p-8"><div className="mx-auto flex w-fit items-center gap-3 rounded-2xl border border-teal-100/15 bg-[#061923]/55 px-3 py-2 text-left"><CharacterAvatar avatarKey={identity.avatarKey} fallback={avatarFallbackFor(identity.avatarKey)} alt={`Avatar de ${identity.nickname}`} imageSizes="40px" className="grid h-10 w-10 place-items-center rounded-xl bg-[#f5bd4d] text-xl" /><div><p className="text-[10px] font-black uppercase tracking-[.16em] text-[#f5bd4d]">Recompensa de</p><p className="text-sm font-extrabold text-[#f5e5b9]">{identity.nickname}</p></div></div><span className="mx-auto mt-4 grid h-16 w-16 place-items-center rounded-[1.5rem] bg-[#f5bd4d] text-4xl shadow-card">🏆</span><p className="mt-5 text-xs font-black uppercase tracking-[.2em] text-[#f5bd4d]">Nivel completado</p><h2 className="mt-2 font-display text-3xl font-black text-[#f5e5b9]">{title}</h2><p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-white/70">{description}</p><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-xl border border-teal-100/15 bg-[#061923]/55 p-4"><p className="font-display text-2xl font-black text-[#f5cf74]">+{points}</p><p className="mt-1 text-xs font-bold text-white/55">Puntos</p></div><div className="rounded-xl border border-teal-100/15 bg-[#061923]/55 p-4"><p className="font-display text-2xl font-black text-[#74e2b0]">+{xp}</p><p className="mt-1 text-xs font-bold text-white/55">XP</p></div></div>{result && result.newAchievementIds.length > 0 && <div className="mt-4 rounded-xl border border-teal-100/15 bg-[#061923]/55 p-4 text-left"><p className="text-xs font-black uppercase tracking-[.16em] text-[#67e5e0]">Nuevo logro</p>{result.newAchievementIds.map((id) => <p className="mt-2 text-sm font-bold text-white" key={id}>{achievementDetails[id].icon} {achievementDetails[id].title}</p>)}</div>}<div className="mt-6 flex flex-wrap justify-center gap-3"><button type="button" onClick={onPlayAgain} className="av-gold-button rounded-xl px-5 py-3 text-sm font-extrabold outline-none focus-visible:ring-4 focus-visible:ring-[#f5bd4d]/30">{actionLabel}</button>{secondaryAction && <button type="button" onClick={secondaryAction.onAction} className="rounded-xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-extrabold text-white outline-none transition-colors hover:bg-white/15 focus-visible:ring-4 focus-visible:ring-teal-100/25">{secondaryAction.label}</button>}</div></div>;
+  const { identity, progressSyncState } = usePlayerProgress();
+  const confirmation = !identity.authenticated ? null
+    : progressSyncState === "synced" ? "Recompensa confirmada por tu cuenta."
+      : progressSyncState === "error" ? "No pudimos confirmar la recompensa todavía. Revisa tu conexión e inténtalo de nuevo más tarde."
+        : "Confirmando la recompensa con tu cuenta…";
+  return <div className="av-panel mx-auto mt-6 max-w-2xl overflow-hidden rounded-[1.7rem] p-6 text-center shadow-card sm:p-8"><div className="mx-auto flex w-fit items-center gap-3 rounded-2xl border border-teal-100/15 bg-[#061923]/55 px-3 py-2 text-left"><CharacterAvatar avatarKey={identity.avatarKey} fallback={avatarFallbackFor(identity.avatarKey)} alt={`Avatar de ${identity.nickname}`} imageSizes="40px" className="grid h-10 w-10 place-items-center rounded-xl bg-[#f5bd4d] text-xl" /><div><p className="text-[10px] font-black uppercase tracking-[.16em] text-[#f5bd4d]">Recompensa de</p><p className="text-sm font-extrabold text-[#f5e5b9]">{identity.nickname}</p></div></div><span className="mx-auto mt-4 grid h-16 w-16 place-items-center rounded-[1.5rem] bg-[#f5bd4d] text-4xl shadow-card">🏆</span><p className="mt-5 text-xs font-black uppercase tracking-[.2em] text-[#f5bd4d]">Nivel completado</p><h2 className="mt-2 font-display text-3xl font-black text-[#f5e5b9]">{title}</h2><p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-white/70">{description}</p><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-xl border border-teal-100/15 bg-[#061923]/55 p-4"><p className="font-display text-2xl font-black text-[#f5cf74]">+{points}</p><p className="mt-1 text-xs font-bold text-white/55">Puntos</p></div><div className="rounded-xl border border-teal-100/15 bg-[#061923]/55 p-4"><p className="font-display text-2xl font-black text-[#74e2b0]">+{xp}</p><p className="mt-1 text-xs font-bold text-white/55">XP</p></div></div>{confirmation && <p role="status" className={`mt-4 rounded-xl px-4 py-3 text-sm font-bold ${progressSyncState === "error" ? "bg-coral/15 text-[#ffb2a7]" : "bg-teal-100/10 text-[#c8f5da]"}`}>{confirmation}</p>}{result && result.newAchievementIds.length > 0 && <div className="mt-4 rounded-xl border border-teal-100/15 bg-[#061923]/55 p-4 text-left"><p className="text-xs font-black uppercase tracking-[.16em] text-[#67e5e0]">Nuevo logro</p>{result.newAchievementIds.map((id) => <p className="mt-2 text-sm font-bold text-white" key={id}>{achievementDetails[id].icon} {achievementDetails[id].title}</p>)}</div>}<div className="mt-6 flex flex-wrap justify-center gap-3"><button type="button" onClick={onPlayAgain} className="av-gold-button rounded-xl px-5 py-3 text-sm font-extrabold outline-none focus-visible:ring-4 focus-visible:ring-[#f5bd4d]/30">{actionLabel}</button>{secondaryAction && <button type="button" onClick={secondaryAction.onAction} className="rounded-xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-extrabold text-white outline-none transition-colors hover:bg-white/15 focus-visible:ring-4 focus-visible:ring-teal-100/25">{secondaryAction.label}</button>}</div></div>;
 }
 
 export function GameLoading() {

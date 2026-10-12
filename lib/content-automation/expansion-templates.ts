@@ -38,7 +38,9 @@ export function contentExpansionDraftFor(dateKey: string): ContentExpansionDraft
 
 export function validateContentExpansionDraft(draft: ContentExpansionDraft) {
   const errors: string[] = [];
-  if (!/^propuesta-[a-z-]+-\d{4}-\d{2}-\d{2}$/.test(draft.contentKey)) errors.push("identificador de propuesta inválido");
+  // Los tipos internos conservan guiones bajos (por ejemplo, `maze_level`).
+  // El identificador se deriva de ese tipo y debe seguir siendo validable.
+  if (!/^propuesta-[a-z_-]+-\d{4}-\d{2}-\d{2}$/.test(draft.contentKey)) errors.push("identificador de propuesta inválido");
   if (!draft.title.trim() || !draft.story.trim() || !draft.educationalGoal.trim()) errors.push("texto editorial incompleto");
   if (draft.ageRange.min < 2 || draft.ageRange.max > 14 || draft.ageRange.min > draft.ageRange.max) errors.push("edad sugerida inválida");
   if (draft.instructions.length < 2 || draft.instructions.some((instruction) => !instruction.trim())) errors.push("instrucciones incompletas");

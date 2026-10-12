@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 const operationSchema = z.object({
   id: z.string().uuid(),
   type: z.literal("GAME_PROGRESS"),
+  accountId: z.string().cuid(),
   gameSlug: z.string().trim().regex(/^[a-z0-9-]{2,80}$/),
   data: z.record(z.string(), z.unknown()),
   updatedAt: z.string().datetime(),
@@ -73,6 +74,10 @@ export async function POST(request: Request) {
   const rejected: Array<{ id: string; reason: string }> = [];
 
   for (const operation of parsed.data.operations) {
+    if (operation.accountId !== account.id) {
+      rejected.push({ id: operation.id, reason: "Esta operación pertenece a otra cuenta." });
+      continue;
+    }
     const jsonData = normalizeJsonObject(operation.data);
 
     if (jsonData === null) {

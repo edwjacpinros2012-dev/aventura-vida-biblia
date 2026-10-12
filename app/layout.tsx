@@ -6,10 +6,25 @@ import { PlayerProgressProvider } from "@/components/player-progress-provider";
 import { OfflineProvider } from "@/components/offline-provider";
 import { OfflineIndicator } from "@/components/offline-indicator";
 import { PwaRegister } from "@/components/pwa-register";
+import { publicSiteName, publicSiteUrl } from "@/lib/site-config";
 
 export const metadata: Metadata = {
-  title: "Aventura Vida | Proyecto Vida Kids",
-  description: "Juega, descubre, aprende y vive aventuras con valores.",
+  metadataBase: new URL(publicSiteUrl),
+  title: { default: `${publicSiteName} | Proyecto Vida Kids`, template: `%s | ${publicSiteName}` },
+  description: "Juegos, aventuras y valores bíblicos para descubrir, aprender y vivir en familia.",
+  applicationName: publicSiteName,
+  manifest: "/manifest.webmanifest",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "es_EC",
+    url: "/",
+    siteName: publicSiteName,
+    title: `${publicSiteName} | Proyecto Vida Kids`,
+    description: "Juegos, aventuras y valores bíblicos para descubrir, aprender y vivir en familia.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Aventura Vida Biblia · Proyecto Vida Kids" }],
+  },
+  twitter: { card: "summary_large_image", title: publicSiteName, description: "Juegos y aventuras bíblicas para toda la familia.", images: ["/opengraph-image"] },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

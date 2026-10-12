@@ -335,10 +335,11 @@ function CampaignMap({ unlockedLevel, completedLevelIds, onSelect }: { unlockedL
 }
 
 export function ArmaduraCampaign() {
-  const { progress, completeCampaignLevel, identity } = usePlayerProgress();
+  const { progress, completeCampaignLevel, confirmCampaignLevel, identity } = usePlayerProgress();
   const [screen, setScreen] = useState<CampaignScreen>("map");
   const [activeLevel, setActiveLevel] = useState<LevelNumber>(1);
   const [lastReward, setLastReward] = useState<RewardResult | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
   const stage = getArmorCampaignStage(activeLevel);
   const campaign = progress.armorCampaign;
 
@@ -348,19 +349,29 @@ export function ArmaduraCampaign() {
     setScreen("intro");
   };
 
-  const completeStage = (elapsedSeconds: number) => {
+  const completeStage = async (elapsedSeconds: number) => {
     if (!stage) return;
-    const result = completeCampaignLevel({
-      levelId: stage.id,
-      unlocksLevel: Math.min(7, stage.level + 1),
-      points: stage.reward.points,
-      xp: stage.reward.xp,
-      faithTokens: stage.reward.faithTokens,
-      badge: stage.reward.badge,
-      armorPiece: stage.reward.armorPiece,
-      elapsedSeconds,
-    });
+    let result: RewardResult | null;
+    try {
+      result = identity.authenticated
+        ? await confirmCampaignLevel(stage.id, elapsedSeconds)
+        : completeCampaignLevel({
+          levelId: stage.id,
+          unlocksLevel: Math.min(7, stage.level + 1),
+          points: stage.reward.points,
+          xp: stage.reward.xp,
+          faithTokens: stage.reward.faithTokens,
+          badge: stage.reward.badge,
+          armorPiece: stage.reward.armorPiece,
+          elapsedSeconds,
+        });
+    } catch (error) {
+      setClaimError(error instanceof Error ? error.message : "No pudimos confirmar la recompensa.");
+      return;
+    }
+    if (!result) return;
     setLastReward(result);
+    setClaimError(null);
     setScreen("reward");
   };
 
@@ -371,16 +382,17 @@ export function ArmaduraCampaign() {
       <Link href="/aventuras" className="text-sm font-extrabold text-[#67e5e0] hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-100/25">← Volver a aventuras</Link>
       <section className="av-panel mt-6 overflow-hidden rounded-[2.3rem] px-6 py-9 text-white shadow-lift sm:px-10"><div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end"><div><p className="text-xs font-black uppercase tracking-[.22em] text-[#f5bd4d]">Aventura Vida: La Gran Aventura</p><h1 className="av-title mt-3 max-w-3xl font-display text-4xl font-black tracking-tight sm:text-6xl">En busca de la Armadura del Espíritu</h1><p className="mt-4 max-w-2xl text-base leading-7 text-white/70">Acompaña a Elián por un mundo original de senderos luminosos, decisiones sabias y desafíos de esperanza.</p><div className="mt-4 inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-xs font-bold text-white/80"><CharacterAvatar avatarKey={identity.avatarKey} fallback={avatarFallbackFor(identity.avatarKey)} alt={`Avatar de ${identity.nickname}`} imageSizes="32px" className="grid h-8 w-8 place-items-center rounded-lg bg-[#f5bd4d] text-base" />{identity.nickname}</div></div><div className="grid grid-cols-2 gap-2 text-center text-xs font-black"><div className="rounded-2xl bg-white/10 p-3"><span className="block text-xl text-[#f5bd4d]">✦ {campaign.faithTokens}</span>destellos</div><div className="rounded-2xl bg-white/10 p-3"><span className="block text-xl text-[#f5bd4d]">{campaign.armorPieces.length}/6</span>armaduras</div></div></div></section>
 
+      {claimError && <p role="alert" className="mt-5 rounded-2xl bg-coral/10 px-4 py-3 text-sm font-bold text-[#ffb2a7]">{claimError}</p>}
       <div className="mt-8" aria-live="polite">
         {screen === "map" && <CampaignMap unlockedLevel={campaign.unlockedLevel} completedLevelIds={campaign.completedLevelIds} onSelect={selectLevel} />}
         {screen === "intro" && <section className="av-panel mx-auto max-w-3xl rounded-[2rem] p-7 shadow-card sm:p-10"><p className="text-xs font-black uppercase tracking-[.18em] text-[#67e5e0]">{stage.worldLabel}</p><h2 className="mt-3 font-display text-4xl font-black text-[#f5e5b9]">Nivel {stage.level}: {stage.title}</h2><p className="mt-4 text-base leading-7 text-white/70">{stage.intro}</p><div className="mt-6 rounded-2xl border border-teal-100/15 bg-[#061923]/60 p-4 text-sm font-bold leading-6 text-white/80"><span className="text-[#67e5e0]">Enseñanza del camino:</span> {stage.teaching}</div><div className="mt-7 flex flex-wrap gap-3"><button type="button" onClick={() => setScreen("playing")} className="av-gold-button rounded-2xl px-6 py-3 text-sm font-black focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#f5bd4d]/30">Comenzar nivel →</button><button type="button" onClick={() => setScreen("map")} className="rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-black text-white hover:bg-white/15 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-100/25">Ver mapa</button></div></section>}
-        {screen === "playing" && <AdventureStage key={stage.id} stage={stage} onComplete={completeStage} avatarKey={identity.avatarKey} nickname={identity.nickname} />}
+        {screen === "playing" && <AdventureStage key={stage.id} stage={stage} onComplete={(seconds) => void completeStage(seconds)} avatarKey={identity.avatarKey} nickname={identity.nickname} />}
         {screen === "reward" && <section className="av-panel mx-auto max-w-2xl rounded-[2rem] p-7 text-center shadow-lift sm:p-10"><div className="mx-auto grid h-20 w-20 place-items-center rounded-[1.7rem] bg-[#f5bd4d] text-4xl text-[#061923] shadow-card">✦</div><p className="mt-5 text-xs font-black uppercase tracking-[.2em] text-[#f5bd4d]">Recompensa desbloqueada</p><h2 className="mt-2 font-display text-4xl font-black text-[#f5e5b9]">{stage.reward.title}</h2><p className="mx-auto mt-4 max-w-lg text-base leading-7 text-white/70">{stage.reward.description}</p><div className="mx-auto mt-6 grid max-w-md grid-cols-3 gap-3"><div className="rounded-2xl border border-teal-100/15 bg-[#061923]/60 p-3 text-sm font-black text-[#67e5e0]">+{stage.reward.xp}<span className="mt-1 block text-[10px] uppercase text-white/55">XP</span></div><div className="rounded-2xl border border-[#f5bd4d]/20 bg-[#061923]/60 p-3 text-sm font-black text-[#f5cf74]">+{stage.reward.points}<span className="mt-1 block text-[10px] uppercase text-white/55">Puntos</span></div><div className="rounded-2xl border border-[#74e2b0]/20 bg-[#061923]/60 p-3 text-sm font-black text-[#74e2b0]">+{stage.reward.faithTokens}<span className="mt-1 block text-[10px] uppercase text-white/55">Destellos</span></div></div>{lastReward && <p className="mt-5 text-sm font-bold text-white/60">Total: {lastReward.totalXp} XP · Nivel {lastReward.level} · Racha {lastReward.streak}</p>}<button type="button" onClick={() => setScreen("narrative")} className="av-gold-button mt-8 rounded-2xl px-6 py-3 text-sm font-black focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#f5bd4d]/30">Continuar la historia →</button></section>}
         {screen === "narrative" && <section className="av-panel-soft mx-auto max-w-2xl overflow-hidden rounded-[2rem] p-7 text-center shadow-card sm:p-10"><div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#f5bd4d] text-3xl shadow-card">🧭</div><p className="mt-5 text-xs font-black uppercase tracking-[.2em] text-[#67e5e0]">Historia desbloqueada</p><h2 className="mt-2 font-display text-4xl font-black text-[#f5e5b9]">{stage.nextNarrative.title}</h2><p className="mx-auto mt-4 max-w-lg text-base leading-7 text-white/70">{stage.nextNarrative.text}</p><button type="button" onClick={() => stage.level < 7 ? selectLevel((stage.level + 1) as LevelNumber) : setScreen("final")} className="av-gold-button mt-8 rounded-2xl px-6 py-3 text-sm font-black focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#f5bd4d]/30">{stage.nextNarrative.action} →</button></section>}
         {screen === "final" && <section className="av-panel mx-auto max-w-2xl overflow-hidden rounded-[2rem] p-7 text-center shadow-lift sm:p-10"><div className="mx-auto grid h-20 w-20 place-items-center rounded-[1.7rem] bg-[#f5bd4d] text-4xl text-[#061923] shadow-card">🏆</div><p className="mt-5 text-xs font-black uppercase tracking-[.2em] text-[#f5bd4d]">La Gran Aventura</p><h2 className="mt-2 font-display text-4xl font-black text-[#f5e5b9]">¡AVENTURA COMPLETADA!</h2><p className="mx-auto mt-4 max-w-lg text-base leading-7 text-white/70">Elián llegó a la Ciudad Celestial. Cada paso, cada destello y cada decisión se guardaron como parte de tu camino.</p><div className="mx-auto mt-6 grid max-w-md grid-cols-3 gap-3"><div className="rounded-2xl border border-teal-100/15 bg-[#061923]/60 p-3 text-sm font-black text-[#f5e5b9]">{campaign.completedLevelIds.length}/7<span className="mt-1 block text-[10px] uppercase text-white/55">niveles</span></div><div className="rounded-2xl border border-teal-100/15 bg-[#061923]/60 p-3 text-sm font-black text-[#f5e5b9]">{campaign.armorPieces.length}/6<span className="mt-1 block text-[10px] uppercase text-white/55">armaduras</span></div><div className="rounded-2xl border border-teal-100/15 bg-[#061923]/60 p-3 text-sm font-black text-[#f5e5b9]">{timeLabel(campaign.adventureSeconds)}<span className="mt-1 block text-[10px] uppercase text-white/55">tiempo</span></div></div><button type="button" onClick={() => setScreen("map")} className="av-gold-button mt-8 rounded-2xl px-6 py-3 text-sm font-black">Explorar el mapa</button></section>}
       </div>
 
-      <section className="av-panel-soft mt-10 grid gap-4 rounded-[1.8rem] p-5 shadow-card md:grid-cols-3"><div><p className="text-xs font-black uppercase tracking-[.16em] text-[#67e5e0]">Progreso guardado</p><p className="mt-1 text-sm font-semibold leading-6 text-white/65">Esta aventura usa el mismo progreso local del perfil: XP, puntos, racha, logros y partidas completadas.</p></div><div><p className="text-xs font-black uppercase tracking-[.16em] text-[#67e5e0]">Siete niveles jugables</p><p className="mt-1 text-sm font-semibold leading-6 text-white/65">Los siete mundos están disponibles y puedes seguir la historia sin volver al menú.</p></div><div><p className="text-xs font-black uppercase tracking-[.16em] text-[#67e5e0]">Tiempo de aventura</p><p className="mt-1 font-display text-2xl font-black text-[#f5e5b9]">{timeLabel(campaign.adventureSeconds)}</p></div></section>
+      <section className="av-panel-soft mt-10 grid gap-4 rounded-[1.8rem] p-5 shadow-card md:grid-cols-3"><div><p className="text-xs font-black uppercase tracking-[.16em] text-[#67e5e0]">Progreso guardado</p><p className="mt-1 text-sm font-semibold leading-6 text-white/65">{identity.authenticated ? "Tu cuenta confirma XP, puntos, racha y logros con el servidor." : "Como visitante, tu progreso se guarda en este dispositivo."}</p></div><div><p className="text-xs font-black uppercase tracking-[.16em] text-[#67e5e0]">Siete niveles jugables</p><p className="mt-1 text-sm font-semibold leading-6 text-white/65">Los siete mundos están disponibles y puedes seguir la historia sin volver al menú.</p></div><div><p className="text-xs font-black uppercase tracking-[.16em] text-[#67e5e0]">Tiempo de aventura</p><p className="mt-1 font-display text-2xl font-black text-[#f5e5b9]">{timeLabel(campaign.adventureSeconds)}</p></div></section>
     </div>
   );
 }

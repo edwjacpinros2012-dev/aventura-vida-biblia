@@ -22,6 +22,8 @@ export type OfflineContentSnapshot = {
 export type PendingGameProgressOperation = {
   id: string;
   type: "GAME_PROGRESS";
+  /** La cola solo se reproduce para la cuenta que la creó. */
+  accountId: string;
   gameSlug: string;
   data: Record<string, unknown>;
   updatedAt: string;

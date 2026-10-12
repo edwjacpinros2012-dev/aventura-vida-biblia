@@ -96,6 +96,15 @@ enum OfflineSyncOperationStatus {
   REJECTED
 }
 
+// Eventos idempotentes que actualizan la progresión de una cuenta. La
+// aplicación cliente nunca decide las cantidades: solo solicita completar una
+// sesión, misión o nivel que el servidor conoce.
+enum PlayerProgressEventKind {
+  GAME_COMPLETION
+  DAILY_CHALLENGE
+  CAMPAIGN_LEVEL
+}
+
 enum AuditAction {
   CREATE
   UPDATE
@@ -238,6 +247,7 @@ model User {
   matchPlayers   MatchPlayer[]
   pvpStats       PvpProfile?
   offlineSyncOperations OfflineSyncOperation[]
+  progressEvents PlayerProgressEvent[]
 
   @@index([role])
 }
@@ -274,6 +284,9 @@ model Profile {
   gamesPlayed Int    @default(0)
   adventuresCompleted Int @default(0)
   learnedVerses Int  @default(0)
+  // Fecha de actividad de la plataforma en Ecuador (YYYY-MM-DD). Se guarda
+  // en servidor para que el reloj del dispositivo no pueda alterar la racha.
+  lastActiveDate String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -397,6 +410,7 @@ model Game {
   category           GameCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   sessions           GameSession[]
   progress           GameProgress[]
+  progressEvents     PlayerProgressEvent[]
   scores             Score[]
   missions           Mission[]
   adventureLinks     AdventureGame[]
@@ -548,6 +562,28 @@ model OfflineSyncOperation {
   user        User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt(sort: Desc)])
+}
+
+// Libro de eventos de progreso para juegos, misión diaria y campaña. La
+// restricción por usuario, tipo y origen hace que reintentar una solicitud no
+// conceda XP, puntos ni monedas una segunda vez.
+model PlayerProgressEvent {
+  id           String                  @id @default(cuid())
+  userId       String
+  kind         PlayerProgressEventKind
+  sourceKey    String
+  gameId       String?
+  xpAwarded    Int                     @default(0)
+  pointsAwarded Int                    @default(0)
+  coinsAwarded Int                     @default(0)
+  payload      Json?
+  createdAt    DateTime                @default(now())
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game         Game?                   @relation(fields: [gameId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, kind, sourceKey])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([gameId, kind])
 }
 
 model MissionProgress {

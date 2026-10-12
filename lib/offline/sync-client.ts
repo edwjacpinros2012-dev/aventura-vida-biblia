@@ -12,8 +12,8 @@ function operationId() {
     });
 }
 
-export async function queueGameProgress(gameSlug: string, data: Record<string, unknown>) {
-  const operation: PendingGameProgressOperation = { id: operationId(), type: "GAME_PROGRESS", gameSlug, data, updatedAt: new Date().toISOString() };
+export async function queueGameProgress(gameSlug: string, data: Record<string, unknown>, accountId: string) {
+  const operation: PendingGameProgressOperation = { id: operationId(), type: "GAME_PROGRESS", accountId, gameSlug, data, updatedAt: new Date().toISOString() };
   await enqueueProgressOperation(operation);
   return operation;
 }

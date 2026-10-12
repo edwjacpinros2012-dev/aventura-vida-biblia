@@ -19,12 +19,16 @@ const STORAGE_KEY = "aventura-vida.player-progress.v2";
 const IDENTITY_STORAGE_KEY = "aventura-vida.player-identity.v1";
 
 export type GlobalPlayerIdentity = {
+  accountId?: string;
   nickname: string;
   avatarKey: string;
   authenticated: boolean;
   /** Saldo devuelto por la cuenta autenticada; nunca se modifica desde el cliente. */
   adventureCoins?: number;
 };
+
+type ProgressSyncState = "local" | "pending" | "synced" | "error";
+type ServerProgressResponse = { state: { progress: PlayerProgress; adventureCoins: number }; result: RewardResult };
 
 const guestIdentity: GlobalPlayerIdentity = {
   nickname: "AventureroLuz",
@@ -61,10 +65,15 @@ type PlayerProgressContextValue = {
   hydrated: boolean;
   identity: GlobalPlayerIdentity;
   identityReady: boolean;
+  progressSyncState: ProgressSyncState;
   completeGame: (reward: GameReward) => RewardResult;
   completeDailyChallenge: (reward: GameReward) => RewardResult | null;
   completeCampaignLevel: (reward: CampaignLevelReward) => RewardResult;
   saveGameProgress: (gameId: string, data: Record<string, unknown>) => void;
+  startAuthenticatedGame: (gameId: string) => Promise<string | null>;
+  confirmAuthenticatedGame: (sessionId: string) => Promise<RewardResult | null>;
+  confirmDailyChallenge: (challengeId: string) => Promise<RewardResult | null>;
+  confirmCampaignLevel: (levelId: string, elapsedSeconds: number) => Promise<RewardResult | null>;
   selectAvatar: (avatarKey: string) => Promise<void>;
   resetProgress: () => void;
 };
@@ -141,6 +150,21 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
   const [hydrated, setHydrated] = useState(false);
   const [identity, setIdentity] = useState<GlobalPlayerIdentity>(guestIdentity);
   const [identityReady, setIdentityReady] = useState(false);
+  const [progressSyncState, setProgressSyncState] = useState<ProgressSyncState>("local");
+
+  const applyServerState = useCallback((state: ServerProgressResponse["state"]) => {
+    setProgress(safeProgress(state.progress));
+    setIdentity((current) => current.authenticated ? { ...current, adventureCoins: Math.max(0, Number(state.adventureCoins) || 0) } : current);
+    setProgressSyncState("synced");
+  }, []);
+
+  const fetchServerState = useCallback(async () => {
+    const response = await fetch("/api/progress/state", { cache: "no-store" });
+    if (!response.ok) throw new Error("No pudimos recuperar el progreso de tu cuenta.");
+    const state = await response.json() as ServerProgressResponse["state"];
+    applyServerState(state);
+    return state;
+  }, [applyServerState]);
 
   useEffect(() => {
     try {
@@ -155,19 +179,22 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
     }
     void fetch("/api/auth/me")
       .then((response) => response.ok ? response.json() as Promise<{ account: { nickname: string; avatarKey: string; adventureCoins: number } | null }> : null)
-      .then((result) => {
+      .then(async (result) => {
         if (result?.account && result.account.avatarKey.trim()) {
           setIdentity({
+            accountId: result.account.id,
             nickname: result.account.nickname,
             avatarKey: result.account.avatarKey,
             authenticated: true,
             adventureCoins: Math.max(0, Number(result.account.adventureCoins) || 0),
           });
+          setProgressSyncState("pending");
+          await fetchServerState().catch(() => setProgressSyncState("error"));
         }
       })
       .catch(() => undefined)
       .finally(() => setIdentityReady(true));
-  }, []);
+  }, [fetchServerState]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -180,6 +207,12 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
   }, [identity, identityReady]);
 
   const completeGame = useCallback((reward: GameReward): RewardResult => {
+    // Las cuentas autenticadas muestran una vista previa hasta que GameShell
+    // confirma la sesión con el servidor. No se modifica el saldo local.
+    if (identity.authenticated) {
+      setProgressSyncState("pending");
+      return { totalPoints: progress.points, totalXp: progress.xp, level: progress.level, streak: progress.streak, newAchievementIds: [] };
+    }
     const today = localDay();
     const streak = progress.lastPlayedOn === today ? progress.streak : progress.lastPlayedOn === previousDay() ? progress.streak + 1 : 1;
     const learnedVerses = reward.verseReference && !progress.learnedVerses.includes(reward.verseReference) ? [...progress.learnedVerses, reward.verseReference] : progress.learnedVerses;
@@ -198,9 +231,13 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
     const completed = { ...withAchievements, level: levelForXp(withAchievements.xp) };
     setProgress(completed);
     return { totalPoints: completed.points, totalXp: completed.xp, level: completed.level, streak: completed.streak, newAchievementIds };
-  }, [progress]);
+  }, [identity.authenticated, progress]);
 
   const completeCampaignLevel = useCallback((reward: CampaignLevelReward): RewardResult => {
+    if (identity.authenticated) {
+      setProgressSyncState("pending");
+      return { totalPoints: progress.points, totalXp: progress.xp, level: progress.level, streak: progress.streak, newAchievementIds: [] };
+    }
     const alreadyCompleted = progress.armorCampaign.completedLevelIds.includes(reward.levelId);
     if (alreadyCompleted) {
       return {
@@ -240,11 +277,17 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
     const completed = { ...withAchievements, level: levelForXp(withAchievements.xp) };
     setProgress(completed);
     return { totalPoints: completed.points, totalXp: completed.xp, level: completed.level, streak: completed.streak, newAchievementIds };
-  }, [progress]);
+  }, [identity.authenticated, progress]);
 
   // Los niveles diarios del modo visitante se guardan junto al mismo progreso
   // local. Un mismo id de fecha solo puede otorgar la recompensa una vez.
   const completeDailyChallenge = useCallback((reward: GameReward): RewardResult | null => {
+    if (identity.authenticated) {
+      setProgressSyncState("pending");
+      return progress.dailyChallengeIds.includes(reward.gameId)
+        ? null
+        : { totalPoints: progress.points, totalXp: progress.xp, level: progress.level, streak: progress.streak, newAchievementIds: [] };
+    }
     if (!/^nivel-diario-\d{4}-\d{2}-\d{2}$/.test(reward.gameId) || progress.dailyChallengeIds.includes(reward.gameId)) return null;
     const today = localDay();
     const streak = progress.lastPlayedOn === today ? progress.streak : progress.lastPlayedOn === previousDay() ? progress.streak + 1 : 1;
@@ -265,7 +308,7 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
     const completed = { ...withAchievements, level: levelForXp(withAchievements.xp) };
     setProgress(completed);
     return { totalPoints: completed.points, totalXp: completed.xp, level: completed.level, streak: completed.streak, newAchievementIds };
-  }, [progress]);
+  }, [identity.authenticated, progress]);
 
   const saveGameProgress = useCallback((gameId: string, data: Record<string, unknown>) => {
     setProgress((current) => ({ ...current, gameProgress: { ...current.gameProgress, [gameId]: { ...current.gameProgress[gameId], ...data } } }));
@@ -273,8 +316,47 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
     // monedas y recompensas siguen siendo decisiones del servidor.
     const game = games.find((candidate) => candidate.id === gameId);
     if (!identity.authenticated || !game) return;
-    void queueGameProgress(game.slug, data).then(() => flushPendingProgress()).catch(() => undefined);
+    if (!identity.accountId) return;
+    void queueGameProgress(game.slug, data, identity.accountId).then(() => flushPendingProgress()).catch(() => undefined);
+  }, [identity.accountId, identity.authenticated]);
+
+  const completeServerActivity = useCallback(async (body: Record<string, unknown>) => {
+    if (!identity.authenticated) return null;
+    setProgressSyncState("pending");
+    const response = await fetch("/api/progress/complete", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const result = await response.json().catch(() => null) as ServerProgressResponse | { error?: string } | null;
+    if (!response.ok || !result || !("state" in result) || !("result" in result)) {
+      setProgressSyncState("error");
+      throw new Error(result && "error" in result && result.error ? result.error : "No pudimos confirmar la recompensa.");
+    }
+    applyServerState(result.state);
+    return result.result;
+  }, [applyServerState, identity.authenticated]);
+
+  const startAuthenticatedGame = useCallback(async (gameId: string) => {
+    if (!identity.authenticated) return null;
+    const game = games.find((candidate) => candidate.id === gameId);
+    if (!game) return null;
+    const response = await fetch("/api/progress/game-session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ gameSlug: game.slug }),
+    });
+    const result = await response.json().catch(() => null) as { sessionId?: string; error?: string } | null;
+    if (!response.ok || !result?.sessionId) {
+      setProgressSyncState("error");
+      throw new Error(result?.error ?? "No pudimos iniciar la partida sincronizada.");
+    }
+    return result.sessionId;
   }, [identity.authenticated]);
+
+  const confirmAuthenticatedGame = useCallback((sessionId: string) => completeServerActivity({ kind: "GAME_SESSION", sessionId }), [completeServerActivity]);
+  const confirmDailyChallenge = useCallback((challengeId: string) => completeServerActivity({ kind: "DAILY_CHALLENGE", challengeId }), [completeServerActivity]);
+  const confirmCampaignLevel = useCallback((levelId: string, elapsedSeconds: number) => completeServerActivity({ kind: "CAMPAIGN_LEVEL", levelId, elapsedSeconds }), [completeServerActivity]);
 
   const selectAvatar = useCallback(async (avatarKey: string) => {
     if (!isSelectableAvatarKey(avatarKey)) throw new Error("Ese avatar no está disponible.");
@@ -301,8 +383,8 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
   const resetProgress = useCallback(() => setProgress(initialProgress), []);
 
   const value = useMemo(
-    () => ({ progress, hydrated, identity, identityReady, completeGame, completeDailyChallenge, completeCampaignLevel, saveGameProgress, selectAvatar, resetProgress }),
-    [completeCampaignLevel, completeDailyChallenge, completeGame, hydrated, identity, identityReady, progress, resetProgress, saveGameProgress, selectAvatar],
+    () => ({ progress, hydrated, identity, identityReady, progressSyncState, completeGame, completeDailyChallenge, completeCampaignLevel, saveGameProgress, startAuthenticatedGame, confirmAuthenticatedGame, confirmDailyChallenge, confirmCampaignLevel, selectAvatar, resetProgress }),
+    [completeCampaignLevel, completeDailyChallenge, completeGame, confirmAuthenticatedGame, confirmCampaignLevel, confirmDailyChallenge, hydrated, identity, identityReady, progress, progressSyncState, resetProgress, saveGameProgress, selectAvatar, startAuthenticatedGame],
   );
   return <PlayerProgressContext.Provider value={value}>{children}</PlayerProgressContext.Provider>;
 }

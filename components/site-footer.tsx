@@ -1,6 +1,14 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { PlatformShareButton } from "@/components/platform-share-button";
 
 export function SiteFooter() {
-  return <footer className="mt-20 border-t border-sun/20 bg-[#04141d] text-white"><div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.3fr_1fr_1fr] lg:px-8"><div><Logo /><p className="mt-4 max-w-sm text-sm leading-6 text-white/60">Un mundo de juegos, aventuras y valores para descubrir, aprender y vivir en familia.</p></div><div><h2 className="font-display text-sm font-black uppercase tracking-wider text-[#f5e5b9]">Explora</h2><div className="mt-4 grid gap-2 text-sm font-bold text-white/65"><Link className="hover:text-[#f5cf74]" href="/juegos">Juegos</Link><Link className="hover:text-[#f5cf74]" href="/aventuras">Aventuras</Link><Link className="hover:text-[#f5cf74]" href="/mision">Misión diaria</Link><Link className="hover:text-[#f5cf74]" href="/ranking">Ranking</Link></div></div><div><h2 className="font-display text-sm font-black uppercase tracking-wider text-[#f5e5b9]">Un espacio seguro</h2><p className="mt-4 text-sm leading-6 text-white/60">Los rankings muestran apodos y avatares. Las herramientas de comunidad protegen la privacidad de cada jugador.</p></div></div><div className="border-t border-white/10 px-4 py-5 text-center text-xs font-semibold text-white/45">© {new Date().getFullYear()} Aventura Vida Biblia · Proyecto Vida Kids</div></footer>;
+  return <footer className="mt-20 border-t border-sun/20 bg-[#04141d] text-white">
+    <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.3fr_1fr_1fr] lg:px-8">
+      <div><Logo /><p className="mt-4 max-w-sm text-sm leading-6 text-white/60">Un mundo de juegos, aventuras y valores para descubrir, aprender y vivir en familia.</p><PlatformShareButton compact className="mt-5 justify-start" /></div>
+      <div><h2 className="font-display text-sm font-black uppercase tracking-wider text-[#f5e5b9]">Explora</h2><div className="mt-4 grid gap-2 text-sm font-bold text-white/65"><Link className="hover:text-[#f5cf74]" href="/juegos">Juegos</Link><Link className="hover:text-[#f5cf74]" href="/aventuras">Aventuras</Link><Link className="hover:text-[#f5cf74]" href="/mision">Misión diaria</Link><Link className="hover:text-[#f5cf74]" href="/ranking">Ranking</Link></div></div>
+      <div><h2 className="font-display text-sm font-black uppercase tracking-wider text-[#f5e5b9]">Un espacio seguro</h2><p className="mt-4 text-sm leading-6 text-white/60">Los rankings muestran apodos y avatares. Las herramientas de comunidad protegen la privacidad de cada jugador.</p></div>
+    </div>
+    <div className="border-t border-white/10 px-4 py-5 text-center text-xs font-semibold text-white/45">© {new Date().getFullYear()} Aventura Vida Biblia · Proyecto Vida Kids</div>
+  </footer>;
 }
