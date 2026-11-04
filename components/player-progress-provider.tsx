@@ -178,7 +178,7 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
       setHydrated(true);
     }
     void fetch("/api/auth/me")
-      .then((response) => response.ok ? response.json() as Promise<{ account: { nickname: string; avatarKey: string; adventureCoins: number } | null }> : null)
+      .then((response) => response.ok ? response.json() as Promise<{ account: { id: string; nickname: string; avatarKey: string; adventureCoins: number } | null }> : null)
       .then(async (result) => {
         if (result?.account && result.account.avatarKey.trim()) {
           setIdentity({
@@ -370,6 +370,7 @@ export function PlayerProgressProvider({ children }: { children: React.ReactNode
       const profile = result.profile;
       if (!response.ok || !profile) throw new Error(result.error ?? "No pudimos guardar tu avatar.");
       setIdentity((current) => ({
+        accountId: current.accountId,
         nickname: profile.nickname,
         avatarKey: profile.avatarKey,
         authenticated: true,

@@ -8,7 +8,7 @@ Plataforma web de juegos, misiones y aventuras para **Proyecto Vida Kids**. Incl
 - Catálogo de juegos con búsqueda, filtros por categoría/dificultad/edad y vistas de nuevos/populares.
 - Fichas individuales, rutas de aventuras, misión diaria, ranking por apodo y perfil de jugador local.
 - Catorce juegos funcionales, incluida la colección bíblica, Laberinto Bíblico, Gran Aventura, Vocales de luz y los minijuegos de aprendizaje.
-- Shell común de juego con pantalla de carga/error/victoria, puntos, XP, racha, progreso, logros, partidas completadas y versículos aprendidos, guardado localmente por navegador.
+- Shell común de juego con pantalla de carga/error/victoria, puntos, XP, racha, progreso, logros, partidas completadas y versículos aprendidos. Los visitantes usan almacenamiento del navegador; las cuentas autenticadas confirman las recompensas con el servidor.
 - Sistema visual original: no usa personajes ni recursos de franquicias de terceros.
 - Esquema Prisma para usuarios, perfiles, juegos, sesiones, progreso, puntuaciones, XP, misiones, logros, aventuras, recompensas, notificaciones, configuración y auditoría.
 - Semilla con contenido y usuarios enteramente ficticios.
@@ -90,6 +90,9 @@ resolve` para no alterar datos existentes.
 Consulta [la guía de operaciones](docs/PERSISTENCE_AND_AUTOMATION.md) antes
 de configurar PostgreSQL, ejecutar el Cron o activar sincronización en
 producción. Ninguna clave se guarda en el navegador ni en el repositorio.
+Consulta también [PWA y Android](docs/PWA_AND_ANDROID.md) para instalar la
+plataforma, conocer los límites sin conexión y preparar un APK real en un
+equipo con Android SDK.
 
 ## Rutas implementadas en Fase 1
 

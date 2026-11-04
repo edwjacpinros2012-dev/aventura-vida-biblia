@@ -14,6 +14,8 @@ export const metadata: Metadata = {
   description: "Juegos, aventuras y valores bíblicos para descubrir, aprender y vivir en familia.",
   applicationName: publicSiteName,
   manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: publicSiteName },
+  icons: { apple: "/icon" },
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",

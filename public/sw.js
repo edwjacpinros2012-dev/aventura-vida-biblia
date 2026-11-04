@@ -1,5 +1,5 @@
-const CACHE = "aventura-vida-shell-v3";
-const SHELL = ["/", "/juegos", "/mision", "/perfil", "/offline", "/manifest.webmanifest", "/icon"];
+const CACHE = "aventura-vida-shell-v4";
+const SHELL = ["/", "/juegos", "/mision", "/offline", "/manifest.webmanifest", "/icon", "/icon-192", "/icon-maskable"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -16,7 +16,11 @@ self.addEventListener("fetch", (event) => {
   const isOfflineContent = url.pathname === "/api/content/offline";
   const isStaticAsset = url.pathname.startsWith("/_next/") || /\.(?:png|jpg|jpeg|webp|svg|woff2?)$/i.test(url.pathname);
   const isNavigation = event.request.mode === "navigate";
+  // No guardar HTML de cuentas, perfil, economía o partidas en una caché que
+  // podría reutilizarse después de cambiar de usuario en el mismo dispositivo.
+  const isPrivateNavigation = ["/perfil", "/coleccion", "/pvp", "/multiplayer", "/admin"].some((path) => url.pathname === path || url.pathname.startsWith(`${path}/`));
   if (url.pathname.startsWith("/api/") && !isOfflineContent) return;
+  if (isPrivateNavigation) return;
 
   event.respondWith(fetch(event.request).then((response) => {
     if (response.ok && (isOfflineContent || isStaticAsset || isNavigation)) {

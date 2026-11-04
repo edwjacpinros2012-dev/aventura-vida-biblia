@@ -4,6 +4,7 @@ import { z } from "zod";
 import { accountFromRequest } from "@/lib/auth/server";
 import { communityErrorResponse, requireModerator } from "@/lib/community/service";
 import { prisma } from "@/lib/prisma";
+import { parsePlayableGamePack } from "@/lib/central-brain/game-content";
 
 const reviewSchema = z.object({
   contentId: z.string().cuid(),
@@ -44,6 +45,13 @@ export async function PATCH(request: Request) {
     if (parsed.data.action === "publish" && current.source === "AI") {
       const approval = await prisma.generatedContent.findUnique({ where: { id: current.id }, select: { status: true } });
       if (approval?.status !== GeneratedContentStatus.APPROVED) return NextResponse.json({ error: "El contenido generado por IA debe aprobarse antes de publicarse." }, { status: 409 });
+      // Una propuesta no es todavía un módulo ejecutable ni una misión con
+      // validación de respuestas. Impedimos que la consola anuncie como
+      // publicado contenido que aún no está conectado a una experiencia real.
+      if (!current.missionId) {
+        const source = await prisma.generatedContent.findUnique({ where: { id: current.id }, select: { payload: true } });
+        if (!parsePlayableGamePack(source?.payload)) return NextResponse.json({ error: "Esta propuesta de IA fue aprobada, pero aún debe convertirse y revisarse como una misión o nivel jugable antes de publicarse." }, { status: 409 });
+      }
     }
     // Una revisión sobre una plantilla que ya fue publicada no la retira.
     const status = parsed.data.action === "approve"

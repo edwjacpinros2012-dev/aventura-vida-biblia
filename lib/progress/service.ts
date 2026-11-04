@@ -94,7 +94,7 @@ async function awardEligibleAchievements(
 
 async function activityStats(tx: Prisma.TransactionClient, userId: string) {
   const [gamesPlayed, quizGames] = await Promise.all([
-    tx.playerProgressEvent.count({ where: { userId, kind: PlayerProgressEventKind.GAME_COMPLETION } }),
+    tx.playerProgressEvent.count({ where: { userId, kind: { in: [PlayerProgressEventKind.GAME_COMPLETION, PlayerProgressEventKind.CAMPAIGN_LEVEL] } } }),
     tx.playerProgressEvent.count({ where: { userId, kind: PlayerProgressEventKind.GAME_COMPLETION, game: { slug: "preguntas-de-aventura" } } }),
   ]);
   return { gamesPlayed, quizGames };

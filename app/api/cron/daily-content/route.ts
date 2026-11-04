@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
-import { dailyContentAutomation, ensureDailyBibleContent } from "@/lib/content-automation/daily-content-service";
+import { dailyContentAutomation, ensureDailyAiProposal, ensureDailyBibleContent } from "@/lib/content-automation/daily-content-service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +22,10 @@ async function run(request: Request) {
   if (!isAuthorized(request)) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   try {
     const result = await ensureDailyBibleContent();
-    return NextResponse.json({ ...result, source: "template", aiProviderConfigured: dailyContentAutomation.aiProviderConfigured });
+    // El fallo de una propuesta opcional no puede retirar ni ocultar el reto
+    // curado que sí se publicó correctamente.
+    const aiProposal = await ensureDailyAiProposal();
+    return NextResponse.json({ ...result, source: "template", aiProviderConfigured: dailyContentAutomation.aiProviderConfigured, aiProposal });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo preparar el contenido diario.";
     return NextResponse.json({ error: message }, { status: 500 });

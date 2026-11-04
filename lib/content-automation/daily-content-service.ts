@@ -1,12 +1,18 @@
 import { GeneratedContentSource, GeneratedContentStatus, MissionStatus, ScheduledJobStatus } from "@prisma/client";
 import { dailyBibleChallengeFor, dailyBibleDateKey, type DailyBibleChallenge } from "@/lib/daily-bible-challenge";
 import { contentExpansionDraftFor, validateContentExpansionDraft } from "@/lib/content-automation/expansion-templates";
+import { aiProviderStatus } from "@/lib/content-automation/ai-provider";
+import { proposeCentralEditorialDraft } from "@/lib/central-brain/editorial-service";
+import { centralBrainAutomationConfig } from "@/lib/central-brain/automation-service";
 import { prisma } from "@/lib/prisma";
 
 const JOB_KEY = "daily-bible-content";
+const AI_JOB_KEY = "daily-bible-ai-proposal";
 const CONTENT_KIND = "DAILY_BIBLE_CHALLENGE";
+const AI_CONTENT_KIND = "AI_BIBLE_CONTENT_PROPOSAL";
 const MAX_REWARD = 500;
 const RUN_STALE_AFTER_MS = 20 * 60 * 1000;
+const MAX_AI_ATTEMPTS = 3;
 
 export type DailyContentRunResult = {
   status: "published" | "already-processed" | "in-progress";
@@ -50,21 +56,22 @@ function isDailyBibleChallenge(value: unknown): value is DailyBibleChallenge {
     && validateDailyBibleChallenge(candidate as DailyBibleChallenge).valid;
 }
 
-type RunClaim = { run: Awaited<ReturnType<typeof prisma.contentGenerationRun.findUniqueOrThrow>>; claimed: boolean };
+type RunClaim = { run: Awaited<ReturnType<typeof prisma.contentGenerationRun.findUniqueOrThrow>>; claimed: boolean; exhausted?: boolean };
 
-async function claimRun(dateKey: string): Promise<RunClaim> {
-  const current = await prisma.contentGenerationRun.findUnique({ where: { jobKey_dateKey: { jobKey: JOB_KEY, dateKey } } });
+async function claimRun(jobKey: string, dateKey: string, source: GeneratedContentSource, maxAttempts = Number.POSITIVE_INFINITY): Promise<RunClaim> {
+  const current = await prisma.contentGenerationRun.findUnique({ where: { jobKey_dateKey: { jobKey, dateKey } } });
   if (!current) {
     try {
-      const run = await prisma.contentGenerationRun.create({ data: { jobKey: JOB_KEY, dateKey, source: GeneratedContentSource.TEMPLATE, status: ScheduledJobStatus.RUNNING } });
+      const run = await prisma.contentGenerationRun.create({ data: { jobKey, dateKey, source, status: ScheduledJobStatus.RUNNING } });
       return { run, claimed: true };
     } catch {
-      const concurrent = await prisma.contentGenerationRun.findUniqueOrThrow({ where: { jobKey_dateKey: { jobKey: JOB_KEY, dateKey } } });
+      const concurrent = await prisma.contentGenerationRun.findUniqueOrThrow({ where: { jobKey_dateKey: { jobKey, dateKey } } });
       return { run: concurrent, claimed: false };
     }
   }
   if (current.status === ScheduledJobStatus.SUCCEEDED) return { run: current, claimed: false };
   if (current.status === ScheduledJobStatus.RUNNING && Date.now() - current.startedAt.getTime() < RUN_STALE_AFTER_MS) return { run: current, claimed: false };
+  if (current.status === ScheduledJobStatus.FAILED && current.attempt >= maxAttempts) return { run: current, claimed: false, exhausted: true };
 
   const claim = await prisma.contentGenerationRun.updateMany({
     // La marca temporal es una compare-and-swap: solo una reejecución puede
@@ -83,7 +90,7 @@ async function claimRun(dateKey: string): Promise<RunClaim> {
 export async function ensureDailyBibleContent(date = new Date()): Promise<DailyContentRunResult> {
   const dateKey = dailyBibleDateKey(date);
   const challenge = challengeForDateKey(dateKey);
-  const claim = await claimRun(dateKey);
+  const claim = await claimRun(JOB_KEY, dateKey, GeneratedContentSource.TEMPLATE);
   const run = claim.run;
   if (!claim.claimed) return { status: run.status === ScheduledJobStatus.SUCCEEDED ? "already-processed" : "in-progress", dateKey, contentKey: challenge.id };
 
@@ -179,8 +186,74 @@ export async function publishedDailyBibleChallengeFor(date = new Date()) {
   return challengeForDateKey(dateKey);
 }
 
+/**
+ * Una vez por día, el proveedor opcional prepara una propuesta de capítulo,
+ * evento o minijuego. Nunca altera la misión publicada ni se auto-publica:
+ * una persona debe aprobarla en la consola editorial.
+ */
+export async function ensureDailyAiProposal(date = new Date()) {
+  const dateKey = dailyBibleDateKey(date);
+  const automation = await centralBrainAutomationConfig();
+  if (!automation.enabled) return { status: "paused" as const, dateKey };
+  const provider = aiProviderStatus();
+  if (!provider.configured) return { status: "disabled" as const, dateKey, reason: provider.reason };
+
+  const claim = await claimRun(AI_JOB_KEY, dateKey, GeneratedContentSource.AI, MAX_AI_ATTEMPTS);
+  const run = claim.run;
+  const contentKey = `propuesta-ia-${dateKey}`;
+  if (claim.exhausted) return { status: "retry-limit" as const, dateKey, contentKey };
+  if (!claim.claimed) return { status: run.status === ScheduledJobStatus.SUCCEEDED ? "already-processed" as const : "in-progress" as const, dateKey, contentKey };
+
+  try {
+    const challenge = challengeForDateKey(dateKey);
+    const generated = await proposeCentralEditorialDraft({ dateKey, challenge });
+    if (generated.status === "disabled") {
+      await prisma.contentGenerationRun.update({ where: { id: run.id }, data: { status: ScheduledJobStatus.SKIPPED, output: { reason: generated.reason }, finishedAt: new Date() } });
+      return { status: "disabled" as const, dateKey, reason: generated.reason };
+    }
+    const validation = validateDailyBibleChallenge(challenge);
+    if (!validation.valid) throw new Error("La plantilla de referencia no pasó validación.");
+    await prisma.generatedContent.upsert({
+      where: { contentKey },
+      update: {
+        kind: AI_CONTENT_KIND,
+        dateKey,
+        source: GeneratedContentSource.AI,
+        status: GeneratedContentStatus.DRAFT,
+        payload: generated.proposal,
+        validation: { valid: true, automaticChecks: ["estructura", "límites de recompensa", "referencia curada sin cambios"], requiresHumanBibleReview: true },
+        reviewNotes: "Propuesta generada por IA: requiere revisión bíblica, editorial y de mecánica antes de publicarse.",
+        runId: run.id,
+      },
+      create: {
+        contentKey,
+        kind: AI_CONTENT_KIND,
+        dateKey,
+        version: 1,
+        source: GeneratedContentSource.AI,
+        status: GeneratedContentStatus.DRAFT,
+        payload: generated.proposal,
+        validation: { valid: true, automaticChecks: ["estructura", "límites de recompensa", "referencia curada sin cambios"], requiresHumanBibleReview: true },
+        reviewNotes: "Propuesta generada por IA: requiere revisión bíblica, editorial y de mecánica antes de publicarse.",
+        runId: run.id,
+      },
+    });
+    await prisma.contentGenerationRun.update({
+      where: { id: run.id },
+      data: { status: ScheduledJobStatus.SUCCEEDED, output: { contentKey, provider: generated.provider, model: generated.model, publication: "draft" }, finishedAt: new Date() },
+    });
+    await prisma.auditLog.create({ data: { action: "CREATE", entity: "GeneratedContent", entityId: contentKey, metadata: { source: "ai", dateKey, runId: run.id, status: "DRAFT" } } });
+    return { status: "drafted" as const, dateKey, contentKey };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "No se pudo generar la propuesta de IA.";
+    await prisma.contentGenerationRun.update({ where: { id: run.id }, data: { status: ScheduledJobStatus.FAILED, error: message.slice(0, 2_000), finishedAt: new Date() } }).catch(() => undefined);
+    return { status: "failed" as const, dateKey, contentKey, error: message };
+  }
+}
+
 export const dailyContentAutomation = {
   jobKey: JOB_KEY,
   contentKind: CONTENT_KIND,
-  aiProviderConfigured: Boolean(process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY),
+  aiProviderConfigured: aiProviderStatus().configured,
+  aiProvider: aiProviderStatus().configured ? "openai" : undefined,
 };

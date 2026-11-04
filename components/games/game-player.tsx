@@ -20,7 +20,7 @@ export function GamePlayer({ game }: { game: Game }) {
   const content = {
     "word-search": <WordSearchGame />,
     coloring: <ColoringGame />,
-    quiz: <QuizGame />,
+    quiz: <QuizGame gameSlug={game.slug} />,
     story: <StoryGame />,
     memory: <MemoryGame />,
     iq: <IqGame />,

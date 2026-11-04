@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { VictoryPanel, useGameCompletion } from "@/components/games/game-shell";
 import { PvpQuizDuel } from "@/components/games/pvp-quiz-duel";
 
 type Question = { category: "Historias" | "Valores" | "Versículos"; difficulty: "Inicial" | "Explorador"; question: string; options: string[]; correct: number; explanation: string };
+type PublishedQuizPack = { title: string; bibleReference: string; questions: Question[] };
 
 const questions: Question[] = [
   { category: "Historias", difficulty: "Inicial", question: "¿Quién construyó un arca para cuidar a su familia y a los animales?", options: ["Noé", "David", "Moisés", "Jonás"], correct: 0, explanation: "Noé siguió las instrucciones de Dios y preparó el arca." },
@@ -15,7 +16,7 @@ const questions: Question[] = [
   { category: "Versículos", difficulty: "Explorador", question: "Completa la idea: “Tu palabra es lámpara a mis…”", options: ["manos", "pasos", "juegos", "sueños"], correct: 1, explanation: "El Salmo 119 usa una lámpara como imagen de guía para nuestros pasos." },
 ];
 
-export function QuizGame() {
+export function QuizGame({ gameSlug }: { gameSlug: string }) {
   const [mode, setMode] = useState<"solo" | "pvp">("solo");
   const { result, finish, resetCompletion } = useGameCompletion("quiz-adventure");
   const [category, setCategory] = useState<Question["category"]>("Historias");
@@ -24,11 +25,32 @@ export function QuizGame() {
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
+  const [publishedQuestions, setPublishedQuestions] = useState<Question[]>([]);
+  const [publishedLabel, setPublishedLabel] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    void fetch(`/api/content/games/${encodeURIComponent(gameSlug)}`)
+      .then((response) => response.ok ? response.json() as Promise<{ packs?: PublishedQuizPack[] }> : null)
+      .then((payload) => {
+        if (!active || !payload?.packs?.length) return;
+        const newest = payload.packs[0];
+        if (newest.questions.length >= 2) {
+          setPublishedQuestions(newest.questions);
+          setPublishedLabel(newest.title);
+        }
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [gameSlug]);
+  const availableQuestions = useMemo(
+    () => publishedQuestions.length >= 2 ? [...questions, ...publishedQuestions] : questions,
+    [publishedQuestions],
+  );
   const filtered = useMemo(() => {
-    const matches = questions.filter((question) => question.category === category && question.difficulty === difficulty);
-    const pool = matches.length >= 2 ? matches : questions.filter((question) => question.category === category).slice(0, 2);
+    const matches = availableQuestions.filter((question) => question.category === category && question.difficulty === difficulty);
+    const pool = matches.length >= 2 ? matches : availableQuestions.filter((question) => question.category === category).slice(0, 2);
     return [...pool].sort((first, second) => (first.question.length + round) % 5 - (second.question.length + round) % 5);
-  }, [category, difficulty, round]);
+  }, [availableQuestions, category, difficulty, round]);
   const current = filtered[index % filtered.length];
   const answered = selected !== null;
   const reset = (nextRound = round + 1) => { setRound(nextRound); setIndex(0); setSelected(null); setCorrectCount(0); resetCompletion(); };
@@ -42,5 +64,5 @@ export function QuizGame() {
   const xp = 70 + correctCount * 20;
   if (mode === "pvp") return <PvpQuizDuel onBack={() => setMode("solo")} />;
   if (result) return <VictoryPanel title="¡Mapa de preguntas completado!" description={`Acertaste ${correctCount} de ${filtered.length} retos. Cada pregunta es una nueva luz para tu mapa.`} result={result} points={points} xp={xp} onPlayAgain={() => reset()} />;
-  return <><div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#e9fbf5] p-4"><div><p className="text-xs font-black uppercase tracking-[.16em] text-leaf">Nuevo: duelo online</p><p className="mt-1 text-sm font-bold text-ink/70">Pon a prueba tus respuestas en un duelo 1 vs 1 validado por servidor.</p></div><button type="button" onClick={() => setMode("pvp")} className="rounded-xl bg-violet px-4 py-3 text-sm font-extrabold text-white hover:bg-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">Jugar duelo 1 vs 1</button></div><div className="mt-6 grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]"><aside className="rounded-[1.7rem] bg-[#edfaff] p-5 shadow-card"><p className="text-xs font-black uppercase tracking-[.16em] text-violet">Tu ruta · ronda {round + 1}</p><p className="mt-3 text-sm font-bold text-ink">Categoría</p><div className="mt-2 grid gap-2">{(["Historias", "Valores", "Versículos"] as const).map((item) => <button key={item} type="button" onClick={() => { setCategory(item); reset(round + 1); }} className={`rounded-xl px-3 py-2.5 text-left text-sm font-extrabold outline-none focus-visible:ring-4 focus-visible:ring-violet/25 ${category === item ? "bg-violet text-white" : "bg-white text-ink hover:bg-violet/10"}`}>{item}</button>)}</div><p className="mt-5 text-sm font-bold text-ink">Dificultad</p><div className="mt-2 flex gap-2">{(["Inicial", "Explorador"] as const).map((item) => <button key={item} type="button" onClick={() => { setDifficulty(item); reset(round + 1); }} className={`flex-1 rounded-xl px-2 py-2.5 text-xs font-extrabold ${difficulty === item ? "bg-ink text-white" : "bg-white text-ink/65"}`}>{item}</button>)}</div><div className="mt-6 rounded-xl bg-white p-4"><p className="text-xs font-black uppercase tracking-wide text-ink/50">Marcador</p><p className="mt-2 font-display text-3xl font-black text-violet">{correctCount}</p><p className="text-xs font-bold text-ink/60">respuestas correctas</p></div></aside><div className="rounded-[1.7rem] bg-white p-5 shadow-card sm:p-8"><div className="flex items-center justify-between gap-3"><span className="rounded-full bg-sun/30 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-ink">Pregunta {index + 1} de {filtered.length}</span><span className="text-xs font-bold text-ink/50">{category}</span></div><h2 className="mt-7 font-display text-3xl font-black leading-tight text-ink">{current.question}</h2><div className="mt-7 grid gap-3">{current.options.map((option, optionIndex) => { const isCorrect = answered && optionIndex === current.correct; const isSelected = selected === optionIndex; return <button type="button" key={option} onClick={() => choose(optionIndex)} disabled={answered} className={`rounded-2xl border-2 p-4 text-left text-sm font-bold outline-none transition-all focus-visible:ring-4 focus-visible:ring-violet/25 ${!answered ? "border-ink/5 bg-sky/40 hover:border-violet hover:bg-violet/5" : isCorrect ? "border-leaf bg-leaf/10 text-[#147558]" : isSelected ? "border-coral bg-coral/10 text-coral" : "border-ink/5 bg-white text-ink/45"}`}><span className="mr-3 inline-grid h-7 w-7 place-items-center rounded-lg bg-white text-xs font-black text-ink/65">{String.fromCharCode(65 + optionIndex)}</span>{option}</button>; })}</div>{answered && <div className={`mt-5 rounded-2xl p-4 text-sm leading-6 ${selected === current.correct ? "bg-leaf/10 text-[#147558]" : "bg-coral/10 text-coral"}`}><p className="font-black">{selected === current.correct ? "¡Correcto!" : "Casi, sigue explorando."}</p><p className="mt-1 font-semibold">{current.explanation}</p></div>}{answered && <button type="button" onClick={next} className="mt-6 rounded-xl bg-ink px-5 py-3 text-sm font-extrabold text-white hover:bg-violet focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">{index + 1 >= filtered.length ? "Ver recompensa" : "Siguiente pregunta"}</button>}</div></div></>;
+  return <><div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#e9fbf5] p-4"><div><p className="text-xs font-black uppercase tracking-[.16em] text-leaf">Nuevo: duelo online</p><p className="mt-1 text-sm font-bold text-ink/70">Pon a prueba tus respuestas en un duelo 1 vs 1 validado por servidor.</p></div><button type="button" onClick={() => setMode("pvp")} className="rounded-xl bg-violet px-4 py-3 text-sm font-extrabold text-white hover:bg-ink focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">Jugar duelo 1 vs 1</button></div>{publishedLabel && <p className="mt-4 rounded-xl border border-leaf/20 bg-leaf/10 px-4 py-3 text-sm font-bold text-[#147558]">Nuevo reto editorial disponible: {publishedLabel}</p>}<div className="mt-6 grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]"><aside className="rounded-[1.7rem] bg-[#edfaff] p-5 shadow-card"><p className="text-xs font-black uppercase tracking-[.16em] text-violet">Tu ruta · ronda {round + 1}</p><p className="mt-3 text-sm font-bold text-ink">Categoría</p><div className="mt-2 grid gap-2">{(["Historias", "Valores", "Versículos"] as const).map((item) => <button key={item} type="button" onClick={() => { setCategory(item); reset(round + 1); }} className={`rounded-xl px-3 py-2.5 text-left text-sm font-extrabold outline-none focus-visible:ring-4 focus-visible:ring-violet/25 ${category === item ? "bg-violet text-white" : "bg-white text-ink hover:bg-violet/10"}`}>{item}</button>)}</div><p className="mt-5 text-sm font-bold text-ink">Dificultad</p><div className="mt-2 flex gap-2">{(["Inicial", "Explorador"] as const).map((item) => <button key={item} type="button" onClick={() => { setDifficulty(item); reset(round + 1); }} className={`flex-1 rounded-xl px-2 py-2.5 text-xs font-extrabold ${difficulty === item ? "bg-ink text-white" : "bg-white text-ink/65"}`}>{item}</button>)}</div><div className="mt-6 rounded-xl bg-white p-4"><p className="text-xs font-black uppercase tracking-wide text-ink/50">Marcador</p><p className="mt-2 font-display text-3xl font-black text-violet">{correctCount}</p><p className="text-xs font-bold text-ink/60">respuestas correctas</p></div></aside><div className="rounded-[1.7rem] bg-white p-5 shadow-card sm:p-8"><div className="flex items-center justify-between gap-3"><span className="rounded-full bg-sun/30 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-ink">Pregunta {index + 1} de {filtered.length}</span><span className="text-xs font-bold text-ink/50">{category}</span></div><h2 className="mt-7 font-display text-3xl font-black leading-tight text-ink">{current.question}</h2><div className="mt-7 grid gap-3">{current.options.map((option, optionIndex) => { const isCorrect = answered && optionIndex === current.correct; const isSelected = selected === optionIndex; return <button type="button" key={option} onClick={() => choose(optionIndex)} disabled={answered} className={`rounded-2xl border-2 p-4 text-left text-sm font-bold outline-none transition-all focus-visible:ring-4 focus-visible:ring-violet/25 ${!answered ? "border-ink/5 bg-sky/40 hover:border-violet hover:bg-violet/5" : isCorrect ? "border-leaf bg-leaf/10 text-[#147558]" : isSelected ? "border-coral bg-coral/10 text-coral" : "border-ink/5 bg-white text-ink/45"}`}><span className="mr-3 inline-grid h-7 w-7 place-items-center rounded-lg bg-white text-xs font-black text-ink/65">{String.fromCharCode(65 + optionIndex)}</span>{option}</button>; })}</div>{answered && <div className={`mt-5 rounded-2xl p-4 text-sm leading-6 ${selected === current.correct ? "bg-leaf/10 text-[#147558]" : "bg-coral/10 text-coral"}`}><p className="font-black">{selected === current.correct ? "¡Correcto!" : "Casi, sigue explorando."}</p><p className="mt-1 font-semibold">{current.explanation}</p></div>}{answered && <button type="button" onClick={next} className="mt-6 rounded-xl bg-ink px-5 py-3 text-sm font-extrabold text-white hover:bg-violet focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet/25">{index + 1 >= filtered.length ? "Ver recompensa" : "Siguiente pregunta"}</button>}</div></div></>;
 }

@@ -23,6 +23,13 @@ pnpm db:seed # solo para desarrollo; añade datos ficticios
 existente no tiene historial de Prisma, inspecciónala y registra una línea de
 base con `prisma migrate resolve` antes de aplicar nada.
 
+La web y la PWA instalada usan las mismas rutas de cuenta, progreso y economía
+cuando hay conexión. `Profile`, `PlayerWallet`, `PlayerProgressEvent`,
+`GameProgress`, `MissionProgress` y `OfflineSyncOperation` se guardan en
+PostgreSQL. El visitante no autenticado conserva solo progreso local del
+dispositivo hasta que crea una cuenta; no se puede prometer una fusión
+automática de esos dos historiales sin una decisión explícita del producto.
+
 ## Cron diario
 
 `vercel.json` programa `GET /api/cron/daily-content` a las **10:00 UTC**
@@ -44,11 +51,26 @@ error y salida. `GeneratedContent` conserva contenido, versión, validación,
 origen, revisión y publicación. La repetición de una ejecución completada
 devuelve `already-processed` y no crea otra misión.
 
-Por ahora, la publicación automática usa únicamente la rotación de plantillas
-bíblicas curadas en `lib/daily-bible-challenge.ts`. No hay proveedor de IA
-configurado. Cuando se conecte uno, se debe usar solo en backend y guardar su
-resultado como `DRAFT`; un moderador debe aprobarlo mediante
-`/api/admin/content` antes de publicarlo.
+La publicación automática usa únicamente la rotación de plantillas bíblicas
+curadas en `lib/daily-bible-challenge.ts`. Además, si se configura
+`OPENAI_API_KEY` (y opcionalmente `OPENAI_MODEL`), el cron solicita una única
+propuesta estructurada en el backend. La propuesta se limita a la referencia y
+fragmento ya curados, se valida con Zod, queda como `DRAFT`, registra proveedor,
+modelo, intento y error, y **nunca se publica automáticamente**. Tiene un
+máximo de tres intentos fallidos por día. Un moderador puede aprobarla en
+`/api/admin/content`; para publicarla debe además convertirse en una misión o
+nivel real que tenga reglas y validación de respuestas del servidor.
+
+Verifica las plantillas sin llamar a ningún proveedor ni a PostgreSQL con:
+
+```bash
+pnpm content:verify
+```
+
+La automatización solo será 24/7 una vez que el proyecto desplegado tenga
+`DATABASE_URL`, `CRON_SECRET`, el secreto opcional de IA y Vercel confirme las
+ejecuciones de Cron. El archivo `vercel.json` configura el horario, pero no
+demuestra por sí solo que la tarea esté activa en una cuenta o plan de Vercel.
 
 ## Offline-first
 
