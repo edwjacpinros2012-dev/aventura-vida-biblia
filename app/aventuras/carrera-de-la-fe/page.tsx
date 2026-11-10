@@ -1,0 +1,9 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { GameCover } from "@/components/game-cover";
+
+export const metadata: Metadata = { title: "La Carrera de la Fe | Aventuras | Aventura Vida Biblia" };
+
+export default function CarreraDeLaFeAdventurePage() {
+  return <main className="av-page"><section className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:py-14 lg:grid-cols-[1fr_.9fr] lg:items-center lg:px-8"><div><Link href="/aventuras" className="text-sm font-extrabold text-[#67e5e0] hover:underline">← Volver a aventuras</Link><p className="mt-6 text-xs font-black uppercase tracking-[.2em] text-[#67e5e0]">Aventura conectada al mundo bíblico</p><h1 className="av-title mt-3 font-display text-5xl font-black tracking-tight">La Carrera de la Fe</h1><p className="mt-4 max-w-xl text-base leading-7 text-white/70">Esta ruta introduce la perseverancia como primera expedición. Los siguientes capítulos ampliarán el recorrido hacia el rescate de personas, la construcción del reino, la armadura de Dios y los frutos del Espíritu.</p><Link href="/juegos/la-carrera-de-la-fe/jugar" className="av-gold-button mt-7 inline-flex rounded-xl px-6 py-3 font-extrabold">Comenzar carrera →</Link></div><GameCover theme="sunset" large className="h-72 rounded-[2rem] sm:h-[370px]" /></section><section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[["01","Perseverancia","Aprende a continuar con esperanza."],["02","Destellos","Reúne señales para futuras mejoras del reino."],["03","Preparación","Conecta la carrera con el mundo 3D compartido."]].map(([n,t,d])=><article key={n} className="av-card rounded-2xl p-5"><span className="font-display text-2xl font-black text-[#f5bd4d]">{n}</span><h2 className="mt-2 font-display text-xl font-black text-[#f5e5b9]">{t}</h2><p className="mt-2 text-sm leading-6 text-white/65">{d}</p></article>)}</div></section></main>;
+}
