@@ -298,6 +298,27 @@ export const games: Game[] = [
     lesson: "Cada parte es importante cuando trabajamos juntos para un buen propósito.",
     objectives: ["Elige dificultad", "Ordena las piezas", "Completa la escena"],
   },
+  {
+    id: "carrera-de-la-fe",
+    slug: "la-carrera-de-la-fe",
+    name: "La Carrera de la Fe",
+    tagline: "Corre, persevera y recoge destellos de esperanza",
+    description: "Una carrera infinita 3D por senderos bíblicos con saltos, deslizamientos y obstáculos.",
+    longDescription: "Corre por caminos de desierto y oasis, cambia de carril, salta rocas y deslízate bajo barreras. Reúne destellos, supera tu récord y persevera en una aventura original que prepara el camino hacia el mundo abierto de Aventura Vida Biblia.",
+    category: "Arcade",
+    difficulty: "Aventurero",
+    suggestedAge: "8–13 años",
+    maxPoints: 1200,
+    xp: 180,
+    playMinutes: 8,
+    coverTheme: "sunset",
+    isNew: true,
+    isFeatured: true,
+    isPlayable: true,
+    gameKey: "carrera-de-la-fe",
+    lesson: "Corramos con perseverancia la carrera que tenemos por delante. (Hebreos 12:1)",
+    objectives: ["Corre la mayor distancia posible", "Esquiva obstáculos con saltos y deslizamientos", "Recoge destellos y supera tu récord"],
+  },
 ];
 
 export const adventures: Adventure[] = [
@@ -325,6 +346,14 @@ export const adventures: Adventure[] = [
     chapters: 5,
     coverTheme: "sky",
     badge: "Nueva ruta",
+  },
+  {
+    slug: "carrera-de-la-fe",
+    title: "La Carrera de la Fe",
+    summary: "Una carrera por senderos del mundo bíblico que fortalece la perseverancia y reúne destellos para futuras expediciones del reino.",
+    chapters: 5,
+    coverTheme: "sunset",
+    badge: "Nueva aventura 3D",
   },
   {
     slug: "jardin-de-las-manos-amigas",
