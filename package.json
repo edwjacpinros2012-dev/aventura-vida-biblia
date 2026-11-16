@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "next dev",
-    "prebuild": "prisma generate && tsx scripts/verify-world3d.ts && tsx scripts/verify-bible-content.ts",
+    "prebuild": "prisma generate && tsx scripts/verify-world3d.ts && tsx scripts/verify-bible-content.ts && tsx scripts/verify-multiplayer-health.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -14,6 +14,7 @@
     "multiplayer:verify": "tsx server/multiplayer/verify.ts",
     "world:verify": "tsx scripts/verify-world3d.ts",
     "bible:verify": "tsx scripts/verify-bible-content.ts",
+    "multiplayer:health:verify": "tsx scripts/verify-multiplayer-health.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
