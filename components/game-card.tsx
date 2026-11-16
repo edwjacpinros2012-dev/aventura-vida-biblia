@@ -24,7 +24,8 @@ export function GameCard({
       >
         <GameCover
           theme={game.coverTheme}
-          className={compact ? "h-36" : "h-44"}
+          gameId={game.id}
+          className={compact ? "h-36 sm:h-40" : "h-44 sm:h-48"}
         />
       </Link>
 
