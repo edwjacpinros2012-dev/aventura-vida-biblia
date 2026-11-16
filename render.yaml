@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: aventura-vida-multiplayer
+    runtime: node
+    plan: free
+    region: ohio
+    buildCommand: corepack enable && corepack prepare pnpm@10.0.0 --activate && pnpm install --frozen-lockfile && pnpm db:generate
+    startCommand: pnpm multiplayer:dev
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MULTIPLAYER_ALLOWED_ORIGIN
+        value: https://aventura-vida-biblia-edwpin.vercel.app,https://aventura-vida-biblia-git-main-edwpin.vercel.app
+      - key: DATABASE_URL
+        sync: false
