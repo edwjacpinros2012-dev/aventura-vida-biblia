@@ -4,17 +4,21 @@ on:
   push:
     branches:
       - feat/plataforma-web-mundo-3d
+    paths-ignore:
+      - pnpm-lock.yaml
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   sync-lockfile:
-    if: ${{ !startsWith(github.event.head_commit.message, 'chore: sync pnpm lockfile') }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out the feature branch
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: feat/plataforma-web-mundo-3d
 
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -27,9 +31,7 @@ jobs:
           corepack prepare pnpm@10.0.0 --activate
 
       - name: Regenerate the lockfile from package.json
-        run: |
-          rm -f pnpm-lock.yaml
-          pnpm install --lockfile-only --no-frozen-lockfile
+        run: pnpm install --lockfile-only --no-frozen-lockfile
 
       - name: Commit the synchronized lockfile
         run: |
@@ -41,4 +43,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add pnpm-lock.yaml
           git commit -m "chore: sync pnpm lockfile"
-          git push
+          git push origin HEAD:feat/plataforma-web-mundo-3d
