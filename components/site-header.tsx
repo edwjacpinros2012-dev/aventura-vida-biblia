@@ -17,6 +17,7 @@ const navItems = [
   { href: "/campo-de-batalla", label: "Campo de Luz", icon: "🛡️" },
   { href: "/recompensas", label: "Premios", icon: "🎁" },
   { href: "/tienda", label: "Tienda", icon: "🛍️" },
+  { href: "/mundo-3d", label: "Mundo 3D", icon: "🌍" },
   { href: "/aventuras", label: "Aventura", icon: "🗺" },
   { href: "/pvp", label: "PvP", icon: "⚔" },
   { href: "/multiplayer", label: "Equipo", icon: "👥" },
