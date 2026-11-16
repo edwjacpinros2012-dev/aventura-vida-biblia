@@ -185,18 +185,19 @@ export function CreationWorld() {
       const savedBuilds = localStorage.getItem("av-world-builds"); if (savedBuilds) { const parsed: unknown = JSON.parse(savedBuilds); if (Array.isArray(parsed)) setBuilds(parsed.filter((value): value is BuildPiece => value && Number.isInteger(value.id) && (value.kind === "cabin" || value.kind === "lamp"))); }
     } catch { /* El juego sigue disponible si el almacenamiento está bloqueado. */ }
 
+    const pressedKeys = keys.current;
     const down = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
       if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) event.preventDefault();
-      keys.current.add(key);
+      pressedKeys.add(key);
     };
-    const up = (event: KeyboardEvent) => keys.current.delete(event.key.toLowerCase());
+    const up = (event: KeyboardEvent) => pressedKeys.delete(event.key.toLowerCase());
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     return () => {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
-      keys.current.clear();
+      pressedKeys.clear();
     };
   }, []);
 
