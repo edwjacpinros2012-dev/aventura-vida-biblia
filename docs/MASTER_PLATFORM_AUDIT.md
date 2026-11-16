@@ -106,3 +106,14 @@ La rama `feat/plataforma-web-mundo-3d` sigue separada de `main`. La comparación
 ### Hallazgo adicional de catálogo
 
 La comparación entre `lib/content.ts`, `lib/games/registry.ts` y `components/games/game-player.tsx` encontró que las 15 fichas tienen un adaptador en el lanzador, pero `little-big-heroes` no estaba registrado en el registro central de juegos. La rama añade ese manifiesto para que el cerebro central también lo reconozca. Esta corrección no sustituye la prueba manual de inicio, finalización y persistencia de cada juego.
+
+
+## Actualización de avance — 16-11-2026 (rama de trabajo)
+
+La rama ya incluye la ruta /mundo-3d con escena cliente, personaje oficial, cámara recuperada con useThree, movimiento teclado/táctil y salto. La experiencia se amplió con nodos de madera y piedra, inventario local, y construcción decorativa de cabañas y lámparas con coste de materiales. El estado se conserva en localStorage del navegador; no es aún inventario de cuenta ni sincronización multiplayer. Se rediseñó la página para mostrar instrucciones y aclarar esos límites.
+
+Se agregó scripts/verify-world3d.ts y el comando pnpm world:verify, además de un workflow de calidad para correr verificación estática, lint, typecheck y build. El registro central conserva 15 módulos.
+
+Estado de Preview: la compilación inicial reveló un JSON package.json inválido por una inserción de salto de línea literal, que se corrigió. El build siguiente reveló conflicto ERESOLVE porque OpenAI SDK 7.57 requiere peer opcional Zod ^3.25 o ^4.0 y el proyecto tenía Zod 3.24.2. La rama elevó Zod a ^3.25.0; aún falta confirmar el resultado de la Preview y las pruebas CI.
+
+La rama se encuentra 22 commits adelante y 2 detrás de main (comparación actual). No integrar ni promover a producción antes de sincronizar/revisar los commits divergentes, restaurar lockfile pnpm correctamente, ejecutar los checks y confirmar Preview READY.
