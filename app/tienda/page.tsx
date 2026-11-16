@@ -47,6 +47,46 @@ export default function StorePage() {
     return () => { active = false; };
   }, [identityReady, refresh]);
 
+  async function equip(slug: string) {
+    if (!identity.authenticated || equipping) return;
+    setEquipping(slug); setNotice(""); setError("");
+    try {
+      const response = await fetch("/api/economy/equip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      const result = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(result.error ?? "No se pudo equipar el objeto.");
+      setNotice("Accesorio equipado. Ya puedes verlo en el Mundo 3D.");
+      await refresh();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "No se pudo equipar el objeto.");
+    } finally {
+      setEquipping(null);
+    }
+  }
+
+  async function unequip(slot: string) {
+    if (!identity.authenticated || equipping) return;
+    setEquipping(slot); setNotice(""); setError("");
+    try {
+      const response = await fetch("/api/economy/equip", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slot }),
+      });
+      const result = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(result.error ?? "No se pudo retirar el accesorio.");
+      setNotice("Accesorio retirado del avatar.");
+      await refresh();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "No se pudo retirar el accesorio.");
+    } finally {
+      setEquipping(null);
+    }
+  }
+
   async function buy(item: ShopItem) {
     if (!identity.authenticated || buying) return;
     setBuying(item.slug); setNotice(""); setError("");
