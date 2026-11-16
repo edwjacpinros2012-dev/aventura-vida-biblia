@@ -101,3 +101,8 @@ Se añadió `render.yaml`, guía `docs/MULTIPLAYER_DEPLOYMENT.md` y soporte para
 ### Estado de compilación y ramas
 
 La rama `feat/plataforma-web-mundo-3d` sigue separada de `main`. La comparación más reciente indicó 9 commits por delante y 2 por detrás; no integrar hasta revisar esa divergencia. `pnpm-lock.yaml` sigue sin las dependencias `@react-three/fiber`, `@react-three/drei` y `three`, así que Vercel continúa fallando con `ERR_PNPM_OUTDATED_LOCKFILE`. No se ha confirmado una compilación, prueba E2E ni despliegue Preview exitoso de estos cambios.
+
+
+### Hallazgo adicional de catálogo
+
+La comparación entre `lib/content.ts`, `lib/games/registry.ts` y `components/games/game-player.tsx` encontró que las 15 fichas tienen un adaptador en el lanzador, pero `little-big-heroes` no estaba registrado en el registro central de juegos. La rama añade ese manifiesto para que el cerebro central también lo reconozca. Esta corrección no sustituye la prueba manual de inicio, finalización y persistencia de cada juego.
