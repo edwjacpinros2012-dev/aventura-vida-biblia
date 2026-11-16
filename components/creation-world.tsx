@@ -31,13 +31,14 @@ function House({ p, color }: { p: [number, number, number]; color: string }) {
 
 type PlayerControls = {
   avatarUrl: string;
+  equippedSlugs: string[];
   keys: React.MutableRefObject<Set<string>>;
   pad: React.MutableRefObject<[number, number]>;
   onNear: (value: boolean) => void;
   player: React.RefObject<THREE.Group | null>;
 };
 
-function Avatar({ keys, pad, onNear, player, avatarUrl }: PlayerControls) {
+function Avatar({ keys, pad, onNear, player, avatarUrl, equippedSlugs }: PlayerControls) {
   const sprite = useRef<THREE.Mesh>(null);
   const { camera } = useThree();
   const texture = useMemo(() => new THREE.TextureLoader().load(avatarUrl), [avatarUrl]);
@@ -81,11 +82,21 @@ function Avatar({ keys, pad, onNear, player, avatarUrl }: PlayerControls) {
     <mesh ref={sprite} position={[0, 1.4, 0]}>
       <planeGeometry args={[1.8, 2.9]} />
       <meshBasicMaterial map={texture} transparent alphaTest={0.08} side={THREE.DoubleSide} />
+      {equippedSlugs.includes("yelmo-salvacion") && <group position={[0, 0.98, 0.09]}>
+        <mesh castShadow><sphereGeometry args={[0.48, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55]} /><meshStandardMaterial color="#e8bd55" metalness={0.55} roughness={0.35} /></mesh>
+        <mesh position={[0, -0.12, 0.08]}><boxGeometry args={[0.82, 0.12, 0.12]} /><meshStandardMaterial color="#f6d878" metalness={0.35} /></mesh>
+      </group>}
+      {equippedSlugs.includes("tunica-pastor-amable") && <mesh position={[0, 0.02, 0.075]} castShadow>
+        <boxGeometry args={[0.88, 0.78, 0.09]} /><meshStandardMaterial color="#d9eee0" roughness={0.85} />
+      </mesh>}
+      {equippedSlugs.includes("capa-bondad") && <mesh position={[0, -0.08, -0.12]} castShadow>
+        <boxGeometry args={[1.28, 1.65, 0.08]} /><meshStandardMaterial color="#6d91b8" roughness={0.82} side={THREE.DoubleSide} />
+      </mesh>}
     </mesh>
   </group>;
 }
 
-function Scene({ keys, pad, collected, collect, woodCollected, collectWood, stoneCollected, collectStone, builds, onNear, avatarUrl }: {
+function Scene({ keys, pad, collected, collect, woodCollected, collectWood, stoneCollected, collectStone, builds, onNear, avatarUrl, equippedSlugs }: {
   keys: PlayerControls["keys"];
   pad: PlayerControls["pad"];
   collected: number[];
@@ -97,6 +108,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
   builds: BuildPiece[];
   onNear: (value: boolean) => void;
   avatarUrl: string;
+  equippedSlugs: string[];
 }) {
   const player = useRef<THREE.Group>(null);
   const orbs = useRef<(THREE.Mesh | null)[]>([]);
@@ -140,7 +152,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
       </mesh>
     </Float>)}
     <Sparkles count={80} scale={[32, 7, 32]} color="#fff1b0" />
-    <Avatar keys={keys} pad={pad} onNear={onNear} player={player} avatarUrl={avatarUrl} />
+    <Avatar keys={keys} pad={pad} onNear={onNear} player={player} avatarUrl={avatarUrl} equippedSlugs={equippedSlugs} />
   </>;
 }
 
@@ -166,8 +178,19 @@ function DirectionButton({ label, direction, pad }: {
 }
 
 export function CreationWorld() {
-  const { identity } = usePlayerProgress();
+  const { identity, identityReady } = usePlayerProgress();
+  const [equippedSlugs, setEquippedSlugs] = useState<string[]>([]);
   const avatarUrl = officialCharacterForAvatar(identity.avatarKey)?.asset ?? avatar;
+  useEffect(() => {
+    if (!identityReady) return;
+    let active = true;
+    fetch("/api/economy/equip", { cache: "no-store" })
+      .then(async (response) => response.ok ? await response.json() as { equipped?: Array<{ slug: string }> } : { equipped: [] })
+      .then((result) => { if (active) setEquippedSlugs((result.equipped ?? []).map((item) => item.slug)); })
+      .catch(() => { if (active) setEquippedSlugs([]); });
+    return () => { active = false; };
+  }, [identityReady, identity.authenticated]);
+
   const keys = useRef(new Set<string>());
   const pad = useRef<[number, number]>([0, 0]);
   const [collected, setCollected] = useState<number[]>([]);
@@ -242,7 +265,7 @@ export function CreationWorld() {
   return <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#082632] shadow-2xl">
     <div className="relative h-[min(72vh,680px)] min-h-[470px]">
       <Canvas shadows camera={{ position: [0, 7, 19], fov: 48 }} dpr={[1, 1.5]}>
-        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} woodCollected={woodCollected} collectWood={collectWood} stoneCollected={stoneCollected} collectStone={collectStone} builds={builds} onNear={setNear} avatarUrl={avatarUrl} /></Suspense>
+        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} woodCollected={woodCollected} collectWood={collectWood} stoneCollected={stoneCollected} collectStone={collectStone} builds={builds} onNear={setNear} avatarUrl={avatarUrl} equippedSlugs={equippedSlugs} /></Suspense>
       </Canvas>
 
       <div className="pointer-events-none absolute left-4 top-4 rounded-2xl border border-white/15 bg-[#06232dcc] p-3 text-white">
@@ -282,6 +305,6 @@ export function CreationWorld() {
         {message}<button type="button" onClick={() => setMessage("")} className="ml-3 underline">Cerrar</button>
       </div>}
     </div>
-    <div className="border-t border-white/10 bg-[#061e29] px-4 py-3 text-xs text-white/70">Personaje oficial Vida Kids · recursos y construcciones decorativas guardados localmente en este dispositivo · prototipo de construcción</div>
+    <div className="border-t border-white/10 bg-[#061e29] px-4 py-3 text-xs text-white/70">Personaje oficial seleccionado · accesorios equipados desde la tienda · recursos y construcciones aún guardados localmente en este dispositivo</div>
   </section>;
 }
