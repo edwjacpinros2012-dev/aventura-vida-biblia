@@ -2,9 +2,12 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePlayerProgress } from "@/components/player-progress-provider";
 
 export function AccountSecuritySettings() {
   const router = useRouter();
+  const { identity, identityReady } = usePlayerProgress();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -48,6 +51,9 @@ export function AccountSecuritySettings() {
       setBusy(false);
     }
   }
+
+  if (!identityReady) return <section className="av-page min-h-screen p-10 text-center text-white/60">Preparando tu cuenta…</section>;
+  if (!identity.authenticated) return <section className="av-page min-h-screen"><div className="mx-auto max-w-xl px-4 py-16 text-center"><h1 className="av-title font-display text-3xl font-black">Inicia sesión para proteger tu cuenta</h1><p className="mt-3 text-sm text-white/60">Esta sección solo está disponible para cuentas registradas.</p><Link href="/login" className="av-teal-button mt-6 inline-flex rounded-xl px-5 py-3 font-bold">Iniciar sesión</Link></div></section>;
 
   return <section className="av-page min-h-screen">
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
