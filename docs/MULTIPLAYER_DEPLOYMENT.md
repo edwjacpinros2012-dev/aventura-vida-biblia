@@ -17,10 +17,10 @@ Vercel aloja la aplicación Next.js, pero no debe alojar este proceso Socket.IO 
 
 1. En el proveedor de hosting, crea un servicio desde el Blueprint `render.yaml` de esta rama. Revisa el plan y las condiciones antes de confirmar; el plan gratuito puede suspender servicios inactivos y no garantiza partidas siempre disponibles.
 2. Configura `DATABASE_URL` como secreto del servicio. No lo pegues en GitHub ni en el navegador.
-3. Cuando el proveedor entregue la URL HTTPS del servidor, configura en Vercel Production y Preview: `NEXT_PUBLIC_MULTIPLAYER_SERVER_URL=https://URL-DEL-SERVIDOR`.
+3. Cuando el proveedor entregue la URL HTTPS del servidor, configura en Vercel Production y Preview ambas variables con la misma URL: `NEXT_PUBLIC_MULTIPLAYER_SERVER_URL=https://URL-DEL-SERVIDOR` (conexión Socket.IO desde el navegador) y `MULTIPLAYER_SERVER_URL=https://URL-DEL-SERVIDOR` (sondeo privado de `/api/multiplayer/health`, sin exponer la URL desde esa API).
 4. Configura `MULTIPLAYER_ALLOWED_ORIGIN` en el servicio para permitir únicamente los dominios reales de la web.
 5. Reinicia el servicio y verifica `https://URL-DEL-SERVIDOR/health`.
-6. Ejecuta desde un entorno con acceso de red al servidor: `MULTIPLAYER_VERIFY_URL=https://URL-DEL-SERVIDOR pnpm multiplayer:verify`.
+6. En el centro `/multiplayer`, pulsa **Revisar** y confirma el estado online; la API de salud usa timeout y no revela la URL configurada.\n7. Ejecuta desde un entorno con acceso de red al servidor: `MULTIPLAYER_VERIFY_URL=https://URL-DEL-SERVIDOR pnpm multiplayer:verify`.
 
 ## Limitaciones que deben resolverse antes de producción
 
