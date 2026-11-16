@@ -226,6 +226,7 @@ export function CreationWorld() {
   const [builds, setBuilds] = useState<BuildPiece[]>([]);
   const [worldStateReady, setWorldStateReady] = useState(false);
   const [worldSaveStatus, setWorldSaveStatus] = useState<"local" | "loading" | "saved" | "error">("local");
+  const [worldStateRetry, setWorldStateRetry] = useState(0);
   const worldSaveQueue = useRef<Promise<void>>(Promise.resolve());
   const [near, setNear] = useState(false);
   const minimapPlayerMarker = useRef<HTMLSpanElement>(null);
@@ -302,7 +303,7 @@ export function CreationWorld() {
         if (active) setWorldSaveStatus("error");
       });
     return () => { active = false; };
-  }, [identityReady, identity.authenticated]);
+  }, [identityReady, identity.authenticated, worldStateRetry]);
 
   useEffect(() => {
     if (!worldStateReady || !identityReady) return;
@@ -426,6 +427,6 @@ export function CreationWorld() {
         {message}<button type="button" onClick={() => setMessage("")} className="ml-3 underline">Cerrar</button>
       </div>}
     </div>
-    <div className="border-t border-white/10 bg-[#061e29] px-4 py-3 text-xs text-white/70">Personaje oficial seleccionado · equipamiento de la tienda · {identity.authenticated ? (worldSaveStatus === "saved" ? "Mundo guardado en tu cuenta" : worldSaveStatus === "loading" ? "Sincronizando mundo…" : worldSaveStatus === "error" ? "No se pudo sincronizar el mundo" : "Esperando guardado") : "Mundo guardado en este dispositivo"}</div>
+    <div className="border-t border-white/10 bg-[#061e29] px-4 py-3 text-xs text-white/70">Personaje oficial seleccionado · equipamiento de la tienda · {identity.authenticated ? (worldSaveStatus === "saved" ? "Mundo guardado en tu cuenta" : worldSaveStatus === "loading" ? "Sincronizando mundo…" : worldSaveStatus === "error" ? "No se pudo sincronizar el mundo" : "Esperando guardado") : "Mundo guardado en este dispositivo"} {identity.authenticated && !worldStateReady && worldSaveStatus === "error" && <button type="button" onClick={() => { setWorldSaveStatus("loading"); setWorldStateRetry((attempt) => attempt + 1); }} className="ml-2 underline">Reintentar carga</button>}</div>
   </section>;
 }
