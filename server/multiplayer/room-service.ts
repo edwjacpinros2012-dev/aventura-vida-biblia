@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import type { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { bibleMazeLevels, mazeCellAt, mazePointFor, mazeTokenKeys, nextMazePoint, type MazePoint } from "@/lib/bible-maze";
 import type {
   MultiplayerError,
@@ -71,7 +71,7 @@ function mazeState(value: Record<string, unknown>) {
 }
 
 class RoomPersistence {
-  private readonly enabled = Boolean(process.env.DATABASE_URL);
+  private readonly enabled = hasDatabaseUrl;
 
   async loadActiveRooms(): Promise<InternalRoom[]> {
     if (!this.enabled) return [];
