@@ -110,3 +110,15 @@ En la rama feat/plataforma-web-mundo-3d ya se implementó una primera capa local
 - Verificador estático del prototipo y workflow de calidad de rama.
 
 Esto no completa el sistema de construcción previsto: aún no hay colocación libre con selección de posición y rotación, retiro de estructuras, recetas/taller, recursos ilimitados o regenerables, sincronización de inventario en perfil, seguridad de recompensas en servidor, misiones persistentes, colisiones del terreno, regiones múltiples ni construcción/movimiento 3D multiplayer. Mantener este bloque como estado real, no como promesa de producción.
+
+
+## New partial implementation — Bible library, store and multiplayer diagnostics (16-11-2026)
+
+- The website now has a Bible Explorer page with 10 lesson paths, scripture references, learning goals, summaries and activities.
+- A five-question interactive Bible practice challenge provides correctness feedback, explanations, score and replay.
+- The seed now adds six Bible-inspired shop collectibles using unique slugs and upserts.
+- A health endpoint and status UI monitor the Socket.IO service configuration and response latency.
+- The only advertised online modes remain Bible Maze cooperative and Bible Quiz Duel 1v1. Other game server adapters are a roadmap item, not deployed capability.
+- Prebuild now validates world prototype, Bible dataset/shop additions, and multiplayer health UI integration.
+
+Still not completed: persistent external server activation, account-synced world inventory/equipment, free building placement/rotation, multiplayer 3D avatars, per-game server adapters for the rest of the catalog, server-side quest/reward validation for newly added modes, and end-to-end/mobile tests.
