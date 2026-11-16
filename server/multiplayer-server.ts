@@ -24,7 +24,7 @@ import { isSelectableAvatarKey } from "@/lib/characters/catalog";
 import type { SafeAccount } from "@/lib/auth/contracts";
 import { PvpDuelService, PvpServiceError } from "./multiplayer/pvp-service";
 
-const port = Number(process.env.MULTIPLAYER_PORT ?? 3001);
+const port = Number(process.env.MULTIPLAYER_PORT ?? process.env.PORT ?? 3001);
 const allowedOrigin = process.env.MULTIPLAYER_ALLOWED_ORIGIN ?? "http://localhost:3000";
 const rooms = new MultiplayerRoomService();
 
