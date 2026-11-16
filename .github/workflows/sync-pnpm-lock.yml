@@ -26,8 +26,10 @@ jobs:
           corepack enable
           corepack prepare pnpm@10.0.0 --activate
 
-      - name: Update the lockfile without installing packages
-        run: pnpm install --lockfile-only --no-frozen-lockfile
+      - name: Regenerate the lockfile from package.json
+        run: |
+          rm -f pnpm-lock.yaml
+          pnpm install --lockfile-only --no-frozen-lockfile
 
       - name: Commit the synchronized lockfile
         run: |
