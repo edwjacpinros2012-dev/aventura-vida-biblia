@@ -39,8 +39,10 @@ function achievementIdForSlug(slug: string): PlayerAchievementId | null {
   const mapping: Record<string, PlayerAchievementId> = {
     "primera-aventura": "first-adventure",
     "explorador-curioso": "curious-explorer",
+    "cinco-juegos": "curious-explorer",
     "guardian-de-versiculos": "verse-keeper",
     "luz-constante": "steady-light",
+    "siete-dias": "steady-light",
     "maestro-de-juegos": "game-master",
   };
   return mapping[slug] ?? null;
