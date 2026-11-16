@@ -15,7 +15,7 @@ const checks: Array<[string, boolean]> = [
   ["Three.js React renderer is declared", pkg.includes('"@react-three/fiber"')],
   ["Drei helpers are declared", pkg.includes('"@react-three/drei"')],
   ["World page mounts the scene", page.includes("<CreationWorld")],
-  ["World has keyboard and touch movement", world.includes("DirectionButton") && world.includes("pressedKeys.add(key)")],
+  ["World has keyboard and touch movement", world.includes("DirectionButton") && world.includes("pressedKeys.add(key)")],\n  ["Three named 3D NPCs are rendered in the world", world.includes("function WorldNpc(") && ["Guardián", "Jardinera", "Constructor"].every((name) => world.includes(`title="${name}"`))],\n  ["NPCs face the player and animate idly", world.includes("root.current.rotation.y") && world.includes("state.clock.elapsedTime * 1.35")],\n  ["NPCs have collision boundaries", world.includes("{ x: 2.6, z: 1, radius: 0.85 }") && world.includes("{ x: -7, z: 3, radius: 0.85 }") && world.includes("{ x: 8, z: 7, radius: 0.85 }")],
   ["Jump physics is present", world.includes("jumpVelocity.current")],
   ["Light quest collectibles exist", world.includes("const lights =") && world.includes("collect(index)")],
   ["Wood and stone gathering exists", world.includes("woodNodes") && world.includes("stoneNodes") && world.includes("collectWood") && world.includes("collectStone")],
