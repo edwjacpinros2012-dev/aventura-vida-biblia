@@ -1,12 +1,10 @@
 name: Aventura Vida preview quality checks
 
 on:
-  push:
-    branches:
-      - feat/plataforma-web-mundo-3d
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
