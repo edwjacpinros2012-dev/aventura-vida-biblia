@@ -48,6 +48,12 @@ const storeData = [
   { slug: "portal-mar-rojo", name: "Portal del Mar Rojo", description: "Un fondo de perfil inspirado en el camino de esperanza de Éxodo 14.", type: InventoryItemType.SCENERY, rarity: ItemRarity.EPIC, coinPrice: 320, criteria: { minLevel: 8 } },
   { slug: "companero-paloma", name: "Compañera paloma", description: "Un compañero decorativo que simboliza la paz y la guía.", type: InventoryItemType.AVATAR, rarity: ItemRarity.EPIC, coinPrice: 360, criteria: { minLevel: 8 } },
   { slug: "pergamino-sabiduria", name: "Pergamino de sabiduría", description: "Una pieza de colección con referencias para seguir aprendiendo Proverbios.", type: InventoryItemType.SPECIAL_CONTENT, rarity: ItemRarity.UNCOMMON, coinPrice: 95, criteria: { minLevel: 2 } },
+  { slug: "tunica-pastor-amable", name: "Túnica del pastor amable", description: "Estilo de avatar inspirado en el cuidado del pastor y sus ovejas (Salmo 23).", type: InventoryItemType.CHARACTER_STYLE, rarity: ItemRarity.UNCOMMON, coinPrice: 145, criteria: { minLevel: 3 } },
+  { slug: "corona-sabiduria", name: "Corona de sabiduría", description: "Cosmético de perfil que celebra aprender y actuar con prudencia (Proverbios 4).", type: InventoryItemType.COSMETIC, rarity: ItemRarity.RARE, coinPrice: 220, criteria: { minLevel: 5 } },
+  { slug: "companero-leoncito-daniel", name: "Compañero leoncito", description: "Avatar compañero de colección que recuerda el relato de Daniel 6.", type: InventoryItemType.AVATAR, rarity: ItemRarity.EPIC, coinPrice: 390, criteria: { minLevel: 9 } },
+  { slug: "jardin-eden-mini", name: "Jardín de la creación", description: "Escenario decorativo inspirado en Génesis 2 para futuras zonas del mundo.", type: InventoryItemType.SCENERY, rarity: ItemRarity.RARE, coinPrice: 260, criteria: { minLevel: 6 } },
+  { slug: "perla-parabola", name: "Perla de la parábola", description: "Objeto de colección que recuerda las enseñanzas de Jesús en Mateo 13.", type: InventoryItemType.SPECIAL_CONTENT, rarity: ItemRarity.UNCOMMON, coinPrice: 125, criteria: { minLevel: 3 } },
+  { slug: "huellas-buen-samaritano", name: "Huellas de compasión", description: "Efecto de colección que celebra ayudar al prójimo (Lucas 10:25–37).", type: InventoryItemType.EFFECT, rarity: ItemRarity.RARE, coinPrice: 205, criteria: { minLevel: 5 } },
 ];
 
 async function main() {
