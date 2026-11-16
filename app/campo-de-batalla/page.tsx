@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 const trials = [
   { title: "La verdad ilumina el camino", reference: "Juan 8:12", prompt: "Jesús enseñó que Él es…", answers: ["La luz del mundo", "Una estrella del cielo", "Un rey de una ciudad"], correct: 0, lesson: "La luz representa guía y esperanza." },
