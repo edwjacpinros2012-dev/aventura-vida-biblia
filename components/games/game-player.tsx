@@ -13,6 +13,7 @@ import { StoryGame } from "@/components/games/story-game";
 import { VerseGame } from "@/components/games/verse-game";
 import { BabyAbcGame } from "@/components/games/baby-abc-game";
 import { WordSearchGame } from "@/components/games/word-search-game";
+import { LittleBigHeroesGame } from "@/components/games/little-big-heroes-game";
 
 export function GamePlayer({ game }: { game: Game }) {
   const ready = useReadyGame();
@@ -32,6 +33,7 @@ export function GamePlayer({ game }: { game: Game }) {
     "star-map": <StarMapGame />,
     "bible-maze": <BibleMazeGame />,
     vowels: <BabyAbcGame />,
+    "little-big-heroes": <LittleBigHeroesGame />,
   }[game.gameKey ?? "word-search"];
   return <GameShell game={game}>{content}</GameShell>;
 }
