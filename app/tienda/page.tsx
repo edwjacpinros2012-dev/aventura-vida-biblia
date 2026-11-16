@@ -6,9 +6,9 @@ import { usePlayerProgress } from "@/components/player-progress-provider";
 
 type ShopItem = {
   slug: string; name: string; description: string; type: string; rarity: string;
-  coinPrice: number; minLevel: number; owned: boolean; unlocked: boolean;
+  coinPrice: number; minLevel: number; owned: boolean; unlocked: boolean; equipmentSlot?: string | null;
 };
-type InventoryEntry = { id: string; item: { slug: string; name: string; description: string; type: string; rarity: string }; acquiredAt: string };
+type InventoryEntry = { id: string; item: { slug: string; name: string; description: string; type: string; rarity: string; equipmentSlot?: string | null }; acquiredAt: string };
 type ShopData = { authenticated: boolean; level: number; adventureCoins: number; items: ShopItem[]; inventory: InventoryEntry[] };
 
 const typeLabels: Record<string, string> = { AVATAR: "Avatar", CHARACTER_STYLE: "Estilo", EFFECT: "Efecto", SCENERY: "Escenario", COSMETIC: "Cosmético", SPECIAL_CONTENT: "Contenido especial" };
@@ -20,28 +20,32 @@ export default function StorePage() {
   const [data, setData] = useState<ShopData | null>(null);
   const [loading, setLoading] = useState(true);
   const [buying, setBuying] = useState<string | null>(null);
+  const [equippedItems, setEquippedItems] = useState<Array<{ slug: string; name: string; slot: string }>>([]);
+  const [equipping, setEquipping] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
   const refresh = useCallback(async () => {
-    const response = await fetch("/api/economy/store", { cache: "no-store" });
-    if (!response.ok) throw new Error("No pudimos cargar la tienda.");
-    setData(await response.json() as ShopData);
+    const [storeResponse, equipmentResponse] = await Promise.all([
+      fetch("/api/economy/store", { cache: "no-store" }),
+      fetch("/api/economy/equip", { cache: "no-store" }),
+    ]);
+    if (!storeResponse.ok) throw new Error("No pudimos cargar la tienda.");
+    setData(await storeResponse.json() as ShopData);
+    if (equipmentResponse.ok) {
+      const equipment = await equipmentResponse.json() as { equipped?: Array<{ slug: string; name: string; slot: string }> };
+      setEquippedItems(equipment.equipped ?? []);
+    }
   }, []);
 
   useEffect(() => {
     if (!identityReady) return;
     let active = true;
-    fetch("/api/economy/store", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("No pudimos cargar la tienda.");
-        return await response.json() as ShopData;
-      })
-      .then((result) => { if (active) setData(result); })
-      .catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : "Ocurrió un error."); })
-      .finally(() => { if (active) setLoading(false); });
+    void refresh().catch((reason: unknown) => {
+      if (active) setError(reason instanceof Error ? reason.message : "Ocurrió un error.");
+    }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [identityReady]);
+  }, [identityReady, refresh]);
 
   async function buy(item: ShopItem) {
     if (!identity.authenticated || buying) return;
@@ -90,7 +94,10 @@ export default function StorePage() {
               <p className="mt-2 min-h-12 text-sm leading-6 text-white/60">{item.description}</p>
               <p className="mt-4 text-xs font-bold text-white/45">{item.minLevel > 1 ? `Requiere nivel ${item.minLevel}` : "Disponible desde el nivel 1"}</p>
               <div className="mt-4 flex items-center justify-between gap-3"><span className="font-display text-xl font-black text-amber-200">{item.coinPrice} 🪙</span>
-                {item.owned ? <span className="rounded-xl bg-emerald-300/15 px-3 py-2 text-xs font-black text-emerald-200">✓ En tu colección</span>
+                {item.owned ? (item.equipmentSlot ? (equippedItems.some((entry) => entry.slug === item.slug)
+                    ? <button type="button" disabled={equipping !== null} onClick={() => void unequip(item.equipmentSlot!)} className="rounded-xl bg-emerald-300/15 px-3 py-2 text-xs font-black text-emerald-200 disabled:opacity-50">✓ Equipado · retirar</button>
+                    : <button type="button" disabled={equipping !== null} onClick={() => void equip(item.slug)} className="rounded-xl bg-cyan-300 px-4 py-2.5 text-xs font-black text-[#092633] disabled:opacity-50">{equipping === item.slug ? "Equipando…" : "Equipar"}</button>)
+                    : <span className="rounded-xl bg-emerald-300/15 px-3 py-2 text-xs font-black text-emerald-200">✓ En tu colección</span>)
                   : !identity.authenticated ? <span className="text-right text-xs font-bold text-white/45">Inicia sesión para canjear</span>
                   : !item.unlocked ? <span className="text-right text-xs font-bold text-white/45">🔒 Nivel {item.minLevel}</span>
                   : <button type="button" disabled={buying !== null || (data?.adventureCoins ?? 0) < item.coinPrice} onClick={() => void buy(item)} className="rounded-xl bg-amber-300 px-4 py-2.5 text-xs font-black text-[#14252a] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40">{buying === item.slug ? "Canjeando…" : (data?.adventureCoins ?? 0) < item.coinPrice ? "Faltan monedas" : "Canjear"}</button>}
@@ -101,7 +108,7 @@ export default function StorePage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6 lg:px-8">
-        <div className="mb-5"><p className="text-xs font-black uppercase tracking-[.16em] text-amber-200">Inventario</p><h2 className="mt-1 font-display text-3xl font-black text-[#f5e5b9]">Tu colección guardada</h2><p className="mt-2 max-w-2xl text-sm text-white/55">Aquí aparecen los objetos que ya canjeaste. Esta primera conexión registra la propiedad; equiparlos visualmente en avatares y escenarios requiere integrar cada objeto con esos módulos.</p></div>
+        <div className="mb-5"><p className="text-xs font-black uppercase tracking-[.16em] text-amber-200">Inventario</p><h2 className="mt-1 font-display text-3xl font-black text-[#f5e5b9]">Tu colección guardada</h2><p className="mt-2 max-w-2xl text-sm text-white/55">Los objetos equipables se activan desde su tarjeta del catálogo. El yelmo, la túnica y la capa se reflejan en tu personaje oficial del Mundo 3D; los demás siguen como piezas de colección.</p></div>
         {!identity.authenticated ? <p className="rounded-2xl border border-white/10 p-6 text-sm text-white/55">Inicia sesión para guardar y consultar tu inventario.</p>
           : !data?.inventory.length ? <p className="rounded-2xl border border-white/10 p-6 text-sm text-white/55">Tu mochila está vacía. Completa juegos y retos para ganar monedas.</p>
           : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{data.inventory.map((entry) => <article key={entry.id} className="av-panel-soft flex items-center gap-4 rounded-2xl p-4"><span className="text-3xl">{icons[entry.item.type] ?? "🎁"}</span><div className="min-w-0"><h3 className="truncate font-bold text-[#f5e5b9]">{entry.item.name}</h3><p className="text-xs text-white/50">{typeLabels[entry.item.type] ?? entry.item.type} · {rarityLabels[entry.item.rarity] ?? entry.item.rarity}</p></div></article>)}</div>}
