@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-const slotSchema = z.enum(["HEAD", "CHEST", "BACK", "HAND", "COMPANION", "EFFECT"]);
+const slotSchema = z.enum(["HEAD", "CHEST", "BACK", "COMPANION", "EFFECT"]);
 const equipSchema = z.object({ slug: z.string().min(2).max(80).regex(/^[a-z0-9-]+$/) });
 const removeSchema = z.object({ slot: slotSchema });
 
