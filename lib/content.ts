@@ -17,6 +17,27 @@ export const categories: Array<{ name: GameCategory; icon: string; color: string
 
 export const games: Game[] = [
   {
+    id: "little-big-heroes",
+    slug: "little-big-heroes-run-hero-run",
+    name: "Little Big Heroes: Run Hero Run!",
+    tagline: "Corre, salta y rescata ovejitas en el tren de las vocales",
+    description: "Una carrera educativa con cuatro héroes, obstáculos, ovejitas, estrellas y estaciones para aprender las vocales.",
+    longDescription: "Elige entre el Pastor Rubio, Astronauta, Maquinista o Conejito. Corre por el valle, salta obstáculos, rescata ovejitas, reúne estrellas y visita las estaciones del tren para practicar A, E, I, O y U.",
+    category: "Arcade",
+    difficulty: "Inicial",
+    suggestedAge: "4–9 años",
+    maxPoints: 900,
+    xp: 160,
+    playMinutes: 8,
+    coverTheme: "sky",
+    isNew: true,
+    isFeatured: true,
+    isPlayable: true,
+    gameKey: "little-big-heroes",
+    lesson: "Aprender también puede ser una aventura llena de alegría, atención y perseverancia.",
+    objectives: ["Elige uno de los cuatro héroes", "Salta obstáculos y rescata ovejitas", "Completa las estaciones de las cinco vocales"],
+  },
+  {
     id: "vowel-light",
     slug: "vocales-de-luz",
     name: "Vocales de luz",
