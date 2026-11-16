@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePlayerProgress } from "@/components/player-progress-provider";
-import { achievementDetails, levelTitleFor, xpProgressFor } from "@/types/player-progress";
+import { levelTitleFor, xpProgressFor } from "@/types/player-progress";
 
 const collections = [
   { id: "first-adventure", title: "Primera aventura", icon: "🧭", description: "Termina tu primer juego.", detail: "Insignia de explorador" },
@@ -25,7 +25,6 @@ export default function RewardsPage() {
   const unlockedAchievements = collections.filter((item) => progress.achievementIds.includes(item.id as (typeof progress.achievementIds)[number])).length;
   const armorCount = progress.armorCampaign.armorPieces.length;
   const tokens = progress.armorCampaign.faithTokens;
-  const unlockedLevels = levelRewards.filter((item) => progress.level >= item.level).length;
 
   return (
     <div className="av-page min-h-screen overflow-hidden pb-12">
