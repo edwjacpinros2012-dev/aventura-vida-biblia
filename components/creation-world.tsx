@@ -363,7 +363,7 @@ export function CreationWorld() {
     });
     const placement = candidates.find((candidate) =>
       !isWorldBlocked(candidate.x, candidate.z) &&
-      builds.every((existing) => Math.hypot(candidate.x - (existing.x ?? 0), candidate.z - (existing.z ?? 0)) > 2)
+      builds.every((existing, existingIndex) => Math.hypot(candidate.x - (existing.x ?? (-13 + (existingIndex % 6) * 5)), candidate.z - (existing.z ?? (-15 + Math.floor(existingIndex / 6) * 5))) > 2)
     );
     if (!placement) { setMessage("No hay espacio libre cerca. Muévete a otra zona para construir."); return; }
     const piece: BuildPiece = { id: Date.now(), kind, ...placement }; setBuilds((current) => { const next = [...current, piece]; try { localStorage.setItem("av-world-builds", JSON.stringify(next)); } catch {} return next; }); setWoodInventory((count) => { const value = count - woodCost; try { localStorage.setItem("av-world-wood-inventory", String(value)); } catch {} return value; }); setStoneInventory((count) => { const value = count - stoneCost; try { localStorage.setItem("av-world-stone-inventory", String(value)); } catch {} return value; }); setMessage(kind === "cabin" ? "¡Construiste una cabaña decorativa!" : "¡Colocaste una lámpara de luz!"); };
