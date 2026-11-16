@@ -78,3 +78,26 @@ La versión anterior `a97ea982680e1ca93eebf2dac863e427f0299f2f` aparece como REA
 ## Estado
 
 Este documento registra el inventario y el plan. No afirma que el mundo 3D esté terminado ni que los pagos comerciales estén activos. La rama de trabajo es `feat/plataforma-web-mundo-3d`; producción no debe modificarse hasta que Preview pase las verificaciones.
+
+
+## Corrección de auditoría — revisión de main y módulos reales (16-11-2026)
+
+La revisión adicional de `main` encontró una primera ruta `/mundo-3d` y el componente `components/creation-world.tsx`. El prototipo ya renderiza un valle 3D con cámara de seguimiento, personaje oficial Vida Kids, casas, árboles, río y cuatro luces coleccionables. El progreso de esas luces se guarda en `localStorage`, no en el perfil de servidor.
+
+La versión de la rama de trabajo contenía una regresión de cámara: el helper `requireThree()` devolvía una cámara nula. La rama ahora recupera `useThree()` y añade salto real y controles táctiles de movimiento. Sigue siendo un prototipo de una zona: aún faltan colisiones del escenario, cámara configurable, animaciones del personaje, más zonas, construcción, inventario persistente, NPC completos, misiones de servidor y sincronización 3D multiplayer.
+
+### Sistemas que ya existen y se deben reutilizar
+
+- Catálogo: se contaron 15 entradas en `lib/content.ts`; cada una aún requiere una prueba de apertura y progreso real.
+- Cooperativo: Socket.IO, salas de Laberinto Bíblico de hasta cuatro jugadores, sincronización de acciones, reconexión y chat de frases predefinidas.
+- VS online: matchmaking y duelos 1 vs 1 de preguntas, tres rondas, respuestas y puntuación validadas en servidor, reconexión y ranking/historial.
+- IA: proveedor OpenAI solo en backend, esquema estructurado, validación y borradores editoriales. La ruta jugable actual de IA está limitada a preguntas; no genera mundos ni publica código automáticamente.
+- Economía: tienda de Monedas de Aventura con canje en servidor e inventario; falta equipar los artículos dentro del avatar y mundo 3D.
+
+### Despliegue multijugador preparado
+
+Se añadió `render.yaml`, guía `docs/MULTIPLAYER_DEPLOYMENT.md` y soporte para que el servidor respete la variable `PORT` del hosting. El servicio externo todavía no se ha creado ni configurado. Requiere URL HTTPS, `DATABASE_URL`, variable `NEXT_PUBLIC_MULTIPLAYER_SERVER_URL` en Vercel y pruebas externas. El plan gratuito puede suspender el proceso inactivo y no equivale a un servidor de disponibilidad continua.
+
+### Estado de compilación y ramas
+
+La rama `feat/plataforma-web-mundo-3d` sigue separada de `main`. La comparación más reciente indicó 9 commits por delante y 2 por detrás; no integrar hasta revisar esa divergencia. `pnpm-lock.yaml` sigue sin las dependencias `@react-three/fiber`, `@react-three/drei` y `three`, así que Vercel continúa fallando con `ERR_PNPM_OUTDATED_LOCKFILE`. No se ha confirmado una compilación, prueba E2E ni despliegue Preview exitoso de estos cambios.
