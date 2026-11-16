@@ -43,7 +43,7 @@ Este documento convierte la investigación de referencias en decisiones concreta
 | Sistema | Estado confirmado | Siguiente trabajo |
 | --- | --- | --- |
 | Jardín 3D | Valle con cámara de seguimiento, sprite oficial, movimiento, salto, controles táctiles, minimapa en vivo, río reflectante, colisiones básicas, luces, madera, piedra, cabañas y lámparas | Interacción contextual, colocación libre, guardado de cuenta y más regiones |
-| Personaje | Selecciona la ilustración oficial según el avatar; accesorios geométricos de prueba | Modelo 3D riggeado, animaciones, puntos de anclaje y vista previa de equipamiento |
+| Personaje | Modelo humanoide 3D procedural articulado; las seis variantes oficiales cambian la paleta de ropa; cabeza, torso, brazos y piernas son geometría 3D con animación de marcha; yelmo/túnica/capa se anclan al modelo | Sustituir el prototipo procedural por modelo GLB original con esqueleto, animaciones completas, materiales/rostros fieles al arte oficial y puntos de anclaje validados |
 | Recursos | Recolección y contadores en localStorage | API autenticada, persistencia PostgreSQL e idempotencia para no duplicar recolecciones |
 | Construcción | Piezas decorativas en posiciones calculadas automáticamente | Modo colocar, rotar, confirmar, cancelar y retirar; validar materiales en servidor |
 | Tienda | Compra e inventario existentes; ranuras de equipamiento y acciones de equipar/quitar incorporadas en la rama | Vista previa real del artículo y pruebas de extremo a extremo |
