@@ -36,7 +36,8 @@ export function LittleBigHeroesGame() {
   useEffect(()=>{if(screen!=="run")return;const timer=window.setInterval(()=>{tick.current++;setDistance(v=>v+2);
     if(tick.current%17===0){setHazard(true);if(!jumping){if(lives<=1)setScreen("over");setLives(v=>Math.max(0,v-1));setNotice("¡Cuidado con la roca! ¡Salta!")}else{setStars(v=>v+1);setNotice("¡Salto perfecto! +1 estrella")}}
     if(tick.current%17===5)setHazard(false);
-    if(tick.current%13===0){setSheep(v=>v+1);setNotice("¡Ovejita rescatada! +25 puntos")}\n    if(tick.current%65===0){setTargetIndex(Math.floor(tick.current/65)-1);setStationDone(false);setScreen("station");setNotice("¡Parada educativa!");}
+    if(tick.current%13===0){setSheep(v=>v+1);setNotice("¡Ovejita rescatada! +25 puntos")}
+    if(tick.current%65===0){setTargetIndex(Math.floor(tick.current/65)-1);setStationDone(false);setScreen("station");setNotice("¡Parada educativa!");}
     if(tick.current%29===0)setStars(v=>v+1);
   },150);return()=>window.clearInterval(timer)},[screen,jumping]);
   useEffect(()=>{if(screen!=="run")return;const key=(e:KeyboardEvent)=>{if(e.code==="Space"||e.code==="ArrowUp"){e.preventDefault();jump()}};window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key)},[jump,screen]);
