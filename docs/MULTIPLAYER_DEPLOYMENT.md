@@ -13,6 +13,12 @@ Vercel aloja la aplicación Next.js, pero no debe alojar este proceso Socket.IO 
 - El comando de inicio es `pnpm multiplayer:dev`.
 - El servicio usa `DATABASE_URL` como variable secreta; debe apuntar a la misma base PostgreSQL que usa la web.
 
+## Conexión PostgreSQL en Vercel
+
+La aplicación resuelve la conexión en este orden: `DATABASE_URL`, `database_PRISMA_DATABASE_URL` y `database_DATABASE_URL`. Esto permite usar la URL que entrega la integración PostgreSQL cuando una variable manual `DATABASE_URL` está vacía. El servidor Socket.IO usa la misma comprobación para no omitir la autenticación de sesiones cuando la integración está disponible.
+
+La verificación estática `pnpm exec tsx scripts/verify-database-config.ts` comprueba el contrato sin imprimir ni leer secretos. Esto no demuestra que PostgreSQL sea alcanzable ni que las migraciones estén aplicadas: ambos puntos requieren una prueba de conexión y una base de pruebas. No ejecutes migraciones de producción como parte de un build.
+
 ## Activación manual necesaria
 
 1. En el proveedor de hosting, crea un servicio desde el Blueprint `render.yaml` de esta rama. Revisa el plan y las condiciones antes de confirmar; el plan gratuito puede suspender servicios inactivos y no garantiza partidas siempre disponibles.
