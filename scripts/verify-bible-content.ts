@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { bibleQuiz, bibleStudies } from "../lib/bible/learning-paths";
 
 assert.equal(bibleStudies.length, 10, "Debe haber diez rutas bíblicas.");
@@ -19,7 +20,7 @@ for (const question of bibleQuiz) {
   assert.ok(question.reference.trim().length > 2, `Referencia ausente: ${question.id}`);
   assert.ok(question.explanation.trim().length > 20, `Explicación ausente: ${question.id}`);
 }
-const seed = await readFile(new URL("../prisma/seed.ts", import.meta.url), "utf8");
+const seed = readFileSync(join(process.cwd(), "prisma", "seed.ts"), "utf8");
 for (const slug of ["tunica-pastor-amable", "corona-sabiduria", "companero-leoncito-daniel", "jardin-eden-mini", "perla-parabola", "huellas-buen-samaritano"]) {
   assert.ok(seed.includes(slug), `Falta objeto bíblico en la tienda: ${slug}`);
 }
