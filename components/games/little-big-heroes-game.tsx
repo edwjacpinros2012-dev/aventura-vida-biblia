@@ -29,6 +29,7 @@ export function LittleBigHeroesGame() {
   const [sound, setSound] = useState(true);
   const laneRef = useRef<HTMLDivElement>(null);
   const jumpTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastStationSheep = useRef(0);
   const current = heroes[hero];
   const completed = result !== null;
 
@@ -85,7 +86,8 @@ export function LittleBigHeroesGame() {
   }, [completed, lives, started]);
 
   useEffect(() => {
-    if (sheep > 0 && sheep % 5 === 0 && !station && started) {
+    if (sheep > 0 && sheep % 5 === 0 && sheep !== lastStationSheep.current && !station && started) {
+      lastStationSheep.current = sheep;
       setStation(true);
       setTarget((value) => (value + 1) % vowels.length);
     }
@@ -110,7 +112,7 @@ export function LittleBigHeroesGame() {
   };
 
   const start = () => {
-    setLives(6); setSheep(0); setStars(0); setDistance(0); setObstacles([]);
+    setLives(6); setSheep(0); setStars(0); setDistance(0); setObstacles([]); lastStationSheep.current = 0;
     setStation(false); setTarget(0); setMessage("¡Corre, salta y rescata ovejitas!");
     resetCompletion(); setStarted(true);
   };
