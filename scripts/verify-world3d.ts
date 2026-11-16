@@ -18,6 +18,8 @@ const checks: Array<[string, boolean]> = [
   ["Wood and stone gathering exists", world.includes("woodNodes") && world.includes("stoneNodes") && world.includes("collectWood") && world.includes("collectStone")],
   ["Local resource inventory is persisted", world.includes("av-world-wood-inventory") && world.includes("av-world-stone-inventory")],
   ["Buildable cabin and lamp objects exist", world.includes('kind: "cabin" | "lamp"') && world.includes('build("cabin")') && world.includes('build("lamp")')],
+  ["World minimap is rendered", world.includes("Mapa del valle") && world.includes("minimapPlayerMarker")],
+  ["Minimap marker updates without React frame state", world.includes("minimapMarker.current.style.left") && world.includes("minimapMarker.current.style.top")],
   ["All fifteen game adapters remain registered", (registry.match(/^\s*(?:"[^"]+"|[a-z-]+): \{ key:/gm) ?? []).length === 15],
 ];
 
