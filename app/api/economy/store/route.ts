@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     }),
     account ? prisma.playerInventoryItem.findMany({
       where: { userId: account.id },
-      include: { item: { select: { slug: true, name: true, description: true, type: true, rarity: true } } },
+      include: { item: { select: { slug: true, name: true, description: true, type: true, rarity: true, equipmentSlot: true } } },
       orderBy: { acquiredAt: "desc" },
     }) : [],
   ]);
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
         : {};
       const minLevel = typeof criteria.minLevel === "number" && Number.isSafeInteger(criteria.minLevel) ? Math.max(1, criteria.minLevel) : 1;
       return {
-        slug: item.slug, name: item.name, description: item.description, type: item.type,
+        slug: item.slug, name: item.name, description: item.description, type: item.type, equipmentSlot: item.equipmentSlot,
         rarity: item.rarity, coinPrice: item.coinPrice, minLevel,
         owned: account ? item.owners.length > 0 : false,
         unlocked: Boolean(account && (profile?.level ?? 0) >= minLevel),
