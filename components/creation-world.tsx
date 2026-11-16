@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Float, Sky, Sparkles } from "@react-three/drei";
+import { Float, MeshReflectorMaterial, Sky, Sparkles } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { usePlayerProgress } from "@/components/player-progress-provider";
@@ -142,7 +142,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
     <directionalLight position={[12, 20, 8]} intensity={2} castShadow />
     <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[100, 100]} /><meshStandardMaterial color="#79b96e" /></mesh>
     <mesh position={[0, 0.04, -2]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[7, 42]} /><meshStandardMaterial color="#d8c28e" /></mesh>
-    <mesh position={[10, 0.08, -1]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[5, 42]} /><meshStandardMaterial color="#4caec1" roughness={0.2} /></mesh>
+    <mesh position={[10, 0.08, -1]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[5, 42]} /><MeshReflectorMaterial color="#4caec1" roughness={0.22} metalness={0.12} resolution={128} blur={[8, 8]} mixBlur={0.5} mixStrength={0.9} mirror={0.35} depthScale={0.15} reflectorOffset={0.02} /></mesh>
     {Array.from({ length: 18 }, (_, index) => <Tree key={index} p={[-15 + (index % 6) * 5.8, 0, -13 + Math.floor(index / 6) * 12]} scale={0.8 + (index % 3) * 0.15} />)}
     <House p={[-10, 0, -8]} color="#e8c68d" />
     <House p={[4, 0, -13]} color="#d7a66f" />
