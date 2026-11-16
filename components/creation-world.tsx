@@ -24,7 +24,7 @@ const collisionObstacles = [
 ];
 const isWorldBlocked = (x: number, z: number) =>
   collisionObstacles.some((obstacle) => Math.hypot(x - obstacle.x, z - obstacle.z) < obstacle.radius);
-type BuildPiece = { id: number; kind: "cabin" | "lamp" };
+type BuildPiece = { id: number; kind: "cabin" | "lamp"; x?: number; z?: number };
 
 function Tree({ p, scale = 1 }: { p: [number, number, number]; scale?: number }) {
   return <group position={p} scale={scale}>
@@ -50,9 +50,10 @@ type PlayerControls = {
   onNear: (value: boolean) => void;
   minimapMarker: React.RefObject<HTMLSpanElement | null>;
   player: React.RefObject<THREE.Group | null>;
+  playerPosition: React.MutableRefObject<[number, number, number]>;
 };
 
-function Avatar({ keys, pad, onNear, minimapMarker, player, avatarUrl, equippedSlugs }: PlayerControls) {
+function Avatar({ keys, pad, onNear, minimapMarker, player, playerPosition, avatarUrl, equippedSlugs }: PlayerControls) {
   const sprite = useRef<THREE.Mesh>(null);
   const { camera } = useThree();
   const texture = useMemo(() => new THREE.TextureLoader().load(avatarUrl), [avatarUrl]);
@@ -64,6 +65,7 @@ function Avatar({ keys, pad, onNear, minimapMarker, player, avatarUrl, equippedS
   useFrame((_, dt) => {
     if (!player.current) return;
     const group = player.current;
+    playerPosition.current = [group.position.x, group.position.z, group.rotation.y];
     const pressed = keys.current;
     const jumpPressed = pressed.has(" ");
     if (jumpPressed && !jumpWasDown.current && group.position.y <= 0.001) jumpVelocity.current = 7.5;
@@ -132,6 +134,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
   builds: BuildPiece[];
   onNear: (value: boolean) => void;
   minimapMarker: React.RefObject<HTMLSpanElement | null>;
+  playerPosition: PlayerControls["playerPosition"];
   avatarUrl: string;
   equippedSlugs: string[];
 }) {
@@ -169,7 +172,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
     </group>
     {woodNodes.map(([x, z], index) => !woodCollected.includes(index) && <Float key={`wood-${index}`} speed={1.2}><mesh position={[x, 0.45, z]}><boxGeometry args={[0.65, 0.65, 0.65]} /><meshStandardMaterial color="#a96d36" emissive="#48240b" /></mesh></Float>)}
     {stoneNodes.map(([x, z], index) => !stoneCollected.includes(index) && <Float key={`stone-${index}`} speed={1.1}><mesh position={[x, 0.5, z]}><dodecahedronGeometry args={[0.55, 0]} /><meshStandardMaterial color="#aab4c0" /></mesh></Float>)}
-    {builds.map((piece, index) => { const x = -13 + (index % 6) * 5; const z = -15 + Math.floor(index / 6) * 5; return <group key={piece.id} position={[x, 0, z]}><mesh position={[0, 0.6, 0]} castShadow><boxGeometry args={piece.kind === "cabin" ? [1.8, 1.2, 1.8] : [0.45, 1.3, 0.45]} /><meshStandardMaterial color={piece.kind === "cabin" ? "#d7a66f" : "#d8b84a"} emissive={piece.kind === "lamp" ? "#b47a16" : "#000000"} /></mesh>{piece.kind === "cabin" && <mesh position={[0, 1.5, 0]}><coneGeometry args={[1.45, 0.8, 4]} /><meshStandardMaterial color="#8b5139" /></mesh>}</group>; })}
+    {builds.map((piece, index) => { const x = piece.x ?? (-13 + (index % 6) * 5); const z = piece.z ?? (-15 + Math.floor(index / 6) * 5); return <group key={piece.id} position={[x, 0, z]}><mesh position={[0, 0.6, 0]} castShadow><boxGeometry args={piece.kind === "cabin" ? [1.8, 1.2, 1.8] : [0.45, 1.3, 0.45]} /><meshStandardMaterial color={piece.kind === "cabin" ? "#d7a66f" : "#d8b84a"} emissive={piece.kind === "lamp" ? "#b47a16" : "#000000"} /></mesh>{piece.kind === "cabin" && <mesh position={[0, 1.5, 0]}><coneGeometry args={[1.45, 0.8, 4]} /><meshStandardMaterial color="#8b5139" /></mesh>}</group>; })}
     {lights.map(([x, z], index) => !collected.includes(index) && <Float key={index} speed={1.8}>
       <mesh ref={(element) => { orbs.current[index] = element; }} position={[x, 0.8, z]}>
         <icosahedronGeometry args={[0.42, 1]} />
@@ -177,7 +180,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
       </mesh>
     </Float>)}
     <Sparkles count={80} scale={[32, 7, 32]} color="#fff1b0" />
-    <Avatar keys={keys} pad={pad} onNear={onNear} minimapMarker={minimapMarker} player={player} avatarUrl={avatarUrl} equippedSlugs={equippedSlugs} />
+    <Avatar keys={keys} pad={pad} onNear={onNear} minimapMarker={minimapMarker} player={player} playerPosition={playerPosition} avatarUrl={avatarUrl} equippedSlugs={equippedSlugs} />
   </>;
 }
 
@@ -230,6 +233,7 @@ export function CreationWorld() {
   const worldSaveQueue = useRef<Promise<void>>(Promise.resolve());
   const [near, setNear] = useState(false);
   const minimapPlayerMarker = useRef<HTMLSpanElement>(null);
+  const playerPosition = useRef<[number, number, number]>([0, 9, 0]);
   const [message, setMessage] = useState("");
   const [started, setStarted] = useState(false);
 
@@ -278,7 +282,7 @@ export function CreationWorld() {
             collectedLights?: number[];
             collectedWood?: number[];
             collectedStone?: number[];
-            builds?: Array<{ id: number; kind: "cabin" | "lamp" }>;
+            builds?: Array<{ id: number; kind: "cabin" | "lamp"; x?: number; z?: number }>;
           };
         };
       })
@@ -287,7 +291,7 @@ export function CreationWorld() {
         const validLights = Array.isArray(state.collectedLights) ? state.collectedLights.filter((value) => Number.isInteger(value) && value >= 0 && value < lights.length) : [];
         const validWood = Array.isArray(state.collectedWood) ? state.collectedWood.filter((value) => Number.isInteger(value) && value >= 0 && value < woodNodes.length) : [];
         const validStone = Array.isArray(state.collectedStone) ? state.collectedStone.filter((value) => Number.isInteger(value) && value >= 0 && value < stoneNodes.length) : [];
-        const validBuilds = Array.isArray(state.builds) ? state.builds.filter((value) => value && Number.isSafeInteger(value.id) && value.id > 0 && (value.kind === "cabin" || value.kind === "lamp")).slice(0, 32) : [];
+        const validBuilds = Array.isArray(state.builds) ? state.builds.filter((value) => value && Number.isSafeInteger(value.id) && value.id > 0 && (value.kind === "cabin" || value.kind === "lamp") && (value.x === undefined || (Number.isFinite(value.x) && Math.abs(value.x) <= 16)) && (value.z === undefined || (Number.isFinite(value.z) && Math.abs(value.z) <= 16))).slice(0, 32) : [];
         const cabins = validBuilds.filter((piece) => piece.kind === "cabin").length;
         const lampsBuilt = validBuilds.length - cabins;
         setCollected([...new Set(validLights)]);
@@ -311,7 +315,7 @@ export function CreationWorld() {
       collectedLights: collected,
       collectedWood: woodCollected,
       collectedStone: stoneCollected,
-      builds: builds.map(({ id, kind }) => ({ id, kind })),
+      builds: builds.map(({ id, kind, x, z }, index) => ({ id, kind, x: x ?? (-13 + (index % 6) * 5), z: z ?? (-15 + Math.floor(index / 6) * 5) })),
     };
 
     if (!identity.authenticated) {
@@ -351,7 +355,18 @@ export function CreationWorld() {
 
   const collectWood = (index: number) => setWoodCollected((current) => { if (current.includes(index)) return current; const next = [...current, index]; try { localStorage.setItem("av-world-wood-nodes", JSON.stringify(next)); } catch {} setWoodInventory((count) => { const value = count + 1; try { localStorage.setItem("av-world-wood-inventory", String(value)); } catch {} return value; }); setMessage("¡Recogiste madera para construir!"); return next; });
   const collectStone = (index: number) => setStoneCollected((current) => { if (current.includes(index)) return current; const next = [...current, index]; try { localStorage.setItem("av-world-stone-nodes", JSON.stringify(next)); } catch {} setStoneInventory((count) => { const value = count + 1; try { localStorage.setItem("av-world-stone-inventory", String(value)); } catch {} return value; }); setMessage("¡Recogiste piedra para tus construcciones!"); return next; });
-  const build = (kind: BuildPiece["kind"]) => { const woodCost = kind === "cabin" ? 2 : 1; const stoneCost = kind === "cabin" ? 1 : 0; if (woodInventory < woodCost || stoneInventory < stoneCost) { setMessage(`Materiales insuficientes. Necesitas ${woodCost} madera y ${stoneCost} piedra.`); return; } const piece: BuildPiece = { id: Date.now(), kind }; setBuilds((current) => { const next = [...current, piece]; try { localStorage.setItem("av-world-builds", JSON.stringify(next)); } catch {} return next; }); setWoodInventory((count) => { const value = count - woodCost; try { localStorage.setItem("av-world-wood-inventory", String(value)); } catch {} return value; }); setStoneInventory((count) => { const value = count - stoneCost; try { localStorage.setItem("av-world-stone-inventory", String(value)); } catch {} return value; }); setMessage(kind === "cabin" ? "¡Construiste una cabaña decorativa!" : "¡Colocaste una lámpara de luz!"); };
+  const build = (kind: BuildPiece["kind"]) => { const woodCost = kind === "cabin" ? 2 : 1; const stoneCost = kind === "cabin" ? 1 : 0; if (woodInventory < woodCost || stoneInventory < stoneCost) { setMessage(`Materiales insuficientes. Necesitas ${woodCost} madera y ${stoneCost} piedra.`); return; } const [playerX, playerZ, rotation] = playerPosition.current;
+    const candidates = Array.from({ length: 12 }, (_, index) => {
+      const angle = rotation + (index * Math.PI) / 6;
+      const distance = index === 0 ? 2.8 : 2.4 + Math.floor((index - 1) / 6) * 1.2;
+      return { x: THREE.MathUtils.clamp(playerX + Math.sin(angle) * distance, -15, 15), z: THREE.MathUtils.clamp(playerZ + Math.cos(angle) * distance, -15, 15) };
+    });
+    const placement = candidates.find((candidate) =>
+      !isWorldBlocked(candidate.x, candidate.z) &&
+      builds.every((existing) => Math.hypot(candidate.x - (existing.x ?? 0), candidate.z - (existing.z ?? 0)) > 2)
+    );
+    if (!placement) { setMessage("No hay espacio libre cerca. Muévete a otra zona para construir."); return; }
+    const piece: BuildPiece = { id: Date.now(), kind, ...placement }; setBuilds((current) => { const next = [...current, piece]; try { localStorage.setItem("av-world-builds", JSON.stringify(next)); } catch {} return next; }); setWoodInventory((count) => { const value = count - woodCost; try { localStorage.setItem("av-world-wood-inventory", String(value)); } catch {} return value; }); setStoneInventory((count) => { const value = count - stoneCost; try { localStorage.setItem("av-world-stone-inventory", String(value)); } catch {} return value; }); setMessage(kind === "cabin" ? "¡Construiste una cabaña decorativa!" : "¡Colocaste una lámpara de luz!"); };
 
   const interact = () => {
     if (!started) {
@@ -376,7 +391,7 @@ export function CreationWorld() {
   return <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#082632] shadow-2xl">
     <div className="relative h-[min(72vh,680px)] min-h-[470px]">
       <Canvas shadows camera={{ position: [0, 7, 19], fov: 48 }} dpr={[1, 1.5]}>
-        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} woodCollected={woodCollected} collectWood={collectWood} stoneCollected={stoneCollected} collectStone={collectStone} builds={builds} onNear={setNear} minimapMarker={minimapPlayerMarker} avatarUrl={avatarUrl} equippedSlugs={equippedSlugs} /></Suspense>
+        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} woodCollected={woodCollected} collectWood={collectWood} stoneCollected={stoneCollected} collectStone={collectStone} builds={builds} onNear={setNear} minimapMarker={minimapPlayerMarker} playerPosition={playerPosition} avatarUrl={avatarUrl} equippedSlugs={equippedSlugs} /></Suspense>
       </Canvas>
 
       <div className="pointer-events-none absolute left-4 top-4 rounded-2xl border border-white/15 bg-[#06232dcc] p-3 text-white">
