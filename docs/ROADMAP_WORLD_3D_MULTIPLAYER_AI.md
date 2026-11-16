@@ -97,3 +97,16 @@ Cada juego necesita un módulo de interfaz, reglas, objetivos, arte, adaptación
 ## 9. Dependencias externas
 
 Para completar el despliegue hacen falta una base PostgreSQL accesible, variables secretas configuradas en los entornos correspondientes y un hosting persistente para Socket.IO. Revisar costes, límites del plan y protección de datos antes de activar servicios públicos.
+
+
+## Implementación parcial añadida — 16-11-2026
+
+En la rama feat/plataforma-web-mundo-3d ya se implementó una primera capa local para el Jardín de la Creación:
+- Nodos recolectables de madera y piedra con detección de proximidad.
+- Contadores de inventario que persisten en el navegador.
+- Cabaña decorativa (coste: 2 madera y 1 piedra) y lámpara (coste: 1 madera), representadas en la escena.
+- UI responsive con botones de construcción para escritorio y móvil.
+- Página de zona actualizada con controles e información de estado.
+- Verificador estático del prototipo y workflow de calidad de rama.
+
+Esto no completa el sistema de construcción previsto: aún no hay colocación libre con selección de posición y rotación, retiro de estructuras, recetas/taller, recursos ilimitados o regenerables, sincronización de inventario en perfil, seguridad de recompensas en servidor, misiones persistentes, colisiones del terreno, regiones múltiples ni construcción/movimiento 3D multiplayer. Mantener este bloque como estado real, no como promesa de producción.
