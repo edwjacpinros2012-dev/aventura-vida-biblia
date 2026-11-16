@@ -18,7 +18,7 @@ const checks: Array<[string, boolean]> = [
   ["Wood and stone gathering exists", world.includes("woodNodes") && world.includes("stoneNodes") && world.includes("collectWood") && world.includes("collectStone")],
   ["Local resource inventory is persisted", world.includes("av-world-wood-inventory") && world.includes("av-world-stone-inventory")],
   ["Buildable cabin and lamp objects exist", world.includes('kind: "cabin" | "lamp"') && world.includes('build("cabin")') && world.includes('build("lamp")')],
-  ["All fifteen game adapters remain registered", (registry.match(/trusted: true/g) ?? []).length === 15],
+  ["All fifteen game adapters remain registered", (registry.match(/^\\s*(?:"[^"]+"|[a-z-]+): \\{ key:/gm) ?? []).length === 15],
 ];
 
 const failed = checks.filter(([, passed]) => !passed);
