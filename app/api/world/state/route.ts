@@ -9,6 +9,8 @@ export const dynamic = "force-dynamic";
 const buildSchema = z.object({
   id: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   kind: z.enum(["cabin", "lamp"]),
+  x: z.number().finite().min(-16).max(16).optional(),
+  z: z.number().finite().min(-16).max(16).optional(),
 }).strict();
 
 const stateSchema = z.object({
