@@ -25,4 +25,5 @@ export const internalGameRegistry: Record<string, InternalGameManifest> = {
   "star-map": { key: "star-map", version: "1.0.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
   "bible-maze": { key: "bible-maze", version: "1.0.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
   vowels: { key: "vowels", version: "1.0.0", supportedEvents: ["score", "progress", "finish"], trusted: true },
+  "little-big-heroes": { key: "little-big-heroes", version: "1.0.0", supportedEvents: ["score", "objective", "progress", "finish"], trusted: true },
 };
