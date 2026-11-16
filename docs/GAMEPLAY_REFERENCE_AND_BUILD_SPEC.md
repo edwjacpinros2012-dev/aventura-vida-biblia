@@ -164,3 +164,33 @@ Exploradores mecánicos de dos formas que recorren regiones, rescatan unidades a
 - [ ] Jardín 3D probado en móvil y escritorio.
 - [ ] Variables de producción configuradas sin exponer sus valores.
 - [ ] Preview comprobada antes de promover a producción.
+
+## 5. Auditoría de CI y despliegues — 16 de noviembre de 2026
+
+### Causa raíz confirmada de los fallos recientes
+- El job de calidad sí instalaba dependencias, generaba Prisma, verificaba el prototipo y pasaba ESLint.
+- TypeScript detenía el flujo por una referencia `minimapMarker` que no estaba declarada en el componente `Scene`. Se corrigió el contrato de props y la comprobación de tipos/build pasó en el commit `4a99a872`.
+- El workflow automático de sincronización de `pnpm-lock.yaml` podía competir con otros commits y recibir un rechazo `fetch first`. Se dejó como ejecución manual; el lockfile está versionado y Vercel lo reconoce con pnpm 10.
+- El workflow de calidad se limitó al evento `pull_request` y a ejecución manual para evitar ejecutar dos pipelines por cada push y sincronización del mismo PR.
+- Se añadieron permisos explícitos de scripts de instalación pnpm para Prisma y esbuild en `package.json`.
+
+### Estado verificado
+- El commit `4a99a872` completó instalación, generación de Prisma, verificación estática de 14 condiciones, contenido bíblico, integración de salud multijugador, compilación Next.js y generación de páginas; su Preview terminó en READY.
+- El workflow de calidad para `4a99a872` terminó SUCCESS, incluidos lint, TypeScript y build.
+- Se corrigió también una dependencia incorrecta del temporizador de obstáculos en Little Big Heroes: el contador de vidas ahora forma parte de las dependencias del efecto que decide cuándo termina la carrera, evitando que el callback use vidas antiguas.
+- Los commits posteriores de configuración y este último ajuste requieren su propio resultado final de CI y Preview; no se deben dar por aprobados por herencia del commit anterior.
+- Los últimos despliegues de producción consultados en `main` incluyen errores durante la introducción de Three.js. La última versión de producción conocida como READY es anterior a esos cambios; la rama de trabajo no se ha promovido.
+
+### Referencias técnicas verificadas
+- React Three Fiber, Performance Pitfalls: https://r3f.docs.pmnd.rs/advanced/pitfalls — no usar setState en el bucle de render; mutar referencias y usar delta.
+- React Three Fiber, Scaling Performance: https://r3f.docs.pmnd.rs/advanced/scaling-performance — ajustar resolución y calidad a la capacidad del dispositivo.
+- Drei, MeshReflectorMaterial: https://drei.docs.pmnd.rs/shaders/mesh-reflector-material — `resolution` menor reduce coste del render target reflectante; el río se configura en 128.
+- Aplicación concreta: el minimapa mueve su marcador mediante una referencia DOM y el jugador actualiza posición en `useFrame`; el HUD no debe provocar un render de React por cada frame.
+
+### Puerta de salida antes de producción
+1. El último commit debe tener CI SUCCESS y Preview READY, no solo un commit anterior.
+2. Probar manualmente el mundo en móvil y escritorio, incluidos controles, colisiones, minimapa, agua y recuperación al volver a la pestaña.
+3. Verificar variables de entorno y conexión de PostgreSQL sin exponer valores secretos.
+4. Confirmar que la migración de ranuras de equipamiento se puede aplicar de forma compatible y con respaldo; `prisma generate` no aplica migraciones.
+5. Ejecutar pruebas reales de tienda, inventario, equipamiento, autenticación, multijugador y los 15 juegos.
+6. Solo después revisar el alcance completo del PR #2; la rama contiene muchos commits y no debe fusionarse por el mero hecho de que compile.
