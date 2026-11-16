@@ -198,6 +198,7 @@ Exploradores mecánicos de dos formas que recorren regiones, rescatan unidades a
 ### Persistencia del Jardín — implementación en rama
 - Se añadió `PlayerWorldState` con recursos recogidos, luces y construcciones por cuenta.
 - Se añadió `GET/PUT /api/world/state`, protegido con la sesión de Aventura Vida y validación Zod. Los recursos duplicados y las construcciones que exceden el material reunido se rechazan.
+- Las cabañas y lámparas nuevas se colocan cerca de la posición y orientación actuales del jugador, buscan un espacio libre y guardan sus coordenadas; se conservan las posiciones de estructuras antiguas sin coordenadas.
 - El cliente carga el estado de la cuenta al iniciar sesión y sincroniza cambios con una cola secuencial para impedir que solicitudes lentas sobrescriban un guardado más reciente. Los visitantes conservan almacenamiento local.
 - La migración aditiva `20261116153000_player_world_state` crea una tabla relacionada con User mediante borrado en cascada; no altera las tablas de progreso ni de inventario existentes.
 - Se amplió `scripts/verify-world3d.ts` para comprobar el contrato, la validación, el modelo Prisma, la migración y la sincronización.
