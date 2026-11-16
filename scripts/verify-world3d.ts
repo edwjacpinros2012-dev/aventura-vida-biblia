@@ -22,6 +22,8 @@ const checks: Array<[string, boolean]> = [
   ["Local resource inventory is persisted", world.includes("av-world-wood-inventory") && world.includes("av-world-stone-inventory")],
   ["Authenticated world state loads from the server", world.includes('fetch("/api/world/state", { cache: "no-store" })')],
   ["World changes are saved to the account", world.includes('method: "PUT"') && world.includes("worldSaveQueue.current")],
+  ["Build pieces are placed near the live player position", world.includes("playerPosition.current") && world.includes("const candidates = Array.from({ length: 12 }")],
+  ["Build coordinates are validated and persisted", world.includes("x: x ??") && worldApi.includes("x: z.number().finite().min(-16).max(16).optional()")],
   ["World state API requires an authenticated account", worldApi.includes("accountFromRequest") && worldApi.includes("status: 401")],
   ["World state API validates unique resources and build costs", worldApi.includes("No se permiten recursos duplicados") && worldApi.includes("Las construcciones superan los materiales reunidos")],
   ["Prisma declares persistent player world state", schema.includes("model PlayerWorldState") && schema.includes("worldState PlayerWorldState?")],
