@@ -7,6 +7,9 @@ const world = read("components/creation-world.tsx");
 const page = read("app/mundo-3d/page.tsx");
 const pkg = read("package.json");
 const registry = read("lib/games/registry.ts");
+const worldApi = read("app/api/world/state/route.ts");
+const schema = read("prisma/schema.prisma");
+const worldMigration = read("prisma/migrations/20261116153000_player_world_state/migration.sql");
 
 const checks: Array<[string, boolean]> = [
   ["Three.js React renderer is declared", pkg.includes('"@react-three/fiber"')],
@@ -17,6 +20,12 @@ const checks: Array<[string, boolean]> = [
   ["Light quest collectibles exist", world.includes("const lights =") && world.includes("collect(index)")],
   ["Wood and stone gathering exists", world.includes("woodNodes") && world.includes("stoneNodes") && world.includes("collectWood") && world.includes("collectStone")],
   ["Local resource inventory is persisted", world.includes("av-world-wood-inventory") && world.includes("av-world-stone-inventory")],
+  ["Authenticated world state loads from the server", world.includes('fetch("/api/world/state", { cache: "no-store" })')],
+  ["World changes are saved to the account", world.includes('method: "PUT"') && world.includes("worldSaveQueue.current")],
+  ["World state API requires an authenticated account", worldApi.includes("accountFromRequest") && worldApi.includes("status: 401")],
+  ["World state API validates unique resources and build costs", worldApi.includes("No se permiten recursos duplicados") && worldApi.includes("Las construcciones superan los materiales reunidos")],
+  ["Prisma declares persistent player world state", schema.includes("model PlayerWorldState") && schema.includes("worldState PlayerWorldState?")],
+  ["World state migration preserves user data and cascades account deletion", worldMigration.includes('CREATE TABLE "PlayerWorldState"') && worldMigration.includes("ON DELETE CASCADE")],
   ["Buildable cabin and lamp objects exist", world.includes('kind: "cabin" | "lamp"') && world.includes('build("cabin")') && world.includes('build("lamp")')],
   ["World obstacles block player movement", world.includes("collisionObstacles") && world.includes("isWorldBlocked")],
   ["River uses reflective water material", world.includes("MeshReflectorMaterial") && world.includes("resolution={128}")],
