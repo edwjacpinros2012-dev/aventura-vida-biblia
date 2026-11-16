@@ -58,12 +58,17 @@ async function main() {
   });
 
   const achievementData = [
-    { slug: "primera-aventura", title: "Primera aventura", description: "Completa tu primer juego.", icon: "🧭", criteria: { completedGames: 1 }, xpReward: 50 },
-    { slug: "cinco-juegos", title: "Explorador constante", description: "Completa 5 juegos.", icon: "✦", criteria: { completedGames: 5 }, xpReward: 100 },
-    { slug: "siete-dias", title: "Semana brillante", description: "Participa 7 días.", icon: "🌟", criteria: { activeDays: 7 }, xpReward: 75 },
-    { slug: "maestro-preguntas", title: "Maestro de preguntas", description: "Completa retos de preguntas.", icon: "💡", criteria: { quizGames: 5 }, xpReward: 100 },
+    { slug: "primera-aventura", title: "Primera aventura", description: "Completa tu primer juego.", icon: "🧭", criteria: { completedGames: 1 }, xpReward: 50, active: true },
+    { slug: "explorador-curioso", title: "Explorador curioso", description: "Prueba 3 juegos diferentes.", icon: "🗺️", criteria: { uniqueGames: 3 }, xpReward: 75, active: true },
+    { slug: "guardian-de-versiculos", title: "Guardián de palabras", description: "Aprende tu primer versículo.", icon: "📖", criteria: { learnedVerses: 1 }, xpReward: 50, active: true },
+    { slug: "luz-constante", title: "Luz constante", description: "Mantén una racha de 3 días.", icon: "🌟", criteria: { activeDays: 3 }, xpReward: 75, active: true },
+    { slug: "maestro-de-juegos", title: "Maestro de juegos", description: "Completa 8 partidas.", icon: "🏆", criteria: { completedGames: 8 }, xpReward: 100, active: true },
   ];
   for (const achievement of achievementData) await prisma.achievement.upsert({ where: { slug: achievement.slug }, update: achievement, create: achievement });
+  await prisma.achievement.updateMany({
+    where: { slug: { in: ["cinco-juegos", "siete-dias", "maestro-preguntas"] } },
+    data: { active: false },
+  });
 
   const adventure = await prisma.adventure.upsert({ where: { slug: "valle-de-los-destellos" }, update: { status: ContentStatus.PUBLISHED, featured: true }, create: { slug: "valle-de-los-destellos", title: "El valle de los destellos", summary: "Una expedición para devolver la luz a las aldeas del valle.", status: ContentStatus.PUBLISHED, featured: true, publishedAt: new Date() } });
   const chapters = ["La señal en el mapa", "El puente de la confianza", "La luz compartida", "Una decisión valiente", "El camino a casa", "El faro despierta"];
