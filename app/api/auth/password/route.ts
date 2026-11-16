@@ -4,6 +4,7 @@ import { z } from "zod";
 import { accountFromRequest } from "@/lib/auth/server";
 import { createSession, revokeAllSessions, sessionCookie } from "@/lib/auth/service";
 import { prisma } from "@/lib/prisma";
+import { requestRateKey, withinRateLimit } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,9 @@ const schema = z.object({
 });
 
 export async function PATCH(request: Request) {
+  if (!withinRateLimit(requestRateKey(request, "password-change"), 5, 60_000)) {
+    return NextResponse.json({ error: "Espera un momento antes de volver a intentarlo." }, { status: 429 });
+  }
   const account = await accountFromRequest(request);
   if (!account) return NextResponse.json({ error: "Inicia sesión para cambiar tu contraseña." }, { status: 401 });
 
