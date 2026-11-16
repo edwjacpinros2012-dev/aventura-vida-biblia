@@ -122,7 +122,7 @@ function Avatar({ keys, pad, onNear, minimapMarker, player, playerPosition, avat
   </group>;
 }
 
-function Scene({ keys, pad, collected, collect, woodCollected, collectWood, stoneCollected, collectStone, builds, onNear, minimapMarker, avatarUrl, equippedSlugs }: {
+function Scene({ keys, pad, collected, collect, woodCollected, collectWood, stoneCollected, collectStone, builds, onNear, minimapMarker, playerPosition, avatarUrl, equippedSlugs }: {
   keys: PlayerControls["keys"];
   pad: PlayerControls["pad"];
   collected: number[];
