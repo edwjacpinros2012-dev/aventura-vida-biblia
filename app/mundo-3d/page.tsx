@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 const features = [
   { icon: "🧭", title: "Exploración", text: "Recorre el valle en tercera persona, usa el salto y acércate al guardián para conversar." },
   { icon: "✨", title: "Misión de luz", text: "Encuentra cuatro destellos dorados y completa la primera misión del Jardín." },
-  { icon: "🪵", title: "Recolectar recursos", text: "Busca madera y piedra por el territorio. Cada nodo se puede recoger una sola vez en este dispositivo." },
+  { icon: "🪵", title: "Recolectar recursos", text: "Busca madera y piedra por el territorio. Cada nodo se puede recoger una sola vez y el progreso se sincroniza en tu cuenta al iniciar sesión." },
   { icon: "🏡", title: "Construcción inicial", text: "Usa los materiales para colocar cabañas y lámparas decorativas en el valle." },
 ];
 
@@ -56,7 +56,7 @@ export default function Mundo3DPage() {
           <article className="rounded-2xl border border-amber-200/15 bg-amber-200/[.05] p-5">
             <h2 className="text-lg font-black text-amber-100">Estado de esta versión</h2>
             <p className="mt-2 text-sm leading-6 text-white/70">
-              Las luces, los materiales y las estructuras se guardan en el almacenamiento local del navegador. Todavía no son inventario sincronizado con la cuenta ni construcción en multijugador; esa conexión requiere backend y pruebas.
+              Los jugadores con sesión iniciada guardan las luces, los materiales y las construcciones en su cuenta. Los visitantes conservan el progreso en este dispositivo. La construcción compartida en multijugador todavía requiere un servidor de mundo y pruebas.
             </p>
           </article>
         </section>
