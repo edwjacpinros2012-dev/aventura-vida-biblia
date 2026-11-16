@@ -33,12 +33,10 @@ Este documento convierte la investigación de referencias en decisiones concreta
   - Aplicación: mantener las versiones compatibles ya declaradas por el proyecto; no actualizar Three/Fiber/Drei sin revisar lockfile, build y Preview.
 
 ### Transformación y diseño de modos
-- GameSpot, Transformers: War for Cybertron review: https://www.gamespot.com/reviews/transformers-war-for-cybertron-review/1900-6267012/
-- PC Gamer, Transformers: War for Cybertron review: https://www.pcgamer.com/transformers-war-for-cybertron-review/
-- Entrevista de desarrollo: https://www.worthplaying.com/article/2010/3/17/interviews/73111-transformers-war-on-cybertron-all-developer-interview/
+- Referencia de diseño aplicada: modos de personaje con funciones complementarias, una forma de exploración precisa y otra de desplazamiento rápido.
   - Lección: la transformación solo aporta profundidad si cada forma tiene utilidad clara y si el nivel ofrece situaciones que hacen natural alternar entre ambas.
   - Aplicación a Eras Wars: robot para activar terminales, ayudar a personajes, manipular mecanismos y recorrer espacios precisos; vehículo para desplazarse por rutas amplias, cruzar zonas y completar pruebas de tiempo. No basta con un botón que cambie la apariencia.
-  - Límite creativo: crear mechs, nombres, siluetas, emblemas, vehículos, escenarios, sonidos y animaciones originales. No reutilizar personajes, logos, modelos, mapas, música ni arte de Transformers.
+  - Límite creativo: crear mechs, nombres, siluetas, emblemas, vehículos, escenarios, sonidos y animaciones originales. No reutilizar personajes, logos, modelos, mapas, música ni arte de otras franquicias.
 
 ## 2. Diagnóstico confirmado del estado actual
 
