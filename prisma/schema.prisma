@@ -232,6 +232,7 @@ model User {
   sessions       UserSession[]
   wallet         PlayerWallet?
   inventory      PlayerInventoryItem[]
+  equippedItems  PlayerEquippedItem[]
   coinTransactions AdventureCoinTransaction[]
   sentGifts      AdventureGift[]  @relation("GiftSender")
   receivedGifts  AdventureGift[]  @relation("GiftRecipient")
@@ -329,6 +330,7 @@ model StoreItem {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   owners      PlayerInventoryItem[]
+  equippedBy  PlayerEquippedItem[]
 
   @@index([type, active])
 }
@@ -344,6 +346,20 @@ model PlayerInventoryItem {
 
   @@unique([userId, itemId])
   @@index([userId, acquiredAt(sort: Desc)])
+}
+
+model PlayerEquippedItem {
+  id         String            @id @default(cuid())
+  userId     String
+  itemId     String
+  type       InventoryItemType
+  equippedAt DateTime          @default(now())
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item       StoreItem         @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@unique([userId, itemId])
+  @@index([userId, equippedAt(sort: Desc)])
 }
 
 model AdventureGift {
