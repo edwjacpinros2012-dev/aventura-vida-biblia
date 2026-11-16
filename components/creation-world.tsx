@@ -43,7 +43,7 @@ function House({ p, color }: { p: [number, number, number]; color: string }) {
 }
 
 type PlayerControls = {
-  avatarUrl: string;
+  avatarKey: string;
   equippedSlugs: string[];
   keys: React.MutableRefObject<Set<string>>;
   pad: React.MutableRefObject<[number, number]>;
@@ -53,16 +53,31 @@ type PlayerControls = {
   playerPosition: React.MutableRefObject<[number, number, number]>;
 };
 
-function Avatar({ keys, pad, onNear, minimapMarker, player, playerPosition, avatarUrl, equippedSlugs }: PlayerControls) {
-  const sprite = useRef<THREE.Mesh>(null);
+function Avatar({ keys, pad, onNear, minimapMarker, player, playerPosition, avatarKey, equippedSlugs }: PlayerControls) {
+  const leftArm = useRef<THREE.Group>(null);
+  const rightArm = useRef<THREE.Group>(null);
+  const leftLeg = useRef<THREE.Group>(null);
+  const rightLeg = useRef<THREE.Group>(null);
+  const body = useRef<THREE.Group>(null);
   const { camera } = useThree();
-  const texture = useMemo(() => new THREE.TextureLoader().load(avatarUrl), [avatarUrl]);
   const near = useRef(false);
   const jumpVelocity = useRef(0);
   const jumpWasDown = useRef(false);
   const lastReportedPosition = useRef<[number, number]>([0, 9]);
 
-  useFrame((_, dt) => {
+  const palette = useMemo(() => {
+    const palettes: Record<string, { shirt: string; lower: string; accent: string; hair: string }> = {
+      "vida-kids-01-rosa-morado": { shirt: "#ed91c2", lower: "#7951a5", accent: "#f5c5df", hair: "#493027" },
+      "vida-kids-02-blanco": { shirt: "#f3f0e8", lower: "#4b6380", accent: "#b8d4e8", hair: "#493027" },
+      "vida-kids-03-azul": { shirt: "#397fc1", lower: "#314c75", accent: "#9dd9ed", hair: "#493027" },
+      "vida-kids-04-beige": { shirt: "#cbb28c", lower: "#78624b", accent: "#ead8b9", hair: "#493027" },
+      "vida-kids-05-verde": { shirt: "#55a66b", lower: "#466d58", accent: "#b9e1a8", hair: "#493027" },
+      "vida-kids-06-rojo": { shirt: "#cf5555", lower: "#465b79", accent: "#f0b0a5", hair: "#493027" },
+    };
+    return palettes[avatarKey] ?? { shirt: "#4b8fba", lower: "#435d78", accent: "#c4e6ef", hair: "#493027" };
+  }, [avatarKey]);
+
+  useFrame((state, dt) => {
     if (!player.current) return;
     const group = player.current;
     playerPosition.current = [group.position.x, group.position.z, group.rotation.y];
@@ -77,7 +92,8 @@ function Avatar({ keys, pad, onNear, minimapMarker, player, playerPosition, avat
     const z = (pressed.has("w") || pressed.has("arrowup") ? 1 : 0) - (pressed.has("s") || pressed.has("arrowdown") ? 1 : 0) + pad.current[1];
     const x = (pressed.has("d") || pressed.has("arrowright") ? 1 : 0) - (pressed.has("a") || pressed.has("arrowleft") ? 1 : 0) + pad.current[0];
     const direction = new THREE.Vector2(x, z);
-    if (direction.lengthSq() > 0.01) {
+    const moving = direction.lengthSq() > 0.01;
+    if (moving) {
       direction.normalize();
       const nextX = THREE.MathUtils.clamp(group.position.x + direction.x * dt * 5, -16, 16);
       if (!isWorldBlocked(nextX, group.position.z)) group.position.x = nextX;
@@ -86,9 +102,18 @@ function Avatar({ keys, pad, onNear, minimapMarker, player, playerPosition, avat
       group.rotation.y = Math.atan2(direction.x, direction.y);
     }
 
+    const stride = moving ? Math.sin(state.clock.elapsedTime * 10) * 0.62 : 0;
+    if (leftArm.current) leftArm.current.rotation.x = stride;
+    if (rightArm.current) rightArm.current.rotation.x = -stride;
+    if (leftLeg.current) leftLeg.current.rotation.x = -stride;
+    if (rightLeg.current) rightLeg.current.rotation.x = stride;
+    if (body.current) {
+      body.current.position.y = moving && group.position.y === 0 ? Math.abs(Math.sin(state.clock.elapsedTime * 10)) * 0.045 : 0;
+      body.current.rotation.z = moving ? Math.sin(state.clock.elapsedTime * 5) * 0.025 : 0;
+    }
+
     camera.position.lerp(new THREE.Vector3(group.position.x, 6.5 + group.position.y * 0.35, group.position.z + 10), 1 - Math.pow(0.001, dt));
     camera.lookAt(group.position.x, 1 + group.position.y, group.position.z - 1);
-    if (sprite.current) sprite.current.lookAt(camera.position.x, group.position.y + 1.4, camera.position.z);
     if (Math.hypot(group.position.x - lastReportedPosition.current[0], group.position.z - lastReportedPosition.current[1]) >= 0.25) {
       lastReportedPosition.current = [group.position.x, group.position.z];
       if (minimapMarker.current) {
@@ -105,23 +130,58 @@ function Avatar({ keys, pad, onNear, minimapMarker, player, playerPosition, avat
   });
 
   return <group ref={player} position={[0, 0, 9]}>
-    <mesh ref={sprite} position={[0, 1.4, 0]}>
-      <planeGeometry args={[1.8, 2.9]} />
-      <meshBasicMaterial map={texture} transparent alphaTest={0.08} side={THREE.DoubleSide} />
-      {equippedSlugs.includes("yelmo-salvacion") && <group position={[0, 0.98, 0.09]}>
+    <group ref={body}>
+      {/* Modelo humanoide 3D articulado: el avatar oficial determina su vestuario. */}
+      <mesh position={[0, 1.48, 0]} castShadow receiveShadow>
+        <capsuleGeometry args={[0.38, 0.72, 5, 10]} />
+        <meshStandardMaterial color={palette.shirt} roughness={0.78} />
+      </mesh>
+      <mesh position={[0, 1.05, 0]} castShadow>
+        <cylinderGeometry args={[0.34, avatarKey === "vida-kids-01-rosa-morado" ? 0.58 : 0.4, 0.38, 10]} />
+        <meshStandardMaterial color={palette.lower} roughness={0.86} />
+      </mesh>
+      <mesh position={[0, 2.03, 0]}><cylinderGeometry args={[0.14, 0.16, 0.2, 10]} /><meshStandardMaterial color="#d99f79" /></mesh>
+      <mesh position={[0, 2.42, 0]} castShadow>
+        <sphereGeometry args={[0.43, 16, 12]} />
+        <meshStandardMaterial color="#d99f79" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 2.69, -0.035]} castShadow>
+        <sphereGeometry args={[0.435, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.52]} />
+        <meshStandardMaterial color={palette.hair} roughness={0.95} />
+      </mesh>
+      <mesh position={[-0.155, 2.44, 0.375]}><sphereGeometry args={[0.045, 8, 8]} /><meshStandardMaterial color="#30241f" /></mesh>
+      <mesh position={[0.155, 2.44, 0.375]}><sphereGeometry args={[0.045, 8, 8]} /><meshStandardMaterial color="#30241f" /></mesh>
+      <mesh position={[0, 2.32, 0.408]}><sphereGeometry args={[0.045, 8, 8]} /><meshStandardMaterial color="#bd8062" /></mesh>
+      <mesh position={[0, 2.23, 0.392]} rotation={[0, 0, Math.PI]}><torusGeometry args={[0.075, 0.014, 6, 12, Math.PI]} /><meshStandardMaterial color="#7c3d3d" /></mesh>
+      <group ref={leftArm} position={[-0.47, 1.83, 0]}>
+        <mesh position={[0, -0.34, 0]} rotation={[0, 0, -0.12]} castShadow><capsuleGeometry args={[0.14, 0.48, 4, 8]} /><meshStandardMaterial color={palette.shirt} /></mesh>
+        <mesh position={[0, -0.68, 0.015]} castShadow><sphereGeometry args={[0.14, 9, 7]} /><meshStandardMaterial color="#d99f79" /></mesh>
+      </group>
+      <group ref={rightArm} position={[0.47, 1.83, 0]}>
+        <mesh position={[0, -0.34, 0]} rotation={[0, 0, 0.12]} castShadow><capsuleGeometry args={[0.14, 0.48, 4, 8]} /><meshStandardMaterial color={palette.shirt} /></mesh>
+        <mesh position={[0, -0.68, 0.015]} castShadow><sphereGeometry args={[0.14, 9, 7]} /><meshStandardMaterial color="#d99f79" /></mesh>
+      </group>
+      <group ref={leftLeg} position={[-0.2, 0.88, 0]}>
+        <mesh position={[0, -0.35, 0]} castShadow><capsuleGeometry args={[0.16, 0.48, 4, 8]} /><meshStandardMaterial color={palette.lower} /></mesh>
+        <mesh position={[0, -0.68, 0.1]} castShadow><boxGeometry args={[0.29, 0.17, 0.43]} /><meshStandardMaterial color="#493d39" /></mesh>
+      </group>
+      <group ref={rightLeg} position={[0.2, 0.88, 0]}>
+        <mesh position={[0, -0.35, 0]} castShadow><capsuleGeometry args={[0.16, 0.48, 4, 8]} /><meshStandardMaterial color={palette.lower} /></mesh>
+        <mesh position={[0, -0.68, 0.1]} castShadow><boxGeometry args={[0.29, 0.17, 0.43]} /><meshStandardMaterial color="#493d39" /></mesh>
+      </group>
+      {equippedSlugs.includes("yelmo-salvacion") && <group position={[0, 2.72, 0]}>
         <mesh castShadow><sphereGeometry args={[0.48, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55]} /><meshStandardMaterial color="#e8bd55" metalness={0.55} roughness={0.35} /></mesh>
         <mesh position={[0, -0.12, 0.08]}><boxGeometry args={[0.82, 0.12, 0.12]} /><meshStandardMaterial color="#f6d878" metalness={0.35} /></mesh>
       </group>}
-      {equippedSlugs.includes("tunica-pastor-amable") && <mesh position={[0, 0.02, 0.075]} castShadow>
-        <boxGeometry args={[0.88, 0.78, 0.09]} /><meshStandardMaterial color="#d9eee0" roughness={0.85} />
+      {equippedSlugs.includes("tunica-pastor-amable") && <mesh position={[0, 1.5, 0.31]} castShadow>
+        <boxGeometry args={[0.66, 0.72, 0.13]} /><meshStandardMaterial color="#d9eee0" roughness={0.85} />
       </mesh>}
-      {equippedSlugs.includes("capa-bondad") && <mesh position={[0, -0.08, -0.12]} castShadow>
-        <boxGeometry args={[1.28, 1.65, 0.08]} /><meshStandardMaterial color="#6d91b8" roughness={0.82} side={THREE.DoubleSide} />
+      {equippedSlugs.includes("capa-bondad") && <mesh position={[0, 1.38, -0.25]} castShadow>
+        <boxGeometry args={[0.92, 1.25, 0.1]} /><meshStandardMaterial color="#6d91b8" roughness={0.82} side={THREE.DoubleSide} />
       </mesh>}
-    </mesh>
+    </group>
   </group>;
 }
-
 function Scene({ keys, pad, collected, collect, woodCollected, collectWood, stoneCollected, collectStone, builds, onNear, minimapMarker, playerPosition, avatarUrl, equippedSlugs }: {
   keys: PlayerControls["keys"];
   pad: PlayerControls["pad"];
@@ -180,7 +240,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
       </mesh>
     </Float>)}
     <Sparkles count={80} scale={[32, 7, 32]} color="#fff1b0" />
-    <Avatar keys={keys} pad={pad} onNear={onNear} minimapMarker={minimapMarker} player={player} playerPosition={playerPosition} avatarUrl={avatarUrl} equippedSlugs={equippedSlugs} />
+    <Avatar keys={keys} pad={pad} onNear={onNear} minimapMarker={minimapMarker} player={player} playerPosition={playerPosition} avatarKey={avatarKey} equippedSlugs={equippedSlugs} />
   </>;
 }
 
@@ -391,7 +451,7 @@ export function CreationWorld() {
   return <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#082632] shadow-2xl">
     <div className="relative h-[min(72vh,680px)] min-h-[470px]">
       <Canvas shadows camera={{ position: [0, 7, 19], fov: 48 }} dpr={[1, 1.5]}>
-        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} woodCollected={woodCollected} collectWood={collectWood} stoneCollected={stoneCollected} collectStone={collectStone} builds={builds} onNear={setNear} minimapMarker={minimapPlayerMarker} playerPosition={playerPosition} avatarUrl={avatarUrl} equippedSlugs={equippedSlugs} /></Suspense>
+        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} woodCollected={woodCollected} collectWood={collectWood} stoneCollected={stoneCollected} collectStone={collectStone} builds={builds} onNear={setNear} minimapMarker={minimapPlayerMarker} playerPosition={playerPosition} avatarKey={identity.avatarKey} equippedSlugs={equippedSlugs} /></Suspense>
       </Canvas>
 
       <div className="pointer-events-none absolute left-4 top-4 rounded-2xl border border-white/15 bg-[#06232dcc] p-3 text-white">
