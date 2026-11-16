@@ -187,7 +187,6 @@ enum EquipmentSlot {
   HEAD
   CHEST
   BACK
-  HAND
   COMPANION
   EFFECT
 }
