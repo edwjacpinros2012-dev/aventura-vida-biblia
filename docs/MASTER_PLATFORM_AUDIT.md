@@ -117,3 +117,25 @@ Se agregó scripts/verify-world3d.ts y el comando pnpm world:verify, además de 
 Estado de Preview: la compilación inicial reveló un JSON package.json inválido por una inserción de salto de línea literal, que se corrigió. El build siguiente reveló conflicto ERESOLVE porque OpenAI SDK 7.57 requiere peer opcional Zod ^3.25 o ^4.0 y el proyecto tenía Zod 3.24.2. La rama elevó Zod a ^3.25.0; aún falta confirmar el resultado de la Preview y las pruebas CI.
 
 La rama se encuentra 22 commits adelante y 2 detrás de main (comparación actual). No integrar ni promover a producción antes de sincronizar/revisar los commits divergentes, restaurar lockfile pnpm correctamente, ejecutar los checks y confirmar Preview READY.
+
+
+## Actual implementation update — 16-11-2026 (continued work)
+
+### Bible learning and shop expansion
+- Added the /biblia route with 10 guided Bible study cards: creation, Noah, Moses, David, Daniel, Jesus' birth, Good Samaritan, calming the storm, Zacchaeus, and resurrection.
+- Each study includes a reference, learning goals, summary, and activity. The page also includes a five-question interactive practice quiz with feedback, reference, score, and replay.
+- Added six Bible-inspired collection items to the Prisma seed. They are added idempotently by slug; existing items are preserved.
+- Added scripts/verify-bible-content.ts; prebuild checks the study count, question structure, and the six new item slugs.
+
+### Multiplayer health and clarity
+- Added /api/multiplayer/health, which probes only the configured MULTIPLAYER_SERVER_URL/health, applies a timeout, validates the service identity, and never returns the configured URL.
+- The multiplayer hub now displays online/offline/unconfigured status and latency, with explicit links to the two online modes that are actually implemented: Bible Maze cooperative and Bible quiz duel 1v1.
+- Updated docs/MULTIPLAYER_DEPLOYMENT.md: configure both NEXT_PUBLIC_MULTIPLAYER_SERVER_URL (browser Socket.IO connection) and MULTIPLAYER_SERVER_URL (server-side health probe) to the same service URL.
+- Added a static integration verifier for the health endpoint and hub.
+
+### Verification and deployment snapshot
+- Static prebuild checks have passed on Vercel for the 3D prototype (10 checks), Bible content (10 studies, 5 questions, 6 shop additions), and multiplayer health integration.
+- A Vercel Preview for commit f0a37a93a486bc32ade07f20dbba5f740810038a reported “Compiled successfully”; lint/type checking was still running at the last observation.
+- A newer Preview for commit 8f10f67aa5f14a7bddd94a1f9487c8f75d83f662 was queued. These states do not mean production is deployed.
+- A verifier count bug and top-level-await compatibility issue in the static scripts were found from build logs and corrected on the branch; those newest fixes still require a fresh completed build.
+- The branch remains a draft PR and is not integrated into production. External Socket.IO hosting, DB/environment configuration, lockfile restoration, branch synchronization, and tests for every game's online adapter remain open work.
