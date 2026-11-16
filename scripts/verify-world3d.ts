@@ -12,7 +12,7 @@ const checks: Array<[string, boolean]> = [
   ["Three.js React renderer is declared", pkg.includes('"@react-three/fiber"')],
   ["Drei helpers are declared", pkg.includes('"@react-three/drei"')],
   ["World page mounts the scene", page.includes("<CreationWorld")],
-  ["World has keyboard and touch movement", world.includes("DirectionButton") && world.includes("keys.current.add(key)")],
+  ["World has keyboard and touch movement", world.includes("DirectionButton") && world.includes("pressedKeys.add(key)")],
   ["Jump physics is present", world.includes("jumpVelocity.current")],
   ["Light quest collectibles exist", world.includes("const lights =") && world.includes("collect(index)")],
   ["Wood and stone gathering exists", world.includes("woodNodes") && world.includes("stoneNodes") && world.includes("collectWood") && world.includes("collectStone")],
