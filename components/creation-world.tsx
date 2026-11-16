@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Float, MeshReflectorMaterial, Sky, Sparkles } from "@react-three/drei";
+import { Float, Html, MeshReflectorMaterial, Sky, Sparkles } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { usePlayerProgress } from "@/components/player-progress-provider";
@@ -37,6 +37,48 @@ function House({ p, color }: { p: [number, number, number]; color: string }) {
     <mesh position={[0, 1, 0]} castShadow><boxGeometry args={[2.8, 2, 2.5]} /><meshStandardMaterial color={color} /></mesh>
     <mesh position={[0, 2.3, 0]} castShadow><coneGeometry args={[2.1, 1.1, 4]} /><meshStandardMaterial color="#8b5139" /></mesh>
     <mesh position={[0, 0.7, 1.27]}><boxGeometry args={[0.6, 1.35, 0.08]} /><meshStandardMaterial color="#513728" /></mesh>
+  </group>;
+}
+
+type WorldNpcProps = {
+  position: [number, number, number];
+  robeColor: string;
+  trimColor: string;
+  hairColor: string;
+  title: string;
+  player: React.RefObject<THREE.Group | null>;
+};
+
+function WorldNpc({ position, robeColor, trimColor, hairColor, title, player }: WorldNpcProps) {
+  const root = useRef<THREE.Group>(null);
+  const leftArm = useRef<THREE.Group>(null);
+  const rightArm = useRef<THREE.Group>(null);
+
+  useFrame((state, dt) => {
+    if (!root.current) return;
+    const target = player.current?.position;
+    if (target) {
+      const desired = Math.atan2(target.x - root.current.position.x, target.z - root.current.position.z);
+      root.current.rotation.y = THREE.MathUtils.lerp(root.current.rotation.y, desired, 1 - Math.exp(-dt * 2.2));
+    }
+    root.current.position.y = Math.sin(state.clock.elapsedTime * 1.35 + position[0]) * 0.025;
+    if (leftArm.current) leftArm.current.rotation.z = Math.sin(state.clock.elapsedTime * 1.1) * 0.055;
+    if (rightArm.current) rightArm.current.rotation.z = -Math.sin(state.clock.elapsedTime * 1.1) * 0.055;
+  });
+
+  return <group ref={root} position={position}>
+    <mesh position={[0, 0.72, 0]} castShadow><cylinderGeometry args={[0.34, 0.5, 1.25, 10]} /><meshStandardMaterial color={robeColor} roughness={0.86} /></mesh>
+    <mesh position={[0, 1.4, 0]} castShadow><sphereGeometry args={[0.31, 14, 10]} /><meshStandardMaterial color="#d7a17d" roughness={0.9} /></mesh>
+    <mesh position={[0, 1.58, -0.035]} castShadow><sphereGeometry args={[0.315, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55]} /><meshStandardMaterial color={hairColor} roughness={0.95} /></mesh>
+    <mesh position={[-0.11, 1.42, 0.27]}><sphereGeometry args={[0.025, 7, 6]} /><meshStandardMaterial color="#30241f" /></mesh>
+    <mesh position={[0.11, 1.42, 0.27]}><sphereGeometry args={[0.025, 7, 6]} /><meshStandardMaterial color="#30241f" /></mesh>
+    <group ref={leftArm} position={[-0.37, 1.12, 0]}><mesh position={[0, -0.24, 0]} rotation={[0, 0, -0.18]} castShadow><capsuleGeometry args={[0.105, 0.42, 4, 8]} /><meshStandardMaterial color={robeColor} /></mesh><mesh position={[0, -0.49, 0.02]}><sphereGeometry args={[0.105, 8, 7]} /><meshStandardMaterial color="#d7a17d" /></mesh></group>
+    <group ref={rightArm} position={[0.37, 1.12, 0]}><mesh position={[0, -0.24, 0]} rotation={[0, 0, 0.18]} castShadow><capsuleGeometry args={[0.105, 0.42, 4, 8]} /><meshStandardMaterial color={robeColor} /></mesh><mesh position={[0, -0.49, 0.02]}><sphereGeometry args={[0.105, 8, 7]} /><meshStandardMaterial color="#d7a17d" /></mesh></group>
+    <mesh position={[0, 0.73, 0.31]}><boxGeometry args={[0.28, 0.52, 0.045]} /><meshStandardMaterial color={trimColor} metalness={0.12} roughness={0.55} /></mesh>
+    <mesh position={[0.58, 0.88, 0.08]}><cylinderGeometry args={[0.035, 0.045, 1.75, 7]} /><meshStandardMaterial color="#795039" /></mesh>
+    <mesh position={[0.58, 1.82, 0.08]}><sphereGeometry args={[0.11, 9, 7]} /><meshStandardMaterial color={trimColor} emissive={trimColor} emissiveIntensity={0.22} /></mesh>
+    <mesh position={[0, 0.08, 0]}><cylinderGeometry args={[0.24, 0.29, 0.12, 10]} /><meshStandardMaterial color="#493d39" /></mesh>
+    <Html position={[0, 2.05, 0]} center distanceFactor={10} style={{ pointerEvents: "none" }}><div className="whitespace-nowrap rounded-full border border-amber-200/60 bg-[#082b2b]/90 px-2 py-1 text-[10px] font-black text-amber-100 shadow-lg">{title}</div></Html>
   </group>;
 }
 
@@ -228,7 +270,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
       <mesh position={[0, 2.8, 0]}><sphereGeometry args={[0.95, 16, 12]} /><meshStandardMaterial color="#3b9654" /></mesh>
       <mesh position={[0, 3.2, 0]}><sphereGeometry args={[0.4, 12, 10]} /><meshStandardMaterial color="#f4d36e" emissive="#b47a16" /></mesh>
     </group>
-    {woodNodes.map(([x, z], index) => !woodCollected.includes(index) && <Float key={`wood-${index}`} speed={1.2}><mesh position={[x, 0.45, z]}><boxGeometry args={[0.65, 0.65, 0.65]} /><meshStandardMaterial color="#a96d36" emissive="#48240b" /></mesh></Float>)}
+    <WorldNpc position={[2.6, 0, 1]} robeColor="#e7c46e" trimColor="#f7df91" hairColor="#493027" title="Guardián" player={player} />\n    <WorldNpc position={[-7, 0, 3]} robeColor="#5b9b7a" trimColor="#c5e6b7" hairColor="#4a3028" title="Jardinera" player={player} />\n    <WorldNpc position={[8, 0, 7]} robeColor="#7692c8" trimColor="#d7e7ff" hairColor="#493027" title="Constructor" player={player} />\n    {woodNodes.map(([x, z], index) => !woodCollected.includes(index) && <Float key={`wood-${index}`} speed={1.2}><mesh position={[x, 0.45, z]}><boxGeometry args={[0.65, 0.65, 0.65]} /><meshStandardMaterial color="#a96d36" emissive="#48240b" /></mesh></Float>)}
     {stoneNodes.map(([x, z], index) => !stoneCollected.includes(index) && <Float key={`stone-${index}`} speed={1.1}><mesh position={[x, 0.5, z]}><dodecahedronGeometry args={[0.55, 0]} /><meshStandardMaterial color="#aab4c0" /></mesh></Float>)}
     {builds.map((piece, index) => { const x = piece.x ?? (-13 + (index % 6) * 5); const z = piece.z ?? (-15 + Math.floor(index / 6) * 5); return <group key={piece.id} position={[x, 0, z]}><mesh position={[0, 0.6, 0]} castShadow><boxGeometry args={piece.kind === "cabin" ? [1.8, 1.2, 1.8] : [0.45, 1.3, 0.45]} /><meshStandardMaterial color={piece.kind === "cabin" ? "#d7a66f" : "#d8b84a"} emissive={piece.kind === "lamp" ? "#b47a16" : "#000000"} /></mesh>{piece.kind === "cabin" && <mesh position={[0, 1.5, 0]}><coneGeometry args={[1.45, 0.8, 4]} /><meshStandardMaterial color="#8b5139" /></mesh>}</group>; })}
     {lights.map(([x, z], index) => !collected.includes(index) && <Float key={index} speed={1.8}>
