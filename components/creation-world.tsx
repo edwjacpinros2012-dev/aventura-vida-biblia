@@ -4,6 +4,8 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Float, Sky, Sparkles } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { usePlayerProgress } from "@/components/player-progress-provider";
+import { officialCharacterForAvatar } from "@/lib/characters/catalog";
 
 const avatar = "/assets/proyecto-vida-kids/characters/vida-kids-01-rosa-morado/full.png";
 const lights = [[-6, -5], [7, -8], [3, 8], [-9, 6]] as const;
@@ -28,16 +30,17 @@ function House({ p, color }: { p: [number, number, number]; color: string }) {
 }
 
 type PlayerControls = {
+  avatarUrl: string;
   keys: React.MutableRefObject<Set<string>>;
   pad: React.MutableRefObject<[number, number]>;
   onNear: (value: boolean) => void;
   player: React.RefObject<THREE.Group | null>;
 };
 
-function Avatar({ keys, pad, onNear, player }: PlayerControls) {
+function Avatar({ keys, pad, onNear, player, avatarUrl }: PlayerControls) {
   const sprite = useRef<THREE.Mesh>(null);
   const { camera } = useThree();
-  const texture = useMemo(() => new THREE.TextureLoader().load(avatar), []);
+  const texture = useMemo(() => new THREE.TextureLoader().load(avatarUrl), [avatarUrl]);
   const near = useRef(false);
   const jumpVelocity = useRef(0);
   const jumpWasDown = useRef(false);
@@ -82,7 +85,7 @@ function Avatar({ keys, pad, onNear, player }: PlayerControls) {
   </group>;
 }
 
-function Scene({ keys, pad, collected, collect, woodCollected, collectWood, stoneCollected, collectStone, builds, onNear }: {
+function Scene({ keys, pad, collected, collect, woodCollected, collectWood, stoneCollected, collectStone, builds, onNear, avatarUrl }: {
   keys: PlayerControls["keys"];
   pad: PlayerControls["pad"];
   collected: number[];
@@ -93,6 +96,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
   collectStone: (index: number) => void;
   builds: BuildPiece[];
   onNear: (value: boolean) => void;
+  avatarUrl: string;
 }) {
   const player = useRef<THREE.Group>(null);
   const orbs = useRef<(THREE.Mesh | null)[]>([]);
@@ -136,7 +140,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
       </mesh>
     </Float>)}
     <Sparkles count={80} scale={[32, 7, 32]} color="#fff1b0" />
-    <Avatar keys={keys} pad={pad} onNear={onNear} player={player} />
+    <Avatar keys={keys} pad={pad} onNear={onNear} player={player} avatarUrl={avatarUrl} />
   </>;
 }
 
@@ -162,6 +166,8 @@ function DirectionButton({ label, direction, pad }: {
 }
 
 export function CreationWorld() {
+  const { identity } = usePlayerProgress();
+  const avatarUrl = officialCharacterForAvatar(identity.avatarKey)?.asset ?? avatar;
   const keys = useRef(new Set<string>());
   const pad = useRef<[number, number]>([0, 0]);
   const [collected, setCollected] = useState<number[]>([]);
@@ -236,7 +242,7 @@ export function CreationWorld() {
   return <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#082632] shadow-2xl">
     <div className="relative h-[min(72vh,680px)] min-h-[470px]">
       <Canvas shadows camera={{ position: [0, 7, 19], fov: 48 }} dpr={[1, 1.5]}>
-        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} woodCollected={woodCollected} collectWood={collectWood} stoneCollected={stoneCollected} collectStone={collectStone} builds={builds} onNear={setNear} /></Suspense>
+        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} woodCollected={woodCollected} collectWood={collectWood} stoneCollected={stoneCollected} collectStone={collectStone} builds={builds} onNear={setNear} avatarUrl={avatarUrl} /></Suspense>
       </Canvas>
 
       <div className="pointer-events-none absolute left-4 top-4 rounded-2xl border border-white/15 bg-[#06232dcc] p-3 text-white">
