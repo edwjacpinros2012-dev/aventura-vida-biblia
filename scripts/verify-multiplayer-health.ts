@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
-const route = await readFile(new URL("../app/api/multiplayer/health/route.ts", import.meta.url), "utf8");
-const hub = await readFile(new URL("../components/multiplayer/multiplayer-hub.tsx", import.meta.url), "utf8");
+const route = readFileSync(join(process.cwd(), "app", "api", "multiplayer", "health", "route.ts"), "utf8");
+const hub = readFileSync(join(process.cwd(), "components", "multiplayer", "multiplayer-hub.tsx"), "utf8");
 assert.ok(route.includes("MULTIPLAYER_SERVER_URL"), "El health check debe usar la URL del entorno.");
 assert.ok(route.includes('healthUrl.pathname = "/health"'), "El health check debe consultar la ruta de salud fija.");
 assert.ok(route.includes("AbortSignal.timeout(3500)"), "La consulta debe tener timeout.");
