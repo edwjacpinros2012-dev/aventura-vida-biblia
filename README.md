@@ -7,9 +7,9 @@ Plataforma web de juegos, misiones y aventuras para **Proyecto Vida Kids**. Incl
 - Inicio público responsive con hero, misión diaria, aventura destacada, novedades y catálogo navegable.
 - Catálogo de juegos con búsqueda, filtros por categoría/dificultad/edad y vistas de nuevos/populares.
 - Fichas individuales, rutas de aventuras, misión diaria, ranking por apodo y perfil de jugador local.
-- Catorce juegos funcionales, incluida la colección bíblica, Laberinto Bíblico, Gran Aventura, Vocales de luz y los minijuegos de aprendizaje.
+- Quince juegos funcionales, incluida la colección bíblica, Laberinto Bíblico, Gran Aventura, Vocales de luz y los minijuegos de aprendizaje.
 - Shell común de juego con pantalla de carga/error/victoria, puntos, XP, racha, progreso, logros, partidas completadas y versículos aprendidos. Los visitantes usan almacenamiento del navegador; las cuentas autenticadas confirman las recompensas con el servidor.
-- Sistema visual original: no usa personajes ni recursos de franquicias de terceros.
+- Sistema visual original con 15 portadas vectoriales individuales para el catálogo; conserva los recursos oficiales de Proyecto Vida Kids y no usa personajes ni recursos de franquicias de terceros.
 - Esquema Prisma para usuarios, perfiles, juegos, sesiones, progreso, puntuaciones, XP, misiones, logros, aventuras, recompensas, notificaciones, configuración y auditoría.
 - Semilla con contenido y usuarios enteramente ficticios.
 - Registro de módulos internos y contratos de Game SDK para sustituir las recompensas locales por validación de servidor.
