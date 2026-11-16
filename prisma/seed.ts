@@ -39,6 +39,15 @@ const storeData = [
   { slug: "estela-de-destellos", name: "Estela de destellos", description: "Un efecto de colección para futuras pantallas de recompensa.", type: InventoryItemType.EFFECT, rarity: ItemRarity.UNCOMMON, coinPrice: 90, criteria: { minLevel: 2 } },
   { slug: "sendero-de-estrellas", name: "Sendero de estrellas", description: "Un escenario de colección para los mapas que se ampliarán más adelante.", type: InventoryItemType.SCENERY, rarity: ItemRarity.RARE, coinPrice: 160, criteria: { minLevel: 3 } },
   { slug: "mapa-de-explorador", name: "Mapa de explorador", description: "Contenido especial que recuerda tus recorridos de aventura.", type: InventoryItemType.SPECIAL_CONTENT, rarity: ItemRarity.UNCOMMON, coinPrice: 120, criteria: { minLevel: 2 } },
+
+  { slug: "yelmo-salvacion", name: "Yelmo de la salvación", description: "Un adorno de perfil inspirado en la esperanza de Efesios 6.", type: InventoryItemType.COSMETIC, rarity: ItemRarity.UNCOMMON, coinPrice: 110, criteria: { minLevel: 2 } },
+  { slug: "escudo-fe", name: "Emblema del escudo de la fe", description: "Un emblema luminoso para tu perfil, inspirado en Efesios 6:16.", type: InventoryItemType.COSMETIC, rarity: ItemRarity.RARE, coinPrice: 180, criteria: { minLevel: 4 } },
+  { slug: "capa-bondad", name: "Capa de la bondad", description: "Una capa decorativa que celebra el servicio y el amor al prójimo.", type: InventoryItemType.CHARACTER_STYLE, rarity: ItemRarity.UNCOMMON, coinPrice: 130, criteria: { minLevel: 2 } },
+  { slug: "aureola-olivo", name: "Brillo de olivo", description: "Un efecto visual sereno inspirado en la paz.", type: InventoryItemType.EFFECT, rarity: ItemRarity.RARE, coinPrice: 210, criteria: { minLevel: 5 } },
+  { slug: "estandarte-jerico", name: "Estandarte de Jericó", description: "Decoración de colección que recuerda la historia de Josué 6.", type: InventoryItemType.SCENERY, rarity: ItemRarity.RARE, coinPrice: 240, criteria: { minLevel: 5 } },
+  { slug: "portal-mar-rojo", name: "Portal del Mar Rojo", description: "Un fondo de perfil inspirado en el camino de esperanza de Éxodo 14.", type: InventoryItemType.SCENERY, rarity: ItemRarity.EPIC, coinPrice: 320, criteria: { minLevel: 8 } },
+  { slug: "companero-paloma", name: "Compañera paloma", description: "Un compañero decorativo que simboliza la paz y la guía.", type: InventoryItemType.AVATAR, rarity: ItemRarity.EPIC, coinPrice: 360, criteria: { minLevel: 8 } },
+  { slug: "pergamino-sabiduria", name: "Pergamino de sabiduría", description: "Una pieza de colección con referencias para seguir aprendiendo Proverbios.", type: InventoryItemType.SPECIAL_CONTENT, rarity: ItemRarity.UNCOMMON, coinPrice: 95, criteria: { minLevel: 2 } },
 ];
 
 async function main() {
