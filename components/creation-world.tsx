@@ -105,7 +105,7 @@ function Avatar({ keys, pad, onNear, minimapMarker, player, avatarUrl, equippedS
   </group>;
 }
 
-function Scene({ keys, pad, collected, collect, woodCollected, collectWood, stoneCollected, collectStone, builds, onNear, avatarUrl, equippedSlugs }: {
+function Scene({ keys, pad, collected, collect, woodCollected, collectWood, stoneCollected, collectStone, builds, onNear, minimapMarker, avatarUrl, equippedSlugs }: {
   keys: PlayerControls["keys"];
   pad: PlayerControls["pad"];
   collected: number[];
