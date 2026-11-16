@@ -13,6 +13,7 @@ import { xpProgressFor } from "@/types/player-progress";
 const navItems = [
   { href: "/", label: "Inicio", icon: "⌂" },
   { href: "/juegos", label: "Juegos", icon: "🎮" },
+  { href: "/misiones", label: "Misiones", icon: "🧭" },
   { href: "/recompensas", label: "Premios", icon: "🎁" },
   { href: "/tienda", label: "Tienda", icon: "🛍️" },
   { href: "/aventuras", label: "Aventura", icon: "🗺" },
