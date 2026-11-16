@@ -224,6 +224,9 @@ export function CreationWorld() {
   const [woodInventory, setWoodInventory] = useState(0);
   const [stoneInventory, setStoneInventory] = useState(0);
   const [builds, setBuilds] = useState<BuildPiece[]>([]);
+  const [worldStateReady, setWorldStateReady] = useState(false);
+  const [worldSaveStatus, setWorldSaveStatus] = useState<"local" | "loading" | "saved" | "error">("local");
+  const worldSaveQueue = useRef<Promise<void>>(Promise.resolve());
   const [near, setNear] = useState(false);
   const minimapPlayerMarker = useRef<HTMLSpanElement>(null);
   const [message, setMessage] = useState("");
@@ -255,6 +258,87 @@ export function CreationWorld() {
       pressedKeys.clear();
     };
   }, []);
+
+  useEffect(() => {
+    if (!identityReady) return;
+    if (!identity.authenticated) {
+      setWorldStateReady(true);
+      setWorldSaveStatus("local");
+      return;
+    }
+
+    let active = true;
+    setWorldSaveStatus("loading");
+    fetch("/api/world/state", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("No se pudo cargar el mundo guardado.");
+        return await response.json() as {
+          state?: {
+            collectedLights?: number[];
+            collectedWood?: number[];
+            collectedStone?: number[];
+            builds?: Array<{ id: number; kind: "cabin" | "lamp" }>;
+          };
+        };
+      })
+      .then(({ state }) => {
+        if (!active || !state) return;
+        const validLights = Array.isArray(state.collectedLights) ? state.collectedLights.filter((value) => Number.isInteger(value) && value >= 0 && value < lights.length) : [];
+        const validWood = Array.isArray(state.collectedWood) ? state.collectedWood.filter((value) => Number.isInteger(value) && value >= 0 && value < woodNodes.length) : [];
+        const validStone = Array.isArray(state.collectedStone) ? state.collectedStone.filter((value) => Number.isInteger(value) && value >= 0 && value < stoneNodes.length) : [];
+        const validBuilds = Array.isArray(state.builds) ? state.builds.filter((value) => value && Number.isSafeInteger(value.id) && value.id > 0 && (value.kind === "cabin" || value.kind === "lamp")).slice(0, 32) : [];
+        const cabins = validBuilds.filter((piece) => piece.kind === "cabin").length;
+        const lampsBuilt = validBuilds.length - cabins;
+        setCollected([...new Set(validLights)]);
+        setWoodCollected([...new Set(validWood)]);
+        setStoneCollected([...new Set(validStone)]);
+        setBuilds(validBuilds);
+        setWoodInventory(Math.max(0, validWood.length - cabins * 2 - lampsBuilt));
+        setStoneInventory(Math.max(0, validStone.length - cabins));
+        setWorldSaveStatus("saved");
+        setWorldStateReady(true);
+      })
+      .catch(() => {
+        if (active) setWorldSaveStatus("error");
+      });
+    return () => { active = false; };
+  }, [identityReady, identity.authenticated]);
+
+  useEffect(() => {
+    if (!worldStateReady || !identityReady) return;
+    const snapshot = {
+      collectedLights: collected,
+      collectedWood: woodCollected,
+      collectedStone: stoneCollected,
+      builds: builds.map(({ id, kind }) => ({ id, kind })),
+    };
+
+    if (!identity.authenticated) {
+      try {
+        localStorage.setItem("av-creation-lights", JSON.stringify(snapshot.collectedLights));
+        localStorage.setItem("av-world-wood-nodes", JSON.stringify(snapshot.collectedWood));
+        localStorage.setItem("av-world-stone-nodes", JSON.stringify(snapshot.collectedStone));
+        localStorage.setItem("av-world-builds", JSON.stringify(snapshot.builds));
+        localStorage.setItem("av-world-wood-inventory", String(woodInventory));
+        localStorage.setItem("av-world-stone-inventory", String(stoneInventory));
+      } catch { /* El guardado local es opcional para visitantes. */ }
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      worldSaveQueue.current = worldSaveQueue.current.catch(() => undefined).then(async () => {
+        setWorldSaveStatus("loading");
+        const response = await fetch("/api/world/state", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(snapshot),
+        });
+        if (!response.ok) throw new Error("No se pudo guardar el mundo.");
+        setWorldSaveStatus("saved");
+      }).catch(() => setWorldSaveStatus("error"));
+    }, 500);
+    return () => window.clearTimeout(timeout);
+  }, [worldStateReady, identityReady, identity.authenticated, collected, woodCollected, stoneCollected, builds, woodInventory, stoneInventory]);
 
   const collect = (index: number) => setCollected((current) => {
     if (current.includes(index)) return current;
@@ -342,6 +426,6 @@ export function CreationWorld() {
         {message}<button type="button" onClick={() => setMessage("")} className="ml-3 underline">Cerrar</button>
       </div>}
     </div>
-    <div className="border-t border-white/10 bg-[#061e29] px-4 py-3 text-xs text-white/70">Personaje oficial seleccionado · accesorios equipados desde la tienda · recursos y construcciones aún guardados localmente en este dispositivo</div>
+    <div className="border-t border-white/10 bg-[#061e29] px-4 py-3 text-xs text-white/70">Personaje oficial seleccionado · equipamiento de la tienda · {identity.authenticated ? (worldSaveStatus === "saved" ? "Mundo guardado en tu cuenta" : worldSaveStatus === "loading" ? "Sincronizando mundo…" : worldSaveStatus === "error" ? "No se pudo sincronizar el mundo" : "Esperando guardado") : "Mundo guardado en este dispositivo"}</div>
   </section>;
 }
