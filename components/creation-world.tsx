@@ -35,16 +35,18 @@ type PlayerControls = {
   keys: React.MutableRefObject<Set<string>>;
   pad: React.MutableRefObject<[number, number]>;
   onNear: (value: boolean) => void;
+  onPosition: (position: [number, number]) => void;
   player: React.RefObject<THREE.Group | null>;
 };
 
-function Avatar({ keys, pad, onNear, player, avatarUrl, equippedSlugs }: PlayerControls) {
+function Avatar({ keys, pad, onNear, onPosition, player, avatarUrl, equippedSlugs }: PlayerControls) {
   const sprite = useRef<THREE.Mesh>(null);
   const { camera } = useThree();
   const texture = useMemo(() => new THREE.TextureLoader().load(avatarUrl), [avatarUrl]);
   const near = useRef(false);
   const jumpVelocity = useRef(0);
   const jumpWasDown = useRef(false);
+  const lastReportedPosition = useRef<[number, number]>([0, 9]);
 
   useFrame((_, dt) => {
     if (!player.current) return;
@@ -70,6 +72,10 @@ function Avatar({ keys, pad, onNear, player, avatarUrl, equippedSlugs }: PlayerC
     camera.position.lerp(new THREE.Vector3(group.position.x, 6.5 + group.position.y * 0.35, group.position.z + 10), 1 - Math.pow(0.001, dt));
     camera.lookAt(group.position.x, 1 + group.position.y, group.position.z - 1);
     if (sprite.current) sprite.current.lookAt(camera.position.x, group.position.y + 1.4, camera.position.z);
+    if (Math.hypot(group.position.x - lastReportedPosition.current[0], group.position.z - lastReportedPosition.current[1]) >= 0.25) {
+      lastReportedPosition.current = [group.position.x, group.position.z];
+      onPosition([group.position.x, group.position.z]);
+    }
 
     const isNear = Math.hypot(group.position.x, group.position.z - 1) < 3.5;
     if (isNear !== near.current) {
@@ -107,6 +113,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
   collectStone: (index: number) => void;
   builds: BuildPiece[];
   onNear: (value: boolean) => void;
+  onPlayerPosition: (position: [number, number]) => void;
   avatarUrl: string;
   equippedSlugs: string[];
 }) {
@@ -152,7 +159,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
       </mesh>
     </Float>)}
     <Sparkles count={80} scale={[32, 7, 32]} color="#fff1b0" />
-    <Avatar keys={keys} pad={pad} onNear={onNear} player={player} avatarUrl={avatarUrl} equippedSlugs={equippedSlugs} />
+    <Avatar keys={keys} pad={pad} onNear={onNear} onPosition={onPlayerPosition} player={player} avatarUrl={avatarUrl} equippedSlugs={equippedSlugs} />
   </>;
 }
 
@@ -200,6 +207,7 @@ export function CreationWorld() {
   const [stoneInventory, setStoneInventory] = useState(0);
   const [builds, setBuilds] = useState<BuildPiece[]>([]);
   const [near, setNear] = useState(false);
+  const [playerPosition, setPlayerPosition] = useState<[number, number]>([0, 9]);
   const [message, setMessage] = useState("");
   const [started, setStarted] = useState(false);
 
@@ -265,7 +273,7 @@ export function CreationWorld() {
   return <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#082632] shadow-2xl">
     <div className="relative h-[min(72vh,680px)] min-h-[470px]">
       <Canvas shadows camera={{ position: [0, 7, 19], fov: 48 }} dpr={[1, 1.5]}>
-        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} woodCollected={woodCollected} collectWood={collectWood} stoneCollected={stoneCollected} collectStone={collectStone} builds={builds} onNear={setNear} avatarUrl={avatarUrl} equippedSlugs={equippedSlugs} /></Suspense>
+        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} woodCollected={woodCollected} collectWood={collectWood} stoneCollected={stoneCollected} collectStone={collectStone} builds={builds} onNear={setNear} onPlayerPosition={setPlayerPosition} avatarUrl={avatarUrl} equippedSlugs={equippedSlugs} /></Suspense>
       </Canvas>
 
       <div className="pointer-events-none absolute left-4 top-4 rounded-2xl border border-white/15 bg-[#06232dcc] p-3 text-white">
@@ -275,7 +283,18 @@ export function CreationWorld() {
         <p className="text-xs text-white/70">{collected.length}/4 luces · 🪵 {woodInventory} · 🪨 {stoneInventory}</p>
       </div>
 
-      <div className="absolute right-4 top-4 rounded-xl bg-[#06232dcc] p-3 text-xs text-white">
+      <div className="pointer-events-none absolute right-4 top-4 rounded-2xl border border-white/20 bg-[#06232de8] p-2 text-white shadow-lg" role="img" aria-label={`Minimapa. Posición del jugador ${Math.round(playerPosition[0])}, ${Math.round(playerPosition[1])}`}>
+        <p className="mb-1 text-center text-[9px] font-black uppercase tracking-widest text-amber-200">Mapa del valle</p>
+        <div className="relative h-24 w-24 overflow-hidden rounded-lg border border-white/15" style={{ background: "linear-gradient(135deg, #7aa96d 0%, #568b61 100%)" }}>
+          <div className="absolute left-[42%] top-0 h-full w-[16%] -rotate-[18deg] bg-[#d8c28e]/90" />
+          <div className="absolute left-[68%] top-0 h-full w-[13%] rotate-[8deg] bg-[#4caec1]/90" />
+          {lights.map(([x, z], index) => <span key={index} className="absolute h-1.5 w-1.5 rounded-full border border-amber-100 bg-amber-300" style={{ left: `${((x + 16) / 32) * 100}%`, top: `${((z + 16) / 32) * 100}%` }} />)}
+          <span className="absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-sky-500 shadow-[0_0_0_2px_#082632]" style={{ left: `${((playerPosition[0] + 16) / 32) * 100}%`, top: `${((playerPosition[1] + 16) / 32) * 100}%` }} />
+        </div>
+        <p className="mt-1 text-center text-[9px] text-white/70">● Tu posición · ◆ Luces</p>
+      </div>
+
+      <div className="pointer-events-none absolute right-4 top-[9.5rem] rounded-xl bg-[#06232dcc] p-2 text-[10px] text-white sm:text-xs">
         <b>W A S D</b> / flechas: mover<br /><b>Espacio</b>: saltar
       </div>
 
