@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: pnpm-lock-sync-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   sync-lockfile:
     runs-on: ubuntu-latest
@@ -46,4 +50,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: sync pnpm lockfile"
+          git fetch origin feat/plataforma-web-mundo-3d
+          git rebase origin/feat/plataforma-web-mundo-3d
           git push origin HEAD:feat/plataforma-web-mundo-3d
