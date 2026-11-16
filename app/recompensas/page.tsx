@@ -84,8 +84,8 @@ export default function RewardsPage() {
             return <article key={item.level} className="av-panel-soft rounded-2xl p-4"><div className="flex items-center justify-between"><span className="text-3xl">{item.icon}</span><span className="text-xs font-black text-amber-200">Nivel {item.level}</span></div><h3 className="mt-3 font-display text-lg font-black text-[#f5e5b9]">{item.title}</h3><p className="mt-1 text-xs text-white/55">{item.description}</p><p className={`mt-3 text-xs font-black ${unlocked ? "text-emerald-200" : "text-white/40"}`}>{unlocked ? "✓ Título conseguido" : "🔒 Sigue jugando para conseguirlo"}</p></article>;
           })}
         </div>
-        <p className="mt-4 text-xs text-white/45">Los puntos, XP, insignias y títulos reflejan el progreso registrado. Las compras con monedas y los objetos equipables aún no están habilitados en esta sala.</p>
-        <div className="mt-7 flex flex-wrap gap-3"><Link href="/juegos" className="av-gold-button rounded-xl px-5 py-3 text-sm font-black">Ganar más XP jugando</Link><Link href="/perfil" className="av-teal-button rounded-xl px-5 py-3 text-sm font-black">Ver mi perfil</Link></div>
+        <p className="mt-4 text-xs text-white/45">Los puntos, XP, insignias y títulos reflejan el progreso registrado. Canjea tus Monedas de Aventura en la tienda y consulta allí los objetos guardados en tu inventario.</p>
+        <div className="mt-7 flex flex-wrap gap-3"><Link href="/tienda" className="av-gold-button rounded-xl px-5 py-3 text-sm font-black">Visitar la tienda</Link><Link href="/juegos" className="av-gold-button rounded-xl px-5 py-3 text-sm font-black">Ganar más XP jugando</Link><Link href="/perfil" className="av-teal-button rounded-xl px-5 py-3 text-sm font-black">Ver mi perfil</Link></div>
       </section>
     </div>
   );
