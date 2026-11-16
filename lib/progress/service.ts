@@ -133,6 +133,8 @@ async function updateProfileForReward(
   const gameStats = await activityStats(tx, input.userId);
   const totalsBeforeAchievements = {
     gamesPlayed: gameStats.gamesPlayed,
+    uniqueGames: gameStats.uniqueGames,
+    learnedVerses: gameStats.learnedVerses,
     streak,
     quizGames: gameStats.quizGames,
   };
