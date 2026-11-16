@@ -6,6 +6,7 @@ export const databaseUrl =
   process.env.DATABASE_URL?.trim() ||
   process.env.database_PRISMA_DATABASE_URL?.trim() ||
   process.env.database_DATABASE_URL?.trim() ||
+  process.env.database_POSTGRES_URL?.trim() ||
   "";
 
 export const hasDatabaseUrl = databaseUrl.length > 0;
