@@ -11,6 +11,19 @@ const avatar = "/assets/proyecto-vida-kids/characters/vida-kids-01-rosa-morado/f
 const lights = [[-6, -5], [7, -8], [3, 8], [-9, 6]] as const;
 const woodNodes = [[-3, 2], [6, 4], [12, 7]] as const;
 const stoneNodes = [[-11, -12], [11, -5]] as const;
+const collisionObstacles = [
+  { x: -10, z: -8, radius: 2.1 },
+  { x: 4, z: -13, radius: 2.1 },
+  { x: -12, z: 10, radius: 2.1 },
+  { x: 0, z: 1, radius: 1.25 },
+  ...Array.from({ length: 18 }, (_, index) => ({
+    x: -15 + (index % 6) * 5.8,
+    z: -13 + Math.floor(index / 6) * 12,
+    radius: 1.05,
+  })),
+];
+const isWorldBlocked = (x: number, z: number) =>
+  collisionObstacles.some((obstacle) => Math.hypot(x - obstacle.x, z - obstacle.z) < obstacle.radius);
 type BuildPiece = { id: number; kind: "cabin" | "lamp" };
 
 function Tree({ p, scale = 1 }: { p: [number, number, number]; scale?: number }) {
@@ -64,8 +77,10 @@ function Avatar({ keys, pad, onNear, minimapMarker, player, avatarUrl, equippedS
     const direction = new THREE.Vector2(x, z);
     if (direction.lengthSq() > 0.01) {
       direction.normalize();
-      group.position.x = THREE.MathUtils.clamp(group.position.x + direction.x * dt * 5, -16, 16);
-      group.position.z = THREE.MathUtils.clamp(group.position.z + direction.y * dt * 5, -16, 16);
+      const nextX = THREE.MathUtils.clamp(group.position.x + direction.x * dt * 5, -16, 16);
+      if (!isWorldBlocked(nextX, group.position.z)) group.position.x = nextX;
+      const nextZ = THREE.MathUtils.clamp(group.position.z + direction.y * dt * 5, -16, 16);
+      if (!isWorldBlocked(group.position.x, nextZ)) group.position.z = nextZ;
       group.rotation.y = Math.atan2(direction.x, direction.y);
     }
 
