@@ -42,7 +42,7 @@ Este documento convierte la investigación de referencias en decisiones concreta
 
 | Sistema | Estado confirmado | Siguiente trabajo |
 | --- | --- | --- |
-| Jardín 3D | Valle con cámara de seguimiento, sprite oficial, movimiento, salto, controles táctiles, minimapa en vivo, río reflectante, luces, madera, piedra, cabañas y lámparas | Colisiones, interacción contextual, colocación libre, guardado de cuenta y más regiones |
+| Jardín 3D | Valle con cámara de seguimiento, sprite oficial, movimiento, salto, controles táctiles, minimapa en vivo, río reflectante, colisiones básicas, luces, madera, piedra, cabañas y lámparas | Interacción contextual, colocación libre, guardado de cuenta y más regiones |
 | Personaje | Selecciona la ilustración oficial según el avatar; accesorios geométricos de prueba | Modelo 3D riggeado, animaciones, puntos de anclaje y vista previa de equipamiento |
 | Recursos | Recolección y contadores en localStorage | API autenticada, persistencia PostgreSQL e idempotencia para no duplicar recolecciones |
 | Construcción | Piezas decorativas en posiciones calculadas automáticamente | Modo colocar, rotar, confirmar, cancelar y retirar; validar materiales en servidor |
@@ -57,7 +57,7 @@ Este documento convierte la investigación de referencias en decisiones concreta
 1. [x] Añadido minimapa sencillo con posición del jugador y luces que faltan por recoger; el marcador se actualiza con una referencia DOM para evitar renderizar React en cada frame.
 2. Convertir el diálogo del guardián en una misión con estados: no iniciada, activa y completada.
 3. Mostrar objetivos breves en HUD y un mensaje de ayuda que se pueda cerrar.
-4. Añadir colisiones básicas para evitar atravesar casas, árboles grandes y límites del valle.
+4. [x] Añadidas colisiones circulares alrededor de las casas, árboles y árbol central; el movimiento permite deslizarse por el borde del obstáculo.
 5. Mantener controles teclado/táctil y añadir pausa/reanudar.
 6. [x] Añadido material reflectante de baja resolución al río para reflejar el entorno con un coste gráfico acotado.
 
