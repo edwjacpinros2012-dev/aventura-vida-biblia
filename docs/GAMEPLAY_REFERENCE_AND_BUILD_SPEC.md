@@ -25,6 +25,9 @@ Este documento convierte la investigación de referencias en decisiones concreta
 - React Three Fiber, Scaling Performance: https://r3f.docs.pmnd.rs/advanced/scaling-performance
   - Lección: reutilizar assets cargados, reducir draw calls y bajar temporalmente la calidad de efectos cuando el dispositivo lo necesite.
   - Aplicación: cargar modelos GLB optimizados, reutilizar materiales, limitar sombras y partículas en móviles y probar el mundo en dispositivos modestos.
+- Drei, MeshReflectorMaterial: https://drei.docs.pmnd.rs/shaders/mesh-reflector-material
+  - Lección: las superficies pueden reflejar el entorno con un render target cuya resolución y desenfoque se ajustan al presupuesto gráfico.
+  - Aplicación: el río del Jardín usa una reflexión de resolución 128 para que el agua refleje el valle sin activar un efecto de máxima calidad.
 - React Three Fiber, Introduction: https://r3f.docs.pmnd.rs/
   - Lección: React Three Fiber es un renderer de Three.js y la versión 9 corresponde a React 19.
   - Aplicación: mantener las versiones compatibles ya declaradas por el proyecto; no actualizar Three/Fiber/Drei sin revisar lockfile, build y Preview.
@@ -41,7 +44,7 @@ Este documento convierte la investigación de referencias en decisiones concreta
 
 | Sistema | Estado confirmado | Siguiente trabajo |
 | --- | --- | --- |
-| Jardín 3D | Valle con cámara de seguimiento, sprite oficial, movimiento, salto, controles táctiles, luces, madera, piedra, cabañas y lámparas | Colisiones, minimapa, interacción contextual, colocación libre, guardado de cuenta y más regiones |
+| Jardín 3D | Valle con cámara de seguimiento, sprite oficial, movimiento, salto, controles táctiles, minimapa en vivo, río reflectante, luces, madera, piedra, cabañas y lámparas | Colisiones, interacción contextual, colocación libre, guardado de cuenta y más regiones |
 | Personaje | Selecciona la ilustración oficial según el avatar; accesorios geométricos de prueba | Modelo 3D riggeado, animaciones, puntos de anclaje y vista previa de equipamiento |
 | Recursos | Recolección y contadores en localStorage | API autenticada, persistencia PostgreSQL e idempotencia para no duplicar recolecciones |
 | Construcción | Piezas decorativas en posiciones calculadas automáticamente | Modo colocar, rotar, confirmar, cancelar y retirar; validar materiales en servidor |
@@ -53,11 +56,12 @@ Este documento convierte la investigación de referencias en decisiones concreta
 ## 3. Especificación de la siguiente versión del Jardín 3D
 
 ### Prioridad A — Interacción legible
-1. Añadir un minimapa sencillo con la posición del jugador, puntos de interés y límites de la zona.
+1. [x] Añadido minimapa sencillo con posición del jugador y luces que faltan por recoger; el marcador se actualiza con una referencia DOM para evitar renderizar React en cada frame.
 2. Convertir el diálogo del guardián en una misión con estados: no iniciada, activa y completada.
 3. Mostrar objetivos breves en HUD y un mensaje de ayuda que se pueda cerrar.
 4. Añadir colisiones básicas para evitar atravesar casas, árboles grandes y límites del valle.
 5. Mantener controles teclado/táctil y añadir pausa/reanudar.
+6. [x] Añadido material reflectante de baja resolución al río para reflejar el entorno con un coste gráfico acotado.
 
 Criterios de aceptación:
 - El jugador entiende cómo moverse en menos de un minuto.
