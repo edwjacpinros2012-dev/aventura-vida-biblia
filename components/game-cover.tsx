@@ -19,13 +19,23 @@ const scenes: Record<CoverTheme, Scene> = {
   garden: { sky: "from-[#194e50] via-[#398b68] to-[#abd06d]", glow: "bg-[#fee27b]", mountain: "bg-[#32805d]", ground: "bg-[#175641]", landmark: "✦", landmarkTone: "text-[#fff1a7]", sparkles: "❋" },
 };
 
-const individualCovers = new Set([
-  "little-big-heroes", "vocales-de-luz", "memoria-biblica", "preguntas-biblicas",
-  "recolector-de-luz", "guardianes-del-jardin", "el-camino-del-rio", "mapa-de-estrellas",
-  "laberinto-biblico", "sopa-de-letras-biblica", "colorear-biblico",
-  "historias-biblicas-interactivas", "iq-biblico", "aprende-el-versiculo",
-  "rompecabezas-biblico",
-]);
+const individualCovers: Record<string, string> = {
+  "little-big-heroes": "little-big-heroes",
+  "vowel-light": "vocales-de-luz",
+  "memory-bible": "memoria-biblica",
+  "quiz-adventure": "preguntas-biblicas",
+  "light-collector": "recolector-de-luz",
+  "garden-helpers": "guardianes-del-jardin",
+  "river-path": "el-camino-del-rio",
+  "star-map": "mapa-de-estrellas",
+  "bible-maze": "laberinto-biblico",
+  "word-search-bible": "sopa-de-letras-biblica",
+  "coloring-bible": "colorear-biblico",
+  "stories-bible": "historias-biblicas-interactivas",
+  "iq-bible": "iq-biblico",
+  "verse-learn": "aprende-el-versiculo",
+  "puzzle-bible": "rompecabezas-biblico",
+};
 
 /**
  * Usa una ilustración vectorial original por juego y conserva una escena CSS
@@ -43,13 +53,13 @@ export function GameCover({
   large?: boolean;
 }) {
   const scene = scenes[theme];
-  const hasIndividualCover = gameId ? individualCovers.has(gameId) : false;
+  const coverAsset = gameId ? individualCovers[gameId] : undefined;
 
-  if (hasIndividualCover && gameId) {
+  if (coverAsset) {
     return (
       <div
         className={`relative isolate overflow-hidden bg-gradient-to-br ${scene.sky} ${className}`}
-        style={{ backgroundImage: `url("/assets/game-covers/${gameId}.svg")`, backgroundSize: "cover", backgroundPosition: "center" }}
+        style={{ backgroundImage: `url("/assets/game-covers/${coverAsset}.svg")`, backgroundSize: "cover", backgroundPosition: "center" }}
         aria-hidden="true"
       >
         <span className="absolute inset-0 bg-gradient-to-t from-[#071b2c]/35 via-transparent to-white/5" />
