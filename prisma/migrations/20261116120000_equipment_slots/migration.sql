@@ -1,4 +1,4 @@
-CREATE TYPE "EquipmentSlot" AS ENUM ('HEAD', 'CHEST', 'BACK', 'HAND', 'COMPANION', 'EFFECT');
+CREATE TYPE "EquipmentSlot" AS ENUM ('HEAD', 'CHEST', 'BACK', 'COMPANION', 'EFFECT');
 
 ALTER TABLE "StoreItem" ADD COLUMN "equipmentSlot" "EquipmentSlot";
 
@@ -19,6 +19,5 @@ ALTER TABLE "PlayerEquippedItem" ADD CONSTRAINT "PlayerEquippedItem_userId_fkey"
 ALTER TABLE "PlayerEquippedItem" ADD CONSTRAINT "PlayerEquippedItem_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "StoreItem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 UPDATE "StoreItem" SET "equipmentSlot" = 'HEAD' WHERE "slug" IN ('yelmo-salvacion', 'corona-sabiduria');
-UPDATE "StoreItem" SET "equipmentSlot" = 'HAND' WHERE "slug" = 'escudo-fe';
 UPDATE "StoreItem" SET "equipmentSlot" = 'BACK' WHERE "slug" = 'capa-bondad';
 UPDATE "StoreItem" SET "equipmentSlot" = 'CHEST' WHERE "slug" = 'tunica-pastor-amable';
