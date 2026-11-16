@@ -17,6 +17,7 @@ const categoryData = [
 ];
 
 const gameData = [
+  { id: "game-little-big-heroes", slug: "little-big-heroes-run-hero-run", name: "Little Big Heroes: Run Hero Run!", shortDescription: "Corre, salta y rescata ovejitas mientras aprendes las vocales.", categoryId: "cat-arcade", suggestedAgeMin: 4, suggestedAgeMax: 9, difficulty: Difficulty.INITIAL, maxPoints: 900, xpReward: 160, moduleKey: "little-big-heroes", featured: true },
   { id: "game-memory", slug: "memoria-biblica", name: "Memoria bíblica", shortDescription: "Une cartas de historias y símbolos para iluminar el sendero.", categoryId: "cat-memory", suggestedAgeMin: 6, suggestedAgeMax: 10, difficulty: Difficulty.INITIAL, maxPoints: 320, xpReward: 100, moduleKey: "memory", featured: true },
   { id: "game-quiz", slug: "preguntas-de-aventura", name: "Preguntas bíblicas", shortDescription: "Responde preguntas, descubre explicaciones y abre nuevas rutas.", categoryId: "cat-quiz", suggestedAgeMin: 7, suggestedAgeMax: 12, difficulty: Difficulty.EXPLORER, maxPoints: 450, xpReward: 130, moduleKey: "quiz", featured: true },
   { id: "game-light", slug: "recolector-de-luz", name: "Recolector de luz", shortDescription: "Ayuda a Lumo a recoger destellos y evitar nubes traviesas.", categoryId: "cat-arcade", suggestedAgeMin: 8, suggestedAgeMax: 13, difficulty: Difficulty.ADVENTURER, maxPoints: 600, xpReward: 160, moduleKey: "light-collector", featured: true },
