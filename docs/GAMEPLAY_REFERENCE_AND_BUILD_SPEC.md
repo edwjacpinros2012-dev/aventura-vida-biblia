@@ -145,7 +145,7 @@ Exploradores mecánicos de dos formas que recorren regiones, rescatan unidades a
 1. Resolver la integración técnica de la rama: recuperar lockfile pnpm reproducible, sincronizar con los dos commits recientes de main y volver a ejecutar lint, typecheck y build.
 2. Probar la tienda y equipamiento con cuentas de prueba y migración revisada.
 3. Mejorar el Jardín 3D con minimapa, misión contextual y colisiones.
-4. Diseñar contrato de servidor para recursos y construcciones antes de conectar persistencia.
+4. [x] Crear contrato autenticado de servidor para luces, recursos y construcciones del Jardín; sincronizar cambios de forma secuencial y validar duplicados/costes en servidor. Pendiente: aplicar la migración en un entorno de prueba con respaldo y verificar dos dispositivos.
 5. Crear prototipo separado de Eras Wars con robot/vehículo y objetivos de exploración.
 6. Añadir modelos riggeados solo cuando los assets originales estén listos.
 7. Ejecutar pruebas móviles, pruebas de cuenta y pruebas de regresión de los 15 juegos.
@@ -194,3 +194,11 @@ Exploradores mecánicos de dos formas que recorren regiones, rescatan unidades a
 4. Confirmar que la migración de ranuras de equipamiento se puede aplicar de forma compatible y con respaldo; `prisma generate` no aplica migraciones.
 5. Ejecutar pruebas reales de tienda, inventario, equipamiento, autenticación, multijugador y los 15 juegos.
 6. Solo después revisar el alcance completo del PR #2; la rama contiene muchos commits y no debe fusionarse por el mero hecho de que compile.
+
+### Persistencia del Jardín — implementación en rama
+- Se añadió `PlayerWorldState` con recursos recogidos, luces y construcciones por cuenta.
+- Se añadió `GET/PUT /api/world/state`, protegido con la sesión de Aventura Vida y validación Zod. Los recursos duplicados y las construcciones que exceden el material reunido se rechazan.
+- El cliente carga el estado de la cuenta al iniciar sesión y sincroniza cambios con una cola secuencial para impedir que solicitudes lentas sobrescriban un guardado más reciente. Los visitantes conservan almacenamiento local.
+- La migración aditiva `20261116153000_player_world_state` crea una tabla relacionada con User mediante borrado en cascada; no altera las tablas de progreso ni de inventario existentes.
+- Se amplió `scripts/verify-world3d.ts` para comprobar el contrato, la validación, el modelo Prisma, la migración y la sincronización.
+- Límite pendiente: el servidor persiste progreso e inventario del prototipo, pero todavía no sincroniza posición en tiempo real ni construcción cooperativa. La migración no se ha aplicado a producción.
