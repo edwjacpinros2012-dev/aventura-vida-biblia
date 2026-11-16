@@ -7,6 +7,9 @@ import * as THREE from "three";
 
 const avatar = "/assets/proyecto-vida-kids/characters/vida-kids-01-rosa-morado/full.png";
 const lights = [[-6, -5], [7, -8], [3, 8], [-9, 6]] as const;
+const woodNodes = [[-3, 2], [6, 4], [12, 7]] as const;
+const stoneNodes = [[-11, -12], [11, -5]] as const;
+type BuildPiece = { id: number; kind: "cabin" | "lamp" };
 
 function Tree({ p, scale = 1 }: { p: [number, number, number]; scale?: number }) {
   return <group position={p} scale={scale}>
@@ -79,11 +82,16 @@ function Avatar({ keys, pad, onNear, player }: PlayerControls) {
   </group>;
 }
 
-function Scene({ keys, pad, collected, collect, onNear }: {
+function Scene({ keys, pad, collected, collect, woodCollected, collectWood, stoneCollected, collectStone, builds, onNear }: {
   keys: PlayerControls["keys"];
   pad: PlayerControls["pad"];
   collected: number[];
   collect: (index: number) => void;
+  woodCollected: number[];
+  collectWood: (index: number) => void;
+  stoneCollected: number[];
+  collectStone: (index: number) => void;
+  builds: BuildPiece[];
   onNear: (value: boolean) => void;
 }) {
   const player = useRef<THREE.Group>(null);
@@ -96,6 +104,8 @@ function Scene({ keys, pad, collected, collect, onNear }: {
       if (!collected.includes(index) && Math.hypot(position.x - x, position.z - z) < 1.4) collect(index);
       if (orbs.current[index]) orbs.current[index]!.rotation.y += 0.02;
     });
+    woodNodes.forEach(([x, z], index) => { if (!woodCollected.includes(index) && Math.hypot(position.x - x, position.z - z) < 1.5) collectWood(index); });
+    stoneNodes.forEach(([x, z], index) => { if (!stoneCollected.includes(index) && Math.hypot(position.x - x, position.z - z) < 1.5) collectStone(index); });
   });
 
   return <>
@@ -116,6 +126,9 @@ function Scene({ keys, pad, collected, collect, onNear }: {
       <mesh position={[0, 2.8, 0]}><sphereGeometry args={[0.95, 16, 12]} /><meshStandardMaterial color="#3b9654" /></mesh>
       <mesh position={[0, 3.2, 0]}><sphereGeometry args={[0.4, 12, 10]} /><meshStandardMaterial color="#f4d36e" emissive="#b47a16" /></mesh>
     </group>
+    {woodNodes.map(([x, z], index) => !woodCollected.includes(index) && <Float key={`wood-${index}`} speed={1.2}><mesh position={[x, 0.45, z]}><boxGeometry args={[0.65, 0.65, 0.65]} /><meshStandardMaterial color="#a96d36" emissive="#48240b" /></mesh></Float>)}
+    {stoneNodes.map(([x, z], index) => !stoneCollected.includes(index) && <Float key={`stone-${index}`} speed={1.1}><mesh position={[x, 0.5, z]}><dodecahedronGeometry args={[0.55, 0]} /><meshStandardMaterial color="#aab4c0" /></mesh></Float>)}
+    {builds.map((piece, index) => { const x = -13 + (index % 6) * 5; const z = -15 + Math.floor(index / 6) * 5; return <group key={piece.id} position={[x, 0, z]}><mesh position={[0, 0.6, 0]} castShadow><boxGeometry args={piece.kind === "cabin" ? [1.8, 1.2, 1.8] : [0.45, 1.3, 0.45]} /><meshStandardMaterial color={piece.kind === "cabin" ? "#d7a66f" : "#d8b84a"} emissive={piece.kind === "lamp" ? "#b47a16" : "#000000"} /></mesh>{piece.kind === "cabin" && <mesh position={[0, 1.5, 0]}><coneGeometry args={[1.45, 0.8, 4]} /><meshStandardMaterial color="#8b5139" /></mesh>}</group>; })}
     {lights.map(([x, z], index) => !collected.includes(index) && <Float key={index} speed={1.8}>
       <mesh ref={(element) => { orbs.current[index] = element; }} position={[x, 0.8, z]}>
         <icosahedronGeometry args={[0.42, 1]} />
@@ -152,6 +165,11 @@ export function CreationWorld() {
   const keys = useRef(new Set<string>());
   const pad = useRef<[number, number]>([0, 0]);
   const [collected, setCollected] = useState<number[]>([]);
+  const [woodCollected, setWoodCollected] = useState<number[]>([]);
+  const [stoneCollected, setStoneCollected] = useState<number[]>([]);
+  const [woodInventory, setWoodInventory] = useState(0);
+  const [stoneInventory, setStoneInventory] = useState(0);
+  const [builds, setBuilds] = useState<BuildPiece[]>([]);
   const [near, setNear] = useState(false);
   const [message, setMessage] = useState("");
   const [started, setStarted] = useState(false);
@@ -159,10 +177,12 @@ export function CreationWorld() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem("av-creation-lights");
-      if (saved) {
-        const parsed: unknown = JSON.parse(saved);
-        if (Array.isArray(parsed)) setCollected(parsed.filter((value): value is number => Number.isInteger(value) && value >= 0 && value < lights.length));
-      }
+      if (saved) { const parsed: unknown = JSON.parse(saved); if (Array.isArray(parsed)) setCollected(parsed.filter((value): value is number => Number.isInteger(value) && value >= 0 && value < lights.length)); }
+      const savedWood = localStorage.getItem("av-world-wood-nodes"); if (savedWood) { const parsed: unknown = JSON.parse(savedWood); if (Array.isArray(parsed)) setWoodCollected(parsed.filter((value): value is number => Number.isInteger(value) && value >= 0 && value < woodNodes.length)); }
+      const savedStone = localStorage.getItem("av-world-stone-nodes"); if (savedStone) { const parsed: unknown = JSON.parse(savedStone); if (Array.isArray(parsed)) setStoneCollected(parsed.filter((value): value is number => Number.isInteger(value) && value >= 0 && value < stoneNodes.length)); }
+      const savedWoodInventory = localStorage.getItem("av-world-wood-inventory"); if (savedWoodInventory) setWoodInventory(Math.max(0, Number(savedWoodInventory) || 0));
+      const savedStoneInventory = localStorage.getItem("av-world-stone-inventory"); if (savedStoneInventory) setStoneInventory(Math.max(0, Number(savedStoneInventory) || 0));
+      const savedBuilds = localStorage.getItem("av-world-builds"); if (savedBuilds) { const parsed: unknown = JSON.parse(savedBuilds); if (Array.isArray(parsed)) setBuilds(parsed.filter((value): value is BuildPiece => value && Number.isInteger(value.id) && (value.kind === "cabin" || value.kind === "lamp"))); }
     } catch { /* El juego sigue disponible si el almacenamiento está bloqueado. */ }
 
     const down = (event: KeyboardEvent) => {
@@ -188,6 +208,10 @@ export function CreationWorld() {
     return next;
   });
 
+  const collectWood = (index: number) => setWoodCollected((current) => { if (current.includes(index)) return current; const next = [...current, index]; try { localStorage.setItem("av-world-wood-nodes", JSON.stringify(next)); } catch {} setWoodInventory((count) => { const value = count + 1; try { localStorage.setItem("av-world-wood-inventory", String(value)); } catch {} return value; }); setMessage("¡Recogiste madera para construir!"); return next; });
+  const collectStone = (index: number) => setStoneCollected((current) => { if (current.includes(index)) return current; const next = [...current, index]; try { localStorage.setItem("av-world-stone-nodes", JSON.stringify(next)); } catch {} setStoneInventory((count) => { const value = count + 1; try { localStorage.setItem("av-world-stone-inventory", String(value)); } catch {} return value; }); setMessage("¡Recogiste piedra para tus construcciones!"); return next; });
+  const build = (kind: BuildPiece["kind"]) => { const woodCost = kind === "cabin" ? 2 : 1; const stoneCost = kind === "cabin" ? 1 : 0; if (woodInventory < woodCost || stoneInventory < stoneCost) { setMessage(`Materiales insuficientes. Necesitas ${woodCost} madera y ${stoneCost} piedra.`); return; } const piece: BuildPiece = { id: Date.now(), kind }; setBuilds((current) => { const next = [...current, piece]; try { localStorage.setItem("av-world-builds", JSON.stringify(next)); } catch {} return next; }); setWoodInventory((count) => { const value = count - woodCost; try { localStorage.setItem("av-world-wood-inventory", String(value)); } catch {} return value; }); setStoneInventory((count) => { const value = count - stoneCost; try { localStorage.setItem("av-world-stone-inventory", String(value)); } catch {} return value; }); setMessage(kind === "cabin" ? "¡Construiste una cabaña decorativa!" : "¡Colocaste una lámpara de luz!"); };
+
   const interact = () => {
     if (!started) {
       setStarted(true);
@@ -211,14 +235,14 @@ export function CreationWorld() {
   return <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#082632] shadow-2xl">
     <div className="relative h-[min(72vh,680px)] min-h-[470px]">
       <Canvas shadows camera={{ position: [0, 7, 19], fov: 48 }} dpr={[1, 1.5]}>
-        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} onNear={setNear} /></Suspense>
+        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} woodCollected={woodCollected} collectWood={collectWood} stoneCollected={stoneCollected} collectStone={collectStone} builds={builds} onNear={setNear} /></Suspense>
       </Canvas>
 
       <div className="pointer-events-none absolute left-4 top-4 rounded-2xl border border-white/15 bg-[#06232dcc] p-3 text-white">
         <p className="text-[10px] font-black uppercase tracking-widest text-amber-200">Mundo 1 · Jardín de la creación</p>
         <p className="text-sm font-bold">Reúne las luces del valle</p>
         <div className="mt-2 h-2 w-40 overflow-hidden rounded-full bg-white/15"><div className="h-full bg-amber-300" style={{ width: (collected.length / lights.length * 100) + "%" }} /></div>
-        <p className="text-xs text-white/70">{collected.length}/4 encontradas</p>
+        <p className="text-xs text-white/70">{collected.length}/4 luces · 🪵 {woodInventory} · 🪨 {stoneInventory}</p>
       </div>
 
       <div className="absolute right-4 top-4 rounded-xl bg-[#06232dcc] p-3 text-xs text-white">
@@ -244,11 +268,13 @@ export function CreationWorld() {
         style={{ touchAction: "none" }}
       >SALTAR</button>
 
+      <div className="absolute bottom-3 right-3 hidden flex-col gap-2 sm:flex"><button type="button" onClick={() => build("cabin")} className="rounded-xl border border-white/20 bg-[#06232ddd] px-3 py-2 text-xs font-black text-white">🏡 Construir cabaña (2🪵 1🪨)</button><button type="button" onClick={() => build("lamp")} className="rounded-xl border border-white/20 bg-[#06232ddd] px-3 py-2 text-xs font-black text-white">💡 Colocar lámpara (1🪵)</button></div>
+      <div className="absolute bottom-24 right-3 flex flex-col gap-2 sm:hidden"><button type="button" onClick={() => build("cabin")} className="rounded-xl border border-white/20 bg-[#06232ddd] px-3 py-2 text-[10px] font-black text-white">🏡 Cabaña</button><button type="button" onClick={() => build("lamp")} className="rounded-xl border border-white/20 bg-[#06232ddd] px-3 py-2 text-[10px] font-black text-white">💡 Lámpara</button></div>
       {near && <button type="button" onClick={interact} className="absolute bottom-20 left-1/2 -translate-x-1/2 rounded-full bg-amber-300 px-5 py-3 text-sm font-black text-[#25331e]">Hablar con el guardián</button>}
       {message && <div role="status" className="absolute bottom-4 left-4 right-4 rounded-2xl border border-amber-200/40 bg-[#082b2bef] p-3 text-sm text-amber-50 sm:bottom-4">
         {message}<button type="button" onClick={() => setMessage("")} className="ml-3 underline">Cerrar</button>
       </div>}
     </div>
-    <div className="border-t border-white/10 bg-[#061e29] px-4 py-3 text-xs text-white/70">Personaje oficial Vida Kids · progreso de luces guardado en este dispositivo</div>
+    <div className="border-t border-white/10 bg-[#061e29] px-4 py-3 text-xs text-white/70">Personaje oficial Vida Kids · recursos y construcciones decorativas guardados localmente en este dispositivo · prototipo de construcción</div>
   </section>;
 }
