@@ -5,9 +5,7 @@ import { Float, MeshReflectorMaterial, Sky, Sparkles } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { usePlayerProgress } from "@/components/player-progress-provider";
-import { officialCharacterForAvatar } from "@/lib/characters/catalog";
 
-const avatar = "/assets/proyecto-vida-kids/characters/vida-kids-01-rosa-morado/full.png";
 const lights = [[-6, -5], [7, -8], [3, 8], [-9, 6]] as const;
 const woodNodes = [[-3, 2], [6, 4], [12, 7]] as const;
 const stoneNodes = [[-11, -12], [11, -5]] as const;
@@ -182,7 +180,7 @@ function Avatar({ keys, pad, onNear, minimapMarker, player, playerPosition, avat
     </group>
   </group>;
 }
-function Scene({ keys, pad, collected, collect, woodCollected, collectWood, stoneCollected, collectStone, builds, onNear, minimapMarker, playerPosition, avatarUrl, equippedSlugs }: {
+function Scene({ keys, pad, collected, collect, woodCollected, collectWood, stoneCollected, collectStone, builds, onNear, minimapMarker, playerPosition, avatarKey, equippedSlugs }: {
   keys: PlayerControls["keys"];
   pad: PlayerControls["pad"];
   collected: number[];
@@ -195,7 +193,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
   onNear: (value: boolean) => void;
   minimapMarker: React.RefObject<HTMLSpanElement | null>;
   playerPosition: PlayerControls["playerPosition"];
-  avatarUrl: string;
+  avatarKey: string;
   equippedSlugs: string[];
 }) {
   const player = useRef<THREE.Group>(null);
@@ -268,7 +266,6 @@ function DirectionButton({ label, direction, pad }: {
 export function CreationWorld() {
   const { identity, identityReady } = usePlayerProgress();
   const [equippedSlugs, setEquippedSlugs] = useState<string[]>([]);
-  const avatarUrl = officialCharacterForAvatar(identity.avatarKey)?.asset ?? avatar;
   useEffect(() => {
     if (!identityReady) return;
     let active = true;
