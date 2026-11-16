@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { accountFromRequest } from "@/lib/auth/server";
-import { createSession, revokeAllSessions, sessionCookie } from "@/lib/auth/service";
+import { createSession, sessionCookie } from "@/lib/auth/service";
 import { prisma } from "@/lib/prisma";
 import { requestRateKey, withinRateLimit } from "@/lib/security/rate-limit";
 
