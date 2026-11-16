@@ -14,6 +14,10 @@ const collisionObstacles = [
   { x: 4, z: -13, radius: 2.1 },
   { x: -12, z: 10, radius: 2.1 },
   { x: 0, z: 1, radius: 1.25 },
+  // Los NPC tienen un perímetro físico para que el jugador no atraviese sus modelos.
+  { x: 2.6, z: 1, radius: 0.85 },
+  { x: -7, z: 3, radius: 0.85 },
+  { x: 8, z: 7, radius: 0.85 },
   ...Array.from({ length: 18 }, (_, index) => ({
     x: -15 + (index % 6) * 5.8,
     z: -13 + Math.floor(index / 6) * 12,
