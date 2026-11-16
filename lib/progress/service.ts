@@ -38,8 +38,10 @@ function nextStreak(previous: string | null, current: string, existing: number) 
 function achievementIdForSlug(slug: string): PlayerAchievementId | null {
   const mapping: Record<string, PlayerAchievementId> = {
     "primera-aventura": "first-adventure",
-    "cinco-juegos": "curious-explorer",
-    "siete-dias": "steady-light",
+    "explorador-curioso": "curious-explorer",
+    "guardian-de-versiculos": "verse-keeper",
+    "luz-constante": "steady-light",
+    "maestro-de-juegos": "game-master",
   };
   return mapping[slug] ?? null;
 }
@@ -72,7 +74,7 @@ function gameReward(game: { xpReward: number; maxPoints: number }) {
 async function awardEligibleAchievements(
   tx: Prisma.TransactionClient,
   userId: string,
-  stats: { gamesPlayed: number; streak: number; quizGames: number },
+  stats: { gamesPlayed: number; uniqueGames: number; learnedVerses: number; streak: number; quizGames: number },
 ) {
   const achievements = await tx.achievement.findMany({ where: { active: true }, select: { id: true, slug: true, criteria: true, xpReward: true } });
   const owned = new Set((await tx.userAchievement.findMany({ where: { userId }, select: { achievementId: true } })).map((item) => item.achievementId));
@@ -81,8 +83,12 @@ async function awardEligibleAchievements(
     if (owned.has(achievement.id)) continue;
     const completedGames = numberCriterion(achievement.criteria, "completedGames");
     const activeDays = numberCriterion(achievement.criteria, "activeDays");
+    const uniqueGames = numberCriterion(achievement.criteria, "uniqueGames");
+    const learnedVerses = numberCriterion(achievement.criteria, "learnedVerses");
     const quizGames = numberCriterion(achievement.criteria, "quizGames");
     const eligible = (completedGames > 0 && stats.gamesPlayed >= completedGames)
+      || (uniqueGames > 0 && stats.uniqueGames >= uniqueGames)
+      || (learnedVerses > 0 && stats.learnedVerses >= learnedVerses)
       || (activeDays > 0 && stats.streak >= activeDays)
       || (quizGames > 0 && stats.quizGames >= quizGames);
     if (!eligible) continue;
@@ -93,11 +99,25 @@ async function awardEligibleAchievements(
 }
 
 async function activityStats(tx: Prisma.TransactionClient, userId: string) {
-  const [gamesPlayed, quizGames] = await Promise.all([
-    tx.playerProgressEvent.count({ where: { userId, kind: { in: [PlayerProgressEventKind.GAME_COMPLETION, PlayerProgressEventKind.CAMPAIGN_LEVEL] } } }),
-    tx.playerProgressEvent.count({ where: { userId, kind: PlayerProgressEventKind.GAME_COMPLETION, game: { slug: "preguntas-de-aventura" } } }),
+  const [gameEvents, verseEvents, quizGames] = await Promise.all([
+    tx.playerProgressEvent.findMany({
+      where: { userId, kind: PlayerProgressEventKind.GAME_COMPLETION },
+      select: { gameId: true },
+    }),
+    tx.playerProgressEvent.findMany({
+      where: { userId, kind: PlayerProgressEventKind.DAILY_CHALLENGE },
+      select: { payload: true },
+    }),
+    tx.playerProgressEvent.count({
+      where: { userId, kind: PlayerProgressEventKind.GAME_COMPLETION, game: { slug: "preguntas-de-aventura" } },
+    }),
   ]);
-  return { gamesPlayed, quizGames };
+  const uniqueGames = new Set(gameEvents.flatMap((event) => event.gameId ? [event.gameId] : [])).size;
+  const learnedVerses = new Set(verseEvents.flatMap((event) => {
+    const reference = jsonRecord(event.payload).verseReference;
+    return typeof reference === "string" ? [reference] : [];
+  })).size;
+  return { gamesPlayed: gameEvents.length, uniqueGames, learnedVerses, quizGames };
 }
 
 async function updateProfileForReward(
