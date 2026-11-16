@@ -32,14 +32,14 @@ export function LittleBigHeroesGame() {
   const hero=heroes[heroIndex],target=vowels[targetIndex%5],points=sheep*25+stars*10+Math.floor(distance/10);
   const speak=useCallback((text:string)=>{if(!sound||typeof window==="undefined"||!("speechSynthesis" in window))return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="es-ES";u.rate=.86;u.pitch=1.12;window.speechSynthesis.speak(u)},[sound]);
   const reset=useCallback(()=>{tick.current=0;setLives(6);setSheep(0);setStars(0);setDistance(0);setJumping(false);setHazard(false);setTargetIndex(0);setStationDone(false);setNotice("¡Corre, salta y rescata!");resetCompletion();setScreen("run")},[resetCompletion]);
-  const jump=useCallback(()=>{if(screen!=="run"||jumping)return;setJumping(true);if(jumpTimer.current)clearTimeout(jumpTimer.current);jumpTimer.current=setTimeout(()=>setJumping(false),760)},[screen,jumping,lives]);
+  const jump=useCallback(()=>{if(screen!=="run"||jumping)return;setJumping(true);if(jumpTimer.current)clearTimeout(jumpTimer.current);jumpTimer.current=setTimeout(()=>setJumping(false),760)},[screen,jumping]);
   useEffect(()=>{if(screen!=="run")return;const timer=window.setInterval(()=>{tick.current++;setDistance(v=>v+2);
     if(tick.current%17===0){setHazard(true);if(!jumping){if(lives<=1)setScreen("over");setLives(v=>Math.max(0,v-1));setNotice("¡Cuidado con la roca! ¡Salta!")}else{setStars(v=>v+1);setNotice("¡Salto perfecto! +1 estrella")}}
     if(tick.current%17===5)setHazard(false);
     if(tick.current%13===0){setSheep(v=>v+1);setNotice("¡Ovejita rescatada! +25 puntos")}
     if(tick.current%65===0){setTargetIndex(Math.floor(tick.current/65)-1);setStationDone(false);setScreen("station");setNotice("¡Parada educativa!");}
     if(tick.current%29===0)setStars(v=>v+1);
-  },150);return()=>window.clearInterval(timer)},[screen,jumping]);
+  },150);return()=>window.clearInterval(timer)},[screen,jumping,lives]);
   useEffect(()=>{if(screen!=="run")return;const key=(e:KeyboardEvent)=>{if(e.code==="Space"||e.code==="ArrowUp"){e.preventDefault();jump()}};window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key)},[jump,screen]);
   useEffect(()=>()=>{if(jumpTimer.current)clearTimeout(jumpTimer.current);if("speechSynthesis"in window)window.speechSynthesis.cancel()},[]);
   const answer=(letter:string)=>{if(letter===target.letter){setStationDone(true);setStars(v=>v+5);setNotice("¡Muy bien! "+target.letter+" de "+target.word);speak("¡Excelente! "+target.letter+" de "+target.word)}else{speak("Busca la vocal "+target.letter);setNotice("¡Inténtalo otra vez! Busca la "+target.letter)}};
