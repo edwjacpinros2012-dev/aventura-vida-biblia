@@ -40,6 +40,8 @@ const checks: Array<[string, boolean]> = [
   ["Store equipment attaches to 3D head, torso and back", world.includes('equippedSlugs.includes("yelmo-salvacion")') && world.includes('equippedSlugs.includes("tunica-pastor-amable")') && world.includes('equippedSlugs.includes("capa-bondad")')],
   ["World minimap is rendered", world.includes("Mapa del valle") && world.includes("minimapPlayerMarker")],
   ["Minimap marker updates without React frame state", world.includes("minimapMarker.current.style.left") && world.includes("minimapMarker.current.style.top")],
+  ["NPC proximity selects the nearest of the three characters", world.includes("const nearbyNpc = [") && world.includes('.filter((npc) => npc.distance < 3.5)') && world.includes("nearNpc.current = nearbyNpc")],
+  ["Each NPC has its own dialogue and interaction prompt", world.includes('nearNpc === "guardian"') && world.includes('nearNpc === "gardener"') && world.includes('nearNpc === "builder"') && world.includes("{nearNpc && <button")],
   ["All fifteen game adapters remain registered", (registry.match(/^\s*(?:"[^"]+"|[a-z-]+): \{ key:/gm) ?? []).length === 15],
 ];
 
