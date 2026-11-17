@@ -112,6 +112,10 @@ equipo con Android SDK.
 - Integrar un proveedor de IA opcional y una pantalla editorial antes de publicar contenido generado por IA.
 - Pruebas E2E en dispositivo real del modo offline/reconexión y de las operaciones de economía.
 
+## Auditoría y evolución
+
+- [Auditoría funcional, referencias y hoja de ruta](docs/PROJECT_AUDIT_AND_REFERENCE_ROADMAP.md)
+
 ## Documentación de diseño
 
 - [Plan de Fase 1](PLAN.md)

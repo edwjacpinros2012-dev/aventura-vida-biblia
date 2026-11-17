@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { Prisma, type MatchPlayerStatus } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { hasDatabaseUrl, prisma } from "@/lib/prisma";
 import { applyAdventureCoinChange } from "@/lib/economy/service";
 import { isBlocked } from "@/lib/community/service";
 import type { MultiplayerError, PublicPlayerIdentity, PvpDuelSnapshot } from "@/lib/multiplayer/contracts";
@@ -68,7 +68,7 @@ export class PvpDuelService {
   private readonly matches = new Map<string, InternalDuel>();
   private readonly queue: DuelPlayer[] = [];
   private readonly disconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
-  private readonly persistenceEnabled = Boolean(process.env.DATABASE_URL);
+  private readonly persistenceEnabled = hasDatabaseUrl;
 
   constructor(private readonly onStateChange?: (match: PvpDuelSnapshot) => void | Promise<void>) {}
 

@@ -18,13 +18,14 @@ import {
 } from "@/lib/multiplayer/contracts";
 import { MultiplayerRoomService, RoomServiceError } from "./multiplayer/room-service";
 import { accountFromSessionToken } from "@/lib/auth/service";
+import { hasDatabaseUrl } from "@/lib/prisma";
 import { assertCommunityAccess, CommunityError, isBlocked } from "@/lib/community/service";
 import { ChatError, createRoomChatMessage } from "@/lib/community/chat-service";
 import { isSelectableAvatarKey } from "@/lib/characters/catalog";
 import type { SafeAccount } from "@/lib/auth/contracts";
 import { PvpDuelService, PvpServiceError } from "./multiplayer/pvp-service";
 
-const port = Number(process.env.MULTIPLAYER_PORT ?? 3001);
+const port = Number(process.env.MULTIPLAYER_PORT ?? process.env.PORT ?? 3001);
 const allowedOrigin = process.env.MULTIPLAYER_ALLOWED_ORIGIN ?? "http://localhost:3000";
 const rooms = new MultiplayerRoomService();
 
@@ -133,7 +134,7 @@ async function start() {
   io.use(async (socket, next) => {
     // Las salas siguen disponibles como invitado para conservar el modo local;
     // el chat exige una sesión de cuenta y nunca acepta una identidad del cliente.
-    if (!process.env.DATABASE_URL) return next();
+    if (!hasDatabaseUrl) return next();
     try {
       const account = await accountFromSessionToken(sessionTokenFromCookie(socket.handshake.headers.cookie));
       if (account) socket.data.account = account;

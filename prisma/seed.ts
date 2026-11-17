@@ -1,4 +1,4 @@
-import { ContentStatus, Difficulty, GameType, InventoryItemType, ItemRarity, MissionStatus, PrismaClient, ScorePeriod, UserRole } from "@prisma/client";
+import { ContentStatus, Difficulty, EquipmentSlot, GameType, InventoryItemType, ItemRarity, MissionStatus, PrismaClient, ScorePeriod, UserRole } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -40,14 +40,20 @@ const storeData = [
   { slug: "sendero-de-estrellas", name: "Sendero de estrellas", description: "Un escenario de colección para los mapas que se ampliarán más adelante.", type: InventoryItemType.SCENERY, rarity: ItemRarity.RARE, coinPrice: 160, criteria: { minLevel: 3 } },
   { slug: "mapa-de-explorador", name: "Mapa de explorador", description: "Contenido especial que recuerda tus recorridos de aventura.", type: InventoryItemType.SPECIAL_CONTENT, rarity: ItemRarity.UNCOMMON, coinPrice: 120, criteria: { minLevel: 2 } },
 
-  { slug: "yelmo-salvacion", name: "Yelmo de la salvación", description: "Un adorno de perfil inspirado en la esperanza de Efesios 6.", type: InventoryItemType.COSMETIC, rarity: ItemRarity.UNCOMMON, coinPrice: 110, criteria: { minLevel: 2 } },
+  { slug: "yelmo-salvacion", name: "Yelmo de la salvación", description: "Un adorno de perfil inspirado en la esperanza de Efesios 6.", type: InventoryItemType.COSMETIC, equipmentSlot: EquipmentSlot.HEAD, rarity: ItemRarity.UNCOMMON, coinPrice: 110, criteria: { minLevel: 2 } },
   { slug: "escudo-fe", name: "Emblema del escudo de la fe", description: "Un emblema luminoso para tu perfil, inspirado en Efesios 6:16.", type: InventoryItemType.COSMETIC, rarity: ItemRarity.RARE, coinPrice: 180, criteria: { minLevel: 4 } },
-  { slug: "capa-bondad", name: "Capa de la bondad", description: "Una capa decorativa que celebra el servicio y el amor al prójimo.", type: InventoryItemType.CHARACTER_STYLE, rarity: ItemRarity.UNCOMMON, coinPrice: 130, criteria: { minLevel: 2 } },
+  { slug: "capa-bondad", name: "Capa de la bondad", description: "Una capa decorativa que celebra el servicio y el amor al prójimo.", type: InventoryItemType.CHARACTER_STYLE, equipmentSlot: EquipmentSlot.BACK, rarity: ItemRarity.UNCOMMON, coinPrice: 130, criteria: { minLevel: 2 } },
   { slug: "aureola-olivo", name: "Brillo de olivo", description: "Un efecto visual sereno inspirado en la paz.", type: InventoryItemType.EFFECT, rarity: ItemRarity.RARE, coinPrice: 210, criteria: { minLevel: 5 } },
   { slug: "estandarte-jerico", name: "Estandarte de Jericó", description: "Decoración de colección que recuerda la historia de Josué 6.", type: InventoryItemType.SCENERY, rarity: ItemRarity.RARE, coinPrice: 240, criteria: { minLevel: 5 } },
   { slug: "portal-mar-rojo", name: "Portal del Mar Rojo", description: "Un fondo de perfil inspirado en el camino de esperanza de Éxodo 14.", type: InventoryItemType.SCENERY, rarity: ItemRarity.EPIC, coinPrice: 320, criteria: { minLevel: 8 } },
   { slug: "companero-paloma", name: "Compañera paloma", description: "Un compañero decorativo que simboliza la paz y la guía.", type: InventoryItemType.AVATAR, rarity: ItemRarity.EPIC, coinPrice: 360, criteria: { minLevel: 8 } },
   { slug: "pergamino-sabiduria", name: "Pergamino de sabiduría", description: "Una pieza de colección con referencias para seguir aprendiendo Proverbios.", type: InventoryItemType.SPECIAL_CONTENT, rarity: ItemRarity.UNCOMMON, coinPrice: 95, criteria: { minLevel: 2 } },
+  { slug: "tunica-pastor-amable", name: "Túnica del pastor amable", description: "Estilo de avatar inspirado en el cuidado del pastor y sus ovejas (Salmo 23).", type: InventoryItemType.CHARACTER_STYLE, equipmentSlot: EquipmentSlot.CHEST, rarity: ItemRarity.UNCOMMON, coinPrice: 145, criteria: { minLevel: 3 } },
+  { slug: "corona-sabiduria", name: "Corona de sabiduría", description: "Cosmético de perfil que celebra aprender y actuar con prudencia (Proverbios 4).", type: InventoryItemType.COSMETIC, equipmentSlot: EquipmentSlot.HEAD, rarity: ItemRarity.RARE, coinPrice: 220, criteria: { minLevel: 5 } },
+  { slug: "companero-leoncito-daniel", name: "Compañero leoncito", description: "Avatar compañero de colección que recuerda el relato de Daniel 6.", type: InventoryItemType.AVATAR, rarity: ItemRarity.EPIC, coinPrice: 390, criteria: { minLevel: 9 } },
+  { slug: "jardin-eden-mini", name: "Jardín de la creación", description: "Escenario decorativo inspirado en Génesis 2 para futuras zonas del mundo.", type: InventoryItemType.SCENERY, rarity: ItemRarity.RARE, coinPrice: 260, criteria: { minLevel: 6 } },
+  { slug: "perla-parabola", name: "Perla de la parábola", description: "Objeto de colección que recuerda las enseñanzas de Jesús en Mateo 13.", type: InventoryItemType.SPECIAL_CONTENT, rarity: ItemRarity.UNCOMMON, coinPrice: 125, criteria: { minLevel: 3 } },
+  { slug: "huellas-buen-samaritano", name: "Huellas de compasión", description: "Efecto de colección que celebra ayudar al prójimo (Lucas 10:25–37).", type: InventoryItemType.EFFECT, rarity: ItemRarity.RARE, coinPrice: 205, criteria: { minLevel: 5 } },
 ];
 
 async function main() {
