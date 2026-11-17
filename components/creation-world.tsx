@@ -91,7 +91,7 @@ type PlayerControls = {
   equippedSlugs: string[];
   keys: React.MutableRefObject<Set<string>>;
   pad: React.MutableRefObject<[number, number]>;
-  onNear: (value: boolean) => void;
+  onNear: (npcId: string | null) => void;
   minimapMarker: React.RefObject<HTMLSpanElement | null>;
   player: React.RefObject<THREE.Group | null>;
   playerPosition: React.MutableRefObject<[number, number, number]>;
@@ -104,7 +104,7 @@ function Avatar({ keys, pad, onNear, minimapMarker, player, playerPosition, avat
   const rightLeg = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
   const { camera } = useThree();
-  const near = useRef(false);
+  const nearNpc = useRef<string | null>(null);
   const jumpVelocity = useRef(0);
   const jumpWasDown = useRef(false);
   const lastReportedPosition = useRef<[number, number]>([0, 9]);
@@ -166,10 +166,17 @@ function Avatar({ keys, pad, onNear, minimapMarker, player, playerPosition, avat
       }
     }
 
-    const isNear = Math.hypot(group.position.x, group.position.z - 1) < 3.5;
-    if (isNear !== near.current) {
-      near.current = isNear;
-      onNear(isNear);
+    const nearbyNpc = [
+      { id: "guardian", x: 2.6, z: 1 },
+      { id: "gardener", x: -7, z: 3 },
+      { id: "builder", x: 8, z: 7 },
+    ]
+      .map((npc) => ({ ...npc, distance: Math.hypot(group.position.x - npc.x, group.position.z - npc.z) }))
+      .filter((npc) => npc.distance < 3.5)
+      .sort((a, b) => a.distance - b.distance)[0]?.id ?? null;
+    if (nearbyNpc !== nearNpc.current) {
+      nearNpc.current = nearbyNpc;
+      onNear(nearbyNpc);
     }
   });
 
@@ -236,7 +243,7 @@ function Scene({ keys, pad, collected, collect, woodCollected, collectWood, ston
   stoneCollected: number[];
   collectStone: (index: number) => void;
   builds: BuildPiece[];
-  onNear: (value: boolean) => void;
+  onNear: (npcId: string | null) => void;
   minimapMarker: React.RefObject<HTMLSpanElement | null>;
   playerPosition: PlayerControls["playerPosition"];
   avatarKey: string;
@@ -334,7 +341,7 @@ export function CreationWorld() {
   const [worldSaveStatus, setWorldSaveStatus] = useState<"local" | "loading" | "saved" | "error">("local");
   const [worldStateRetry, setWorldStateRetry] = useState(0);
   const worldSaveQueue = useRef<Promise<void>>(Promise.resolve());
-  const [near, setNear] = useState(false);
+  const [nearNpc, setNearNpc] = useState<string | null>(null);
   const minimapPlayerMarker = useRef<HTMLSpanElement>(null);
   const playerPosition = useRef<[number, number, number]>([0, 9, 0]);
   const [message, setMessage] = useState("");
@@ -472,13 +479,23 @@ export function CreationWorld() {
     const piece: BuildPiece = { id: Date.now(), kind, ...placement }; setBuilds((current) => { const next = [...current, piece]; try { localStorage.setItem("av-world-builds", JSON.stringify(next)); } catch {} return next; }); setWoodInventory((count) => { const value = count - woodCost; try { localStorage.setItem("av-world-wood-inventory", String(value)); } catch {} return value; }); setStoneInventory((count) => { const value = count - stoneCost; try { localStorage.setItem("av-world-stone-inventory", String(value)); } catch {} return value; }); setMessage(kind === "cabin" ? "¡Construiste una cabaña decorativa!" : "¡Colocaste una lámpara de luz!"); };
 
   const interact = () => {
-    if (!started) {
-      setStarted(true);
-      setMessage("Guardián: ¡Bienvenido al jardín! Reúne las cuatro luces doradas que se dispersaron por el valle.");
-    } else {
-      setMessage(collected.length === lights.length
-        ? "¡Misión completada! Has reunido las cuatro luces. Cuida la creación y trata con bondad a todos."
-        : `Guardián: explora el valle. Llevas ${collected.length} de 4 luces.`);
+    if (nearNpc === "guardian") {
+      if (!started) {
+        setStarted(true);
+        setMessage("Guardián: ¡Bienvenido al jardín! Reúne las cuatro luces doradas que se dispersaron por el valle.");
+      } else {
+        setMessage(collected.length === lights.length
+          ? "¡Misión completada! Has reunido las cuatro luces. Cuida la creación y trata con bondad a todos."
+          : `Guardián: explora el valle. Llevas ${collected.length} de 4 luces.`);
+      }
+      return;
+    }
+    if (nearNpc === "gardener") {
+      setMessage("Jardinera: cuida los árboles y recoge madera caída para construir. Recuerda dejar espacio para que la naturaleza crezca.");
+      return;
+    }
+    if (nearNpc === "builder") {
+      setMessage("Constructor: reúne madera y piedra. Puedes construir una cabaña con 2 maderas y 1 piedra, o una lámpara con 1 madera.");
     }
   };
 
@@ -494,7 +511,7 @@ export function CreationWorld() {
   return <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#082632] shadow-2xl">
     <div className="relative h-[min(72vh,680px)] min-h-[470px]">
       <Canvas shadows camera={{ position: [0, 7, 19], fov: 48 }} dpr={[1, 1.5]}>
-        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} woodCollected={woodCollected} collectWood={collectWood} stoneCollected={stoneCollected} collectStone={collectStone} builds={builds} onNear={setNear} minimapMarker={minimapPlayerMarker} playerPosition={playerPosition} avatarKey={identity.avatarKey} equippedSlugs={equippedSlugs} /></Suspense>
+        <Suspense fallback={null}><Scene keys={keys} pad={pad} collected={collected} collect={collect} woodCollected={woodCollected} collectWood={collectWood} stoneCollected={stoneCollected} collectStone={collectStone} builds={builds} onNear={setNearNpc} minimapMarker={minimapPlayerMarker} playerPosition={playerPosition} avatarKey={identity.avatarKey} equippedSlugs={equippedSlugs} /></Suspense>
       </Canvas>
 
       <div className="pointer-events-none absolute left-4 top-4 rounded-2xl border border-white/15 bg-[#06232dcc] p-3 text-white">
@@ -540,7 +557,7 @@ export function CreationWorld() {
 
       <div className="absolute bottom-3 right-3 hidden flex-col gap-2 sm:flex"><button type="button" onClick={() => build("cabin")} className="rounded-xl border border-white/20 bg-[#06232ddd] px-3 py-2 text-xs font-black text-white">🏡 Construir cabaña (2🪵 1🪨)</button><button type="button" onClick={() => build("lamp")} className="rounded-xl border border-white/20 bg-[#06232ddd] px-3 py-2 text-xs font-black text-white">💡 Colocar lámpara (1🪵)</button></div>
       <div className="absolute bottom-24 right-3 flex flex-col gap-2 sm:hidden"><button type="button" onClick={() => build("cabin")} className="rounded-xl border border-white/20 bg-[#06232ddd] px-3 py-2 text-[10px] font-black text-white">🏡 Cabaña</button><button type="button" onClick={() => build("lamp")} className="rounded-xl border border-white/20 bg-[#06232ddd] px-3 py-2 text-[10px] font-black text-white">💡 Lámpara</button></div>
-      {near && <button type="button" onClick={interact} className="absolute bottom-20 left-1/2 -translate-x-1/2 rounded-full bg-amber-300 px-5 py-3 text-sm font-black text-[#25331e]">Hablar con el guardián</button>}
+      {nearNpc && <button type="button" onClick={interact} className="absolute bottom-20 left-1/2 -translate-x-1/2 rounded-full bg-amber-300 px-5 py-3 text-sm font-black text-[#25331e]">Hablar con {nearNpc === "guardian" ? "el guardián" : nearNpc === "gardener" ? "la jardinera" : "el constructor"}</button>}
       {message && <div role="status" className="absolute bottom-4 left-4 right-4 rounded-2xl border border-amber-200/40 bg-[#082b2bef] p-3 text-sm text-amber-50 sm:bottom-4">
         {message}<button type="button" onClick={() => setMessage("")} className="ml-3 underline">Cerrar</button>
       </div>}
