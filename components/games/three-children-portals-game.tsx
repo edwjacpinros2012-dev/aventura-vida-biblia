@@ -210,7 +210,6 @@ function Environment({ environment }: { environment: Chapter["environment"] }) {
       </mesh>
       {environment === "portal" && (
         <>
-          <Portal />
           <mesh position={[0, 3.4, -13]}><boxGeometry args={[10, 6, 0.6]} /><meshStandardMaterial color="#26374d" metalness={0.55} roughness={0.42} /></mesh>
           <mesh position={[0, 3.4, -12.65]}><boxGeometry args={[5.8, 3.5, 0.1]} /><meshBasicMaterial color="#263e75" /></mesh>
           <Monster position={[-3.4, 0, -13]} />
@@ -455,7 +454,7 @@ export function ThreeChildrenPortalsGame() {
 
       <div className="relative h-[min(68vh,620px)] min-h-[440px]">
         <Canvas shadows camera={{ position: [0, 7, 19], fov: 48 }} dpr={[1, 1.5]}>
-          <GameScene chapter={current} keys={keys} pad={pad} collected={collected} onCollect={collect} onNearGate={setNearGate} />
+          <GameScene key={chapterIndex} chapter={current} keys={keys} pad={pad} collected={collected} onCollect={collect} onNearGate={setNearGate} />
         </Canvas>
 
         {!started && (
