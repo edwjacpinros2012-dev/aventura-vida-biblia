@@ -5,7 +5,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Float, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 import { VictoryPanel, useGameCompletion } from "@/components/games/game-shell";
-import { useGameStore, type ChildProfile } from "@/store/use-game-store";
+import { getGameStoreState, useGameStore, type ChildProfile } from "@/store/use-game-store";
 
 type Chapter = {
   title: string;
@@ -348,6 +348,7 @@ export function ThreeChildrenPortalsGame() {
   const pad = useRef<[number, number]>([0, 0]);
   const [chapterIndex, setChapterIndex] = useState(0);
   const activeChild = useGameStore((state) => state.childrenData[state.activeChildIndex]);
+  const childrenData = useGameStore((state) => state.childrenData);
   const faith = useGameStore((state) => state.faith);
   const isPraying = useGameStore((state) => state.isPraying);
   const guidanceMessage = useGameStore((state) => state.guidanceMessage);
@@ -369,7 +370,7 @@ export function ThreeChildrenPortalsGame() {
 
   useEffect(() => {
     hydrateStore();
-    const storedChapter = useGameStore((state) => state.currentChapter);
+    const storedChapter = getGameStoreState().currentChapter;
     setChapterIndex(storedChapter - 1);
     try {
       const saved = localStorage.getItem("av-three-children-portals");
@@ -514,7 +515,7 @@ export function ThreeChildrenPortalsGame() {
         <div className="absolute right-3 top-3 rounded-xl border border-white/10 bg-[#071e2b]/90 p-2 text-xs shadow-lg">
           <p className="mb-1 font-black text-[#f5cf74]">Equipo</p>
           <div className="flex gap-1">{[0, 1, 2].map((index) => {
-            const child = useGameStore((state) => state.childrenData[index]);
+            const child = childrenData[index];
             return <button key={child.id} type="button" onClick={() => switchChild(index)} aria-pressed={activeChild.id === index} className="rounded-lg px-2 py-1 font-bold" style={{ backgroundColor: activeChild.id === index ? child.color : "rgba(255,255,255,.1)" }}>{child.name}</button>;
           })}</div>
           <p className="mt-1 max-w-48 text-[10px] text-white/60">{activeChild.role} · Velocidad {activeChild.speed}</p>
