@@ -22,4 +22,12 @@ declare module "three" {
   export const MathUtils: { clamp(value: number, min: number, max: number): number };
 }
 
-// React 19 JSX namespace shim for React Three Fiber elements in this prototype.\nimport "react";\ndeclare module "react" {\n  namespace JSX {\n    interface IntrinsicElements { [elementName: string]: any; }\n  }\n}\n
+// React 19 JSX namespace shim for React Three Fiber elements in this prototype.
+import "react";
+declare module "react" {
+  namespace JSX {
+    interface IntrinsicElements {
+      [elementName: string]: any;
+    }
+  }
+}
