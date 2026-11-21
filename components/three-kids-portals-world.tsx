@@ -160,7 +160,7 @@ export default function ThreeKidsPortalsWorld() {
   function interact() {
     if (stage === "portal" && nearPortal) {
       if (collected.length < 3) { setMessage("El portal necesita tres luces. ¡Sigan explorando juntos!"); return; }
-      setStage("ship"); setCollected([]); setNearPortal(false); setMessage("¡Entraron a la nave! Una criatura amistosa está atrapada. Reúne los cristales y busca cómo liberarla."); return;
+      completeChapter("portal"); setStage("ship"); setCollected([]); setNearPortal(false); setMessage("¡Entraron a la nave! Una criatura amistosa está atrapada. Reúne los cristales y busca cómo liberarla."); return;
     }
     if (stage === "ship" && nearCreature) {
       if (collected.length < 3) { setMessage("La cápsula de rescate necesita tres cristales de energía. Busca las luces de la nave."); return; }
