@@ -5,6 +5,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Float, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 import { VictoryPanel, useGameCompletion } from "@/components/games/game-shell";
+import { useGameStore, type ChildProfile } from "@/store/use-game-store";
 
 type Chapter = {
   title: string;
@@ -266,6 +267,7 @@ function GameScene({
   collected,
   onCollect,
   onNearGate,
+  activeChild,
 }: {
   chapter: Chapter;
   keys: KeysRef;
@@ -273,6 +275,7 @@ function GameScene({
   collected: number[];
   onCollect: (index: number) => void;
   onNearGate: (near: boolean) => void;
+  activeChild: ChildProfile;
 }) {
   const player = useRef<THREE.Group | null>(null);
   const friendOne = useRef<THREE.Group | null>(null);
@@ -288,8 +291,8 @@ function GameScene({
     const direction = new THREE.Vector2(sideways, forward);
     if (direction.lengthSq() > 0.01) {
       direction.normalize();
-      player.current.position.x = THREE.MathUtils.clamp(player.current.position.x + direction.x * delta * 5, -13, 13);
-      player.current.position.z = THREE.MathUtils.clamp(player.current.position.z - direction.y * delta * 5, -17, 13);
+      player.current.position.x = THREE.MathUtils.clamp(player.current.position.x + direction.x * delta * activeChild.speed, -13, 13);
+      player.current.position.z = THREE.MathUtils.clamp(player.current.position.z - direction.y * delta * activeChild.speed, -17, 13);
       player.current.rotation.y = Math.atan2(direction.x, direction.y);
     }
     const target = new THREE.Vector3(player.current.position.x, 6.4, player.current.position.z + 10);
@@ -332,7 +335,7 @@ function GameScene({
           </mesh>
         </Float>
       ))}
-      <KidModel name="Noa" shirt="#df795d" hair="#493329" position={[0, 0, 8]} nodeRef={player} />
+      <KidModel name={activeChild.name} shirt={activeChild.color} hair="#493329" position={[0, 0, 8]} nodeRef={player} />
       <KidModel name="Mía" shirt="#8a74cb" hair="#382b35" position={[-1.3, 0, 9.4]} scale={0.94} nodeRef={friendOne} />
       <KidModel name="Samuel" shirt="#4d9f9c" hair="#47372b" position={[1.3, 0, 9.4]} scale={0.96} nodeRef={friendTwo} />
       <Sparkles count={70} scale={[28, 7, 32]} color="#fff1ba" />
@@ -344,6 +347,18 @@ export function ThreeChildrenPortalsGame() {
   const keys = useRef(new Set<string>());
   const pad = useRef<[number, number]>([0, 0]);
   const [chapterIndex, setChapterIndex] = useState(0);
+  const activeChild = useGameStore((state) => state.childrenData[state.activeChildIndex]);
+  const faith = useGameStore((state) => state.faith);
+  const isPraying = useGameStore((state) => state.isPraying);
+  const guidanceMessage = useGameStore((state) => state.guidanceMessage);
+  const inventory = useGameStore((state) => state.inventory);
+  const switchChild = useGameStore((state) => state.switchChild);
+  const triggerPrayer = useGameStore((state) => state.triggerPrayer);
+  const restoreFaith = useGameStore((state) => state.restoreFaith);
+  const addItem = useGameStore((state) => state.addItem);
+  const setMissionProgress = useGameStore((state) => state.setMissionProgress);
+  const setStoredChapter = useGameStore((state) => state.setChapter);
+  const hydrateStore = useGameStore((state) => state.hydrate);
   const [collected, setCollected] = useState<number[]>([]);
   const collectedRef = useRef<number[]>([]);
   const [nearGate, setNearGate] = useState(false);
@@ -353,6 +368,9 @@ export function ThreeChildrenPortalsGame() {
   const { result, finish, resetCompletion, saveGameProgress } = useGameCompletion("three-children-portals");
 
   useEffect(() => {
+    hydrateStore();
+    const storedChapter = useGameStore((state) => state.currentChapter);
+    setChapterIndex(storedChapter - 1);
     try {
       const saved = localStorage.getItem("av-three-children-portals");
       if (saved) {
@@ -374,7 +392,7 @@ export function ThreeChildrenPortalsGame() {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, []);
+  }, [hydrateStore]);
 
   const current = chapters[chapterIndex];
 
@@ -383,11 +401,14 @@ export function ThreeChildrenPortalsGame() {
     const next = [...collectedRef.current, index];
     collectedRef.current = next;
     setCollected(next);
-    setMessage("¡Encontraste una señal! Los tres amigos avanzan juntos.");
+    setMissionProgress(next.length);
+    restoreFaith(5);
+    addItem("Señal de luz " + (index + 1));
+    setMessage("¡Encontraste una señal! Los tres amigos avanzan juntos y recuperan ánimo.");
   };
 
   const askGodForHelp = () => {
-    setMessage("Los tres amigos hacen una pausa y oran: «Dios, danos sabiduría, valentía y amor para ayudarnos unos a otros. Amén». Después continúan buscando una solución segura.");
+    triggerPrayer("Los amigos oran: «Dios, danos sabiduría, valentía y amor para ayudarnos unos a otros. Amén». Observa las señales luminosas y busca el camino seguro.");
   };
 
   const advance = () => {
@@ -403,6 +424,7 @@ export function ThreeChildrenPortalsGame() {
       return;
     }
     const next = chapterIndex + 1;
+    setStoredChapter(next + 1);
     const completedChapters = chapters.slice(0, next).map((_, index) => index + 1);
     saveGameProgress("three-children-portals", { chapter: next + 1, completedChapters, completed: false, updatedAt: new Date().toISOString() });
     setChapterIndex(next);
@@ -426,6 +448,8 @@ export function ThreeChildrenPortalsGame() {
   const replay = () => {
     advancingRef.current = false;
     setChapterIndex(0);
+    setStoredChapter(1);
+    setMissionProgress(0);
     collectedRef.current = [];
     setCollected([]);
     saveGameProgress("three-children-portals", { chapter: 1, completedChapters: [], completed: false, updatedAt: new Date().toISOString() });
@@ -466,13 +490,14 @@ export function ThreeChildrenPortalsGame() {
         <div className="rounded-2xl bg-white/5 p-3 text-sm">
           <p className="font-black text-[#f5cf74]">Capítulo {chapterIndex + 1} / 7</p>
           <p className="mt-1 text-xs text-white/65">Señales: {collected.length} / 3</p>
+          <p className="mt-1 text-xs text-white/65">Fe: {faith} / 100</p>
           <div className="mt-2 h-2 w-36 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-[#f5cf74] transition-all" style={{ width: ((collected.length / 3) * 100) + "%" }} /></div>
         </div>
       </div>
 
       <div className="relative h-[min(68vh,620px)] min-h-[440px]">
         <Canvas shadows camera={{ position: [0, 7, 19], fov: 48 }} dpr={[1, 1.5]}>
-          <GameScene key={chapterIndex} chapter={current} keys={keys} pad={pad} collected={collected} onCollect={collect} onNearGate={setNearGate} />
+          <GameScene key={chapterIndex} chapter={current} keys={keys} pad={pad} collected={collected} onCollect={collect} onNearGate={setNearGate} activeChild={activeChild} />
         </Canvas>
 
         {!started && (
@@ -485,6 +510,16 @@ export function ThreeChildrenPortalsGame() {
             </div>
           </div>
         )}
+
+        <div className="absolute right-3 top-3 rounded-xl border border-white/10 bg-[#071e2b]/90 p-2 text-xs shadow-lg">
+          <p className="mb-1 font-black text-[#f5cf74]">Equipo</p>
+          <div className="flex gap-1">{[0, 1, 2].map((index) => {
+            const child = useGameStore((state) => state.childrenData[index]);
+            return <button key={child.id} type="button" onClick={() => switchChild(index)} aria-pressed={activeChild.id === index} className="rounded-lg px-2 py-1 font-bold" style={{ backgroundColor: activeChild.id === index ? child.color : "rgba(255,255,255,.1)" }}>{child.name}</button>;
+          })}</div>
+          <p className="mt-1 max-w-48 text-[10px] text-white/60">{activeChild.role} · Velocidad {activeChild.speed}</p>
+          <p className="mt-1 max-w-48 text-[10px] text-white/60">Mochila: {inventory.length} objetos</p>
+        </div>
 
         <div className="absolute left-3 top-3 rounded-xl border border-white/10 bg-[#071e2b]/85 p-3 text-xs shadow-lg">
           <p className="font-black text-[#f5cf74]">Objetivo</p>
@@ -502,7 +537,7 @@ export function ThreeChildrenPortalsGame() {
         </div>
 
         <div className="absolute bottom-4 right-3 flex max-w-[58%] flex-col items-end gap-2 sm:right-4">
-          <button type="button" onClick={askGodForHelp} className="rounded-xl border border-[#f5cf74]/50 bg-[#142f3c]/95 px-3 py-2 text-xs font-black text-[#f5cf74] shadow-lg">Orar y pedir ayuda a Dios</button>
+          <button type="button" disabled={isPraying || faith < 20} onClick={askGodForHelp} className="rounded-xl border border-[#f5cf74]/50 bg-[#142f3c]/95 px-3 py-2 text-xs font-black text-[#f5cf74] shadow-lg disabled:opacity-50">{isPraying ? "Orando…" : "Orar y pedir ayuda a Dios"} · 20 fe</button>
           {nearGate && (
             <button type="button" disabled={collected.length < 3} onClick={advance} className="rounded-xl bg-[#f5cf74] px-4 py-3 text-xs font-black text-[#203142] shadow-lg disabled:cursor-not-allowed disabled:opacity-50">
               {collected.length < 3 ? "Busca las 3 señales" : "Portal activado…"}
@@ -510,13 +545,14 @@ export function ThreeChildrenPortalsGame() {
           )}
         </div>
 
-        {message && <div role="status" className="absolute left-1/2 top-20 w-[min(90%,480px)] -translate-x-1/2 rounded-2xl border border-white/15 bg-[#082b3b]/95 p-3 text-center text-xs leading-5 text-white shadow-xl">{message}<button type="button" onClick={() => setMessage("")} className="ml-2 font-black text-[#f5cf74] underline">Cerrar</button></div>}
+        {(message || guidanceMessage) && <div role="status" className="absolute left-1/2 top-20 w-[min(90%,480px)] -translate-x-1/2 rounded-2xl border border-white/15 bg-[#082b3b]/95 p-3 text-center text-xs leading-5 text-white shadow-xl">{guidanceMessage || message}<button type="button" onClick={() => setMessage("")} className="ml-2 font-black text-[#f5cf74] underline">Cerrar</button></div>}
       </div>
 
       <div className="grid gap-3 border-t border-white/10 bg-[#061925] p-4 sm:grid-cols-[1fr_auto] sm:items-center">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[.18em] text-[#7bd8cf]">Enseñanza del capítulo</p>
           <p className="mt-1 text-sm text-white/75">{current.lesson}</p>
+          <p className="mt-1 text-xs text-white/50">Personaje activo: {activeChild.name} · Mochila: {inventory.length} objetos</p>
         </div>
         <p className="text-xs font-bold text-white/50">Personajes 3D geométricos · sin imágenes planas</p>
       </div>
