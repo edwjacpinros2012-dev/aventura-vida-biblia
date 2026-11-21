@@ -2,13 +2,38 @@
 
 import { useSyncExternalStore } from "react";
 
-export type ChildProfile = {
-  id: number;
+export type ChildId = "mateo" | "sofia" | "lucas";
+
+export interface ChildProfile {
+  id: ChildId;
   name: string;
   role: string;
-  color: string;
   speed: number;
-  jump: number;
+  jumpForce: number;
+  prayerBonus: number;
+  accentColor: string;
+}
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  chapter: number;
+}
+
+export const CHILDREN_PROFILES: ChildProfile[] = [
+  { id: "mateo", name: "Mateo", role: "Sabiduría y Oración", speed: 5.2, jumpForce: 7.2, prayerBonus: 1.35, accentColor: "#3b82f6" },
+  { id: "sofia", name: "Sofía", role: "Agilidad y Exploración", speed: 7.1, jumpForce: 9.0, prayerBonus: 1.0, accentColor: "#ec4899" },
+  { id: "lucas", name: "Lucas", role: "Fuerza y Escudo", speed: 4.4, jumpForce: 6.4, prayerBonus: 1.15, accentColor: "#10b981" },
+];
+
+export const CHAPTER_GUIDANCE: Record<number, string> = {
+  1: "Busca las tres señales alrededor del portal para encender el paso al siguiente mundo.",
+  2: "Observa los pasillos de la nave y reúne las tres señales antes de acercarte al portal.",
+  3: "Avancen con calma y valentía: las tres señales abrirán el camino de salida.",
+  4: "Revisa las zonas altas del campamento inundado para completar las tres señales.",
+  5: "Camina con cuidado por el bosque y recoge las tres señales sin apresurarte.",
+  6: "Explora cerca del árbol de los frutos mágicos para reunir las tres señales.",
+  7: "Manténganse unidos ante la avalancha: al reunir las tres señales se completará la aventura.",
 };
 
 type GameState = {
@@ -33,9 +58,7 @@ type GameState = {
 
 const STORAGE_KEY = "av-tres-ninos-game-state";
 const childrenData: ChildProfile[] = [
-  { id: 0, name: "Mateo", role: "Sabiduría y oración", color: "#3b82f6", speed: 5, jump: 7 },
-  { id: 1, name: "Sofía", role: "Agilidad y exploración", color: "#ec4899", speed: 7, jump: 9 },
-  { id: 2, name: "Lucas", role: "Fuerza y protección", color: "#10b981", speed: 4, jump: 6 },
+  ...CHILDREN_PROFILES,
 ];
 
 let prayerTimer: ReturnType<typeof setTimeout> | undefined;
@@ -79,10 +102,11 @@ state = {
     if (index >= 0 && index < childrenData.length) update({ activeChildIndex: index });
   },
   triggerPrayer: (hint) => {
-    if (state.isPraying || state.faith < 20) return;
+    const prayerCost = Math.ceil(20 / (childrenData[state.activeChildIndex]?.prayerBonus ?? 1));
+    if (state.isPraying || state.faith < prayerCost) return;
     if (prayerTimer) clearTimeout(prayerTimer);
     update({
-      faith: state.faith - 20,
+      faith: state.faith - prayerCost,
       isPraying: true,
       guidanceMessage: hint || "Haz una pausa: observa las señales luminosas para encontrar un camino seguro.",
     });
