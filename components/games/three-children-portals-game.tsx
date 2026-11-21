@@ -89,9 +89,9 @@ function KidModel({
   hair: string;
   position: [number, number, number];
   scale?: number;
-  nodeRef?: React.Ref<THREE.Group>;
+  nodeRef?: React.Ref<THREE.Object3D>;
 }) {
-  const bob = useRef<THREE.Group | null>(null);
+  const bob = useRef<THREE.Object3D | null>(null);
   useFrame((state) => {
     if (bob.current) {
       bob.current.position.y = Math.sin(state.clock.elapsedTime * 2.5 + position[0]) * 0.045;
@@ -277,9 +277,9 @@ function GameScene({
   onNearGate: (near: boolean) => void;
   activeChild: ChildProfile;
 }) {
-  const player = useRef<THREE.Group | null>(null);
-  const friendOne = useRef<THREE.Group | null>(null);
-  const friendTwo = useRef<THREE.Group | null>(null);
+  const player = useRef<THREE.Object3D | null>(null);
+  const friendOne = useRef<THREE.Object3D | null>(null);
+  const friendTwo = useRef<THREE.Object3D | null>(null);
   const { camera } = useThree();
   const lastNear = useRef(false);
   const jumpVelocity = useRef(0);
@@ -309,7 +309,7 @@ function GameScene({
     camera.position.lerp(target, 1 - Math.pow(0.001, delta));
     camera.lookAt(player.current.position.x, 1.2, player.current.position.z - 1.5);
 
-    const follow = (node: THREE.Group | null, xOffset: number, zOffset: number) => {
+    const follow = (node: THREE.Object3D | null, xOffset: number, zOffset: number) => {
       if (!node || !player.current) return;
       const p = player.current.position;
       const desired = new THREE.Vector3(p.x + xOffset, 0, p.z + zOffset);
