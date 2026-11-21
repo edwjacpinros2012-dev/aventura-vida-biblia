@@ -4,16 +4,11 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Float, Sparkles, Text, useTexture } from "@react-three/drei";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { officialCharacters } from "@/lib/characters/catalog";
+import { getPlayerProfile, selectAvatar, completeChapter } from "@/lib/portales/progress-store";
+import type { ExistingAvatarId } from "@/lib/portales/types";
 
-const AVATAR_ROOT = "/assets/proyecto-vida-kids/characters";
-const AVATARS = [
-  { id: "vida-kids-01-rosa-morado", label: "Rosa y morado", image: `${AVATAR_ROOT}/vida-kids-01-rosa-morado/full.png` },
-  { id: "vida-kids-02-blanco", label: "Camiseta blanca", image: `${AVATAR_ROOT}/vida-kids-02-blanco/full.png` },
-  { id: "vida-kids-03-azul", label: "Sudadera azul", image: `${AVATAR_ROOT}/vida-kids-03-azul/full.png` },
-  { id: "vida-kids-04-beige", label: "Camiseta beige", image: `${AVATAR_ROOT}/vida-kids-04-beige/full.png` },
-  { id: "vida-kids-05-verde", label: "Camiseta verde", image: `${AVATAR_ROOT}/vida-kids-05-verde/full.png` },
-  { id: "vida-kids-06-rojo", label: "Camiseta roja", image: `${AVATAR_ROOT}/vida-kids-06-rojo/full.png` },
-] as const;
+const AVATARS = officialCharacters.filter(character => character.status === "active").map(character => ({ id: character.id as ExistingAvatarId, label: character.name, image: character.asset }));
 
 const CHAPTERS = [
   { title: "El portal misterioso", detail: "Descubren el portal y una nave llena de criaturas.", available: true, icon: "🌀" },
@@ -130,7 +125,7 @@ function HoldButton({ label, x, z, pad }: { label: string; x: number; z: number;
 export default function ThreeKidsPortalsWorld() {
   const keys = useRef(new Set<string>());
   const pad = useRef<[number, number]>([0, 0]);
-  const [avatarId, setAvatarId] = useState<string>(AVATARS[0].id);
+  const [avatarId, setAvatarId] = useState<string>(AVATARS[0]?.id ?? "vida-kids-01-rosa-morado");
   const [stage, setStage] = useState<Stage>("portal");
   const [collected, setCollected] = useState<number[]>([]);
   const [nearPortal, setNearPortal] = useState(false);
@@ -169,7 +164,7 @@ export default function ThreeKidsPortalsWorld() {
     }
     if (stage === "ship" && nearCreature) {
       if (collected.length < 3) { setMessage("La cápsula de rescate necesita tres cristales de energía. Busca las luces de la nave."); return; }
-      setRescued(true); setMessage("¡Rescate completado! Los tres niños ayudaron a la criatura y descubrieron que la bondad y el trabajo en equipo pueden vencer al miedo."); try { localStorage.setItem("av-portales-chapter1", "ship-rescued"); } catch {}
+      setRescued(true); setMessage("¡Rescate completado! Los tres niños ayudaron a la criatura y descubrieron que la bondad y el trabajo en equipo pueden vencer al miedo."); try { localStorage.setItem("av-portales-chapter1", "ship-rescued"); } catch {}\n      completeChapter("ship");
       return;
     }
     setMessage(stage === "portal" ? "Explora el claro y toca las luces doradas para recogerlas." : "Explora la nave y reúne los cristales de energía.");
@@ -187,6 +182,6 @@ export default function ThreeKidsPortalsWorld() {
       <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2"><div className="max-w-[70%] rounded-2xl border border-white/10 bg-slate-950/80 p-3 text-xs leading-5 text-white/90">{message}</div><div className="grid grid-cols-3 gap-1 sm:hidden"><span/><HoldButton label="↑" x={0} z={-1} pad={pad}/><span/><HoldButton label="←" x={-1} z={0} pad={pad}/><HoldButton label="↓" x={0} z={1} pad={pad}/><HoldButton label="→" x={1} z={0} pad={pad}/></div></div>
       {(nearPortal || nearCreature) && <button onClick={interact} className="absolute bottom-24 left-1/2 -translate-x-1/2 rounded-full bg-amber-300 px-5 py-3 text-sm font-black text-slate-950 shadow-lg">{stage === "portal" ? collected.length === 3 ? "Entrar al portal · E" : "Portal · faltan luces" : rescued ? "Rescate completado" : collected.length === 3 ? "Liberar criatura · E" : "Cápsula · faltan cristales"}</button>}
     </div>
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-[#081a2b] p-3 text-xs text-white/65"><label className="flex items-center gap-2"><span className="font-bold">Avatar que controlas:</span><select value={avatarId} onChange={e=>{setAvatarId(e.target.value);try{localStorage.setItem("av-portales-avatar",e.target.value)}catch{}}} className="rounded-lg border border-white/15 bg-slate-900 px-2 py-2 text-white">{AVATARS.map(a=><option key={a.id} value={a.id}>{a.label}</option>)}</select></label><button type="button" onClick={pray} className="rounded-xl border border-amber-200/30 bg-amber-200/10 px-3 py-2 font-bold text-amber-100 hover:bg-amber-200/20">🙏 Orar juntos</button><p>Usa los seis avatares oficiales existentes. No se crean personajes nuevos.</p></div>
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-[#081a2b] p-3 text-xs text-white/65"><label className="flex items-center gap-2"><span className="font-bold">Avatar que controlas:</span><select value={avatarId} onChange={e=>{setAvatarId(e.target.value);selectAvatar(e.target.value as ExistingAvatarId)}} className="rounded-lg border border-white/15 bg-slate-900 px-2 py-2 text-white">{AVATARS.map(a=><option key={a.id} value={a.id}>{a.label}</option>)}</select></label><button type="button" onClick={pray} className="rounded-xl border border-amber-200/30 bg-amber-200/10 px-3 py-2 font-bold text-amber-100 hover:bg-amber-200/20">🙏 Orar juntos</button><p>Usa los seis avatares oficiales existentes. No se crean personajes nuevos.</p></div>
   </div>;
 }
