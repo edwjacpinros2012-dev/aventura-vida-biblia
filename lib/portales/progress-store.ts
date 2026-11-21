@@ -1,0 +1,9 @@
+import { AVATAR_IDS, DEFAULT_PROFILE, type ChapterId, type PlayerProfile } from "./types";
+const STORAGE_KEY = "proyecto-vida-portales-profile-v1";
+function safeRead(): PlayerProfile { if (typeof window === "undefined") return DEFAULT_PROFILE; try { const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null") as PlayerProfile | null; if (!parsed) return DEFAULT_PROFILE; return { ...DEFAULT_PROFILE, ...parsed, selectedAvatarId: AVATAR_IDS.includes(parsed.selectedAvatarId as typeof AVATAR_IDS[number]) ? parsed.selectedAvatarId : DEFAULT_PROFILE.selectedAvatarId, completedChapterIds: Array.isArray(parsed.completedChapterIds) ? parsed.completedChapterIds : [], chapterProgress: parsed.chapterProgress ?? {} }; } catch { return DEFAULT_PROFILE; } }
+function safeWrite(profile: PlayerProfile) { if (typeof window === "undefined") return; try { localStorage.setItem(STORAGE_KEY, JSON.stringify({...profile,updatedAt:new Date().toISOString()})); } catch {} }
+export function getPlayerProfile(){ return safeRead(); }
+export function selectAvatar(id: PlayerProfile["selectedAvatarId"]){ const p=safeRead(); if(!AVATAR_IDS.includes(id as typeof AVATAR_IDS[number])) return p; const next={...p,selectedAvatarId:id}; safeWrite(next); return next; }
+export function setChapterProgress(id: ChapterId, progress: number){ const p=safeRead(); const next={...p,chapterProgress:{...p.chapterProgress,[id]:Math.max(0,Math.min(100,Math.floor(progress)))}}; safeWrite(next); return next; }
+export function completeChapter(id: ChapterId){ const p=safeRead(); const nextId=(["portal","ship","armies","flood","forest","fruit-tree","rock-avalanche"] as ChapterId[]).find((x,i,a)=>a[i-1]===id); const next={...p,completedChapterIds:Array.from(new Set([...p.completedChapterIds,id])),chapterProgress:{...p.chapterProgress,[id]:100}}; safeWrite(next); return {profile:next,unlockedChapter:nextId}; }
+export function resetProgress(){ safeWrite(DEFAULT_PROFILE); return DEFAULT_PROFILE; }
