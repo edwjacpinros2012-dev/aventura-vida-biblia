@@ -1,0 +1,9 @@
+export type ChapterStatus = "locked" | "available" | "completed";
+export type ChapterId = "portal" | "ship" | "armies" | "flood" | "forest" | "fruit-tree" | "rock-avalanche";
+export type ObjectiveStatus = "pending" | "active" | "completed";
+export type Objective = { id: string; title: string; description: string; status: ObjectiveStatus; count?: number; target?: number };
+export type Chapter = { id: ChapterId; order: number; title: string; summary: string; status: ChapterStatus; objectives: Objective[] };
+export type PlayerProfile = { selectedAvatarId: string; completedChapterIds: ChapterId[]; chapterProgress: Partial<Record<ChapterId, number>>; updatedAt: string };
+export const AVATAR_IDS = ["vida-kids-01-rosa-morado","vida-kids-02-blanco","vida-kids-03-azul","vida-kids-04-beige","vida-kids-05-verde","vida-kids-06-rojo"] as const;
+export type ExistingAvatarId = typeof AVATAR_IDS[number];
+export const DEFAULT_PROFILE: PlayerProfile = { selectedAvatarId: AVATAR_IDS[0], completedChapterIds: [], chapterProgress: {}, updatedAt: new Date(0).toISOString() };
