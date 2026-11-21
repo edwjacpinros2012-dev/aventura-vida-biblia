@@ -90,7 +90,7 @@ function KidModel({
   scale?: number;
   nodeRef?: React.Ref<THREE.Group>;
 }) {
-  const bob = useRef<THREE.Group>(null);
+  const bob = useRef<THREE.Group | null>(null);
   useFrame((state) => {
     if (bob.current) {
       bob.current.position.y = Math.sin(state.clock.elapsedTime * 2.5 + position[0]) * 0.045;
@@ -150,7 +150,7 @@ function KidModel({
 }
 
 function Portal({ position = [0, 0, -9] as [number, number, number] }) {
-  const ring = useRef<THREE.Mesh>(null);
+  const ring = useRef<THREE.Mesh | null>(null);
   useFrame((_, delta) => {
     if (ring.current) ring.current.rotation.z += delta * 0.18;
   });
@@ -274,9 +274,9 @@ function GameScene({
   onCollect: (index: number) => void;
   onNearGate: (near: boolean) => void;
 }) {
-  const player = useRef<THREE.Group>(null);
-  const friendOne = useRef<THREE.Group>(null);
-  const friendTwo = useRef<THREE.Group>(null);
+  const player = useRef<THREE.Group | null>(null);
+  const friendOne = useRef<THREE.Group | null>(null);
+  const friendTwo = useRef<THREE.Group | null>(null);
   const { camera } = useThree();
   const lastNear = useRef(false);
 
@@ -345,10 +345,11 @@ export function ThreeChildrenPortalsGame() {
   const pad = useRef<[number, number]>([0, 0]);
   const [chapterIndex, setChapterIndex] = useState(0);
   const [collected, setCollected] = useState<number[]>([]);
+  const collectedRef = useRef<number[]>([]);
   const [nearGate, setNearGate] = useState(false);
   const [started, setStarted] = useState(false);
   const [message, setMessage] = useState("");
-  const { result, finish, resetCompletion } = useGameCompletion("three-children-portals");
+  const { result, finish, resetCompletion, saveGameProgress } = useGameCompletion("three-children-portals");
 
   useEffect(() => {
     try {
@@ -377,12 +378,11 @@ export function ThreeChildrenPortalsGame() {
   const current = chapters[chapterIndex];
 
   const collect = (index: number) => {
-    setCollected((old) => {
-      if (old.includes(index)) return old;
-      const next = [...old, index];
-      setMessage("¡Encontraste una señal! Los tres amigos avanzan juntos.");
-      return next;
-    });
+    if (collectedRef.current.includes(index)) return;
+    const next = [...collectedRef.current, index];
+    collectedRef.current = next;
+    setCollected(next);
+    setMessage("¡Encontraste una señal! Los tres amigos avanzan juntos.");
   };
 
   const askGodForHelp = () => {
@@ -392,6 +392,8 @@ export function ThreeChildrenPortalsGame() {
   const advance = () => {
     if (collected.length < 3 || !nearGate) return;
     if (chapterIndex === chapters.length - 1) {
+      const completedChapters = chapters.map((_, index) => index + 1);
+      saveGameProgress("three-children-portals", { chapter: 7, completedChapters, completed: true, completedAt: new Date().toISOString() });
       try {
         localStorage.setItem("av-three-children-portals", JSON.stringify({ chapter: 0, completed: true }));
       } catch {}
@@ -399,7 +401,10 @@ export function ThreeChildrenPortalsGame() {
       return;
     }
     const next = chapterIndex + 1;
+    const completedChapters = chapters.slice(0, next).map((_, index) => index + 1);
+    saveGameProgress("three-children-portals", { chapter: next + 1, completedChapters, completed: false, updatedAt: new Date().toISOString() });
     setChapterIndex(next);
+    collectedRef.current = [];
     setCollected([]);
     setNearGate(false);
     setMessage("¡Capítulo completado! Los amigos descubren una nueva zona.");
@@ -410,7 +415,9 @@ export function ThreeChildrenPortalsGame() {
 
   const replay = () => {
     setChapterIndex(0);
+    collectedRef.current = [];
     setCollected([]);
+    saveGameProgress("three-children-portals", { chapter: 1, completedChapters: [], completed: false, updatedAt: new Date().toISOString() });
     setNearGate(false);
     setStarted(false);
     setMessage("");
