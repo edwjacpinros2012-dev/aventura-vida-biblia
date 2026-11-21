@@ -282,10 +282,20 @@ function GameScene({
   const friendTwo = useRef<THREE.Group | null>(null);
   const { camera } = useThree();
   const lastNear = useRef(false);
+  const jumpVelocity = useRef(0);
+  const jumpWasPressed = useRef(false);
 
   useFrame((_, delta) => {
     if (!player.current) return;
     const keySet = keys.current;
+    const jumpPressed = keySet.has(" ") || keySet.has("space");
+    if (jumpPressed && !jumpWasPressed.current && player.current.position.y <= 0.001) jumpVelocity.current = activeChild.jump;
+    jumpWasPressed.current = jumpPressed;
+    if (player.current.position.y > 0 || jumpVelocity.current > 0) {
+      jumpVelocity.current -= 18 * delta;
+      player.current.position.y = Math.max(0, player.current.position.y + jumpVelocity.current * delta);
+      if (player.current.position.y === 0) jumpVelocity.current = 0;
+    }
     const forward = (keySet.has("w") || keySet.has("arrowup") ? 1 : 0) - (keySet.has("s") || keySet.has("arrowdown") ? 1 : 0) + pad.current[1];
     const sideways = (keySet.has("d") || keySet.has("arrowright") ? 1 : 0) - (keySet.has("a") || keySet.has("arrowleft") ? 1 : 0) + pad.current[0];
     const direction = new THREE.Vector2(sideways, forward);
@@ -476,6 +486,11 @@ export function ThreeChildrenPortalsGame() {
     );
   }
 
+  const holdJump = (pressed: boolean) => {
+    if (pressed) keys.current.add(" ");
+    else keys.current.delete(" ");
+  };
+
   const holdDirection = (x: number, y: number) => {
     pad.current = [x, y];
   };
@@ -535,6 +550,7 @@ export function ThreeChildrenPortalsGame() {
           <button type="button" aria-label="Mover a la izquierda" onPointerDown={() => holdDirection(-1, 0)} onPointerUp={() => holdDirection(0, 0)} onPointerLeave={() => holdDirection(0, 0)} className="h-11 w-11 rounded-xl border border-white/15 bg-[#0a2b3a]/90 text-lg font-black">←</button>
           <button type="button" aria-label="Retroceder" onPointerDown={() => holdDirection(0, -1)} onPointerUp={() => holdDirection(0, 0)} onPointerLeave={() => holdDirection(0, 0)} className="h-11 w-11 rounded-xl border border-white/15 bg-[#0a2b3a]/90 text-lg font-black">↓</button>
           <button type="button" aria-label="Mover a la derecha" onPointerDown={() => holdDirection(1, 0)} onPointerUp={() => holdDirection(0, 0)} onPointerLeave={() => holdDirection(0, 0)} className="h-11 w-11 rounded-xl border border-white/15 bg-[#0a2b3a]/90 text-lg font-black">→</button>
+          <button type="button" aria-label="Saltar" onPointerDown={() => holdJump(true)} onPointerUp={() => holdJump(false)} onPointerLeave={() => holdJump(false)} className="col-span-3 mt-1 h-10 rounded-xl border border-white/15 bg-[#0a2b3a]/90 text-xs font-black">SALTAR</button>
         </div>
 
         <div className="absolute bottom-4 right-3 flex max-w-[58%] flex-col items-end gap-2 sm:right-4">
