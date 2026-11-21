@@ -5,7 +5,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Float, Sparkles } from "@react-three/drei";
 import * as THREE from "three";
 import { VictoryPanel, useGameCompletion } from "@/components/games/game-shell";
-import { getGameStoreState, useGameStore, type ChildProfile } from "@/store/use-game-store";
+import { CHAPTER_GUIDANCE, getGameStoreState, useGameStore, type ChildProfile } from "@/store/use-game-store";
 
 type Chapter = {
   title: string;
@@ -345,7 +345,7 @@ function GameScene({
           </mesh>
         </Float>
       ))}
-      <KidModel name={activeChild.name} shirt={activeChild.color} hair="#493329" position={[0, 0, 8]} nodeRef={(node) => { player.current = node; }} />
+      <KidModel name={activeChild.name} shirt={activeChild.accentColor} hair="#493329" position={[0, 0, 8]} nodeRef={(node) => { player.current = node; }} />
       <KidModel name="Mía" shirt="#8a74cb" hair="#382b35" position={[-1.3, 0, 9.4]} scale={0.94} nodeRef={(node) => { friendOne.current = node; }} />
       <KidModel name="Samuel" shirt="#4d9f9c" hair="#47372b" position={[1.3, 0, 9.4]} scale={0.96} nodeRef={(node) => { friendTwo.current = node; }} />
       <Sparkles count={70} scale={[28, 7, 32]} color="#fff1ba" />
@@ -418,8 +418,10 @@ export function ThreeChildrenPortalsGame() {
     setMessage("¡Encontraste una señal! Los tres amigos avanzan juntos y recuperan ánimo.");
   };
 
+  const prayerCost = Math.ceil(20 / activeChild.prayerBonus);
+
   const askGodForHelp = () => {
-    triggerPrayer("Los amigos oran: «Dios, danos sabiduría, valentía y amor para ayudarnos unos a otros. Amén». Observa las señales luminosas y busca el camino seguro.");
+    triggerPrayer("Los amigos oran: «Dios, danos sabiduría, valentía y amor para ayudarnos unos a otros. Amén». " + CHAPTER_GUIDANCE[chapterIndex + 1]);
   };
 
   const advance = () => {
@@ -531,15 +533,16 @@ export function ThreeChildrenPortalsGame() {
           <p className="mb-1 font-black text-[#f5cf74]">Equipo</p>
           <div className="flex gap-1">{[0, 1, 2].map((index) => {
             const child = childrenData[index];
-            return <button key={child.id} type="button" onClick={() => switchChild(index)} aria-pressed={activeChild.id === index} className="rounded-lg px-2 py-1 font-bold" style={{ backgroundColor: activeChild.id === index ? child.color : "rgba(255,255,255,.1)" }}>{child.name}</button>;
+            return <button key={child.id} type="button" onClick={() => switchChild(index)} aria-pressed={activeChild.id === child.id} className="rounded-lg px-2 py-1 font-bold" style={{ backgroundColor: activeChild.id === index ? child.color : "rgba(255,255,255,.1)" }}>{child.name}</button>;
           })}</div>
-          <p className="mt-1 max-w-48 text-[10px] text-white/60">{activeChild.role} · Velocidad {activeChild.speed}</p>
+          <p className="mt-1 max-w-48 text-[10px] text-white/60">{activeChild.role} · Velocidad {activeChild.speed} · Salto {activeChild.jumpForce}</p>
           <p className="mt-1 max-w-48 text-[10px] text-white/60">Mochila: {inventory.length} objetos</p>
         </div>
 
         <div className="absolute left-3 top-3 rounded-xl border border-white/10 bg-[#071e2b]/85 p-3 text-xs shadow-lg">
           <p className="font-black text-[#f5cf74]">Objetivo</p>
           <p className="mt-1 max-w-52 leading-5 text-white/80">{current.objective}</p>
+          <p className="mt-1 max-w-52 leading-5 text-[#f5cf74]">{CHAPTER_GUIDANCE[chapterIndex + 1]}</p>
           <p className="mt-2 text-[10px] text-white/55">WASD / flechas o controles táctiles</p>
         </div>
 
@@ -554,7 +557,7 @@ export function ThreeChildrenPortalsGame() {
         </div>
 
         <div className="absolute bottom-4 right-3 flex max-w-[58%] flex-col items-end gap-2 sm:right-4">
-          <button type="button" disabled={isPraying || faith < 20} onClick={askGodForHelp} className="rounded-xl border border-[#f5cf74]/50 bg-[#142f3c]/95 px-3 py-2 text-xs font-black text-[#f5cf74] shadow-lg disabled:opacity-50">{isPraying ? "Orando…" : "Orar y pedir ayuda a Dios"} · 20 fe</button>
+          <button type="button" disabled={isPraying || faith < prayerCost} onClick={askGodForHelp} className="rounded-xl border border-[#f5cf74]/50 bg-[#142f3c]/95 px-3 py-2 text-xs font-black text-[#f5cf74] shadow-lg disabled:opacity-50">{isPraying ? "Orando…" : "Orar y pedir ayuda a Dios"} · {prayerCost} fe</button>
           {nearGate && (
             <button type="button" disabled={collected.length < 3} onClick={advance} className="rounded-xl bg-[#f5cf74] px-4 py-3 text-xs font-black text-[#203142] shadow-lg disabled:cursor-not-allowed disabled:opacity-50">
               {collected.length < 3 ? "Busca las 3 señales" : "Portal activado…"}
