@@ -10,17 +10,9 @@ import type { ExistingAvatarId } from "@/lib/portales/types";
 
 const AVATARS = officialCharacters.filter(character => character.status === "active").map(character => ({ id: character.id as ExistingAvatarId, label: character.name, image: character.asset }));
 
-const CHAPTERS = [
-  { title: "El portal misterioso", detail: "Descubren el portal y una nave llena de criaturas.", available: true, icon: "🌀" },
-  { title: "La nave de los monstruos", detail: "Explora la nave, resuelve acertijos y ayuda a las criaturas.", available: false, icon: "🚀" },
-  { title: "La batalla de los ejércitos", detail: "Una aventura de estrategia, escudos y rescate en equipo.", available: false, icon: "🛡️" },
-  { title: "El campamento inundado", detail: "Encuentra rutas seguras y ayuda a evacuar el campamento.", available: false, icon: "🌊" },
-  { title: "El bosque peligroso", detail: "Busca el camino, cuida a los animales y reúne al equipo.", available: false, icon: "🌲" },
-  { title: "El árbol de los frutos mágicos", detail: "Descubre frutos de colores y sus acertijos de sabiduría.", available: false, icon: "🍎" },
-  { title: "La avalancha de rocas gigantes", detail: "Usa observación, cooperación y refugios para llegar a salvo.", available: false, icon: "⛰️" },
-] as const;
+type ChapterStage = "portal" | "ship" | "armies" | "flood" | "forest" | "fruit-tree" | "rock-avalanche";
+type Stage = ChapterStage;
 
-type Stage = "portal" | "ship";
 type Vec3 = [number, number, number];
 
 function AvatarBillboard({ image, position, scale = 1 }: { image: string; position: Vec3; scale?: number }) {
@@ -122,7 +114,6 @@ function HoldButton({ label, x, z, pad }: { label: string; x: number; z: number;
   return <button aria-label={label} onPointerDown={(e) => { e.preventDefault(); set(true); }} onPointerUp={() => set(false)} onPointerLeave={() => set(false)} onPointerCancel={() => set(false)} className="touch-none select-none rounded-xl border border-white/20 bg-slate-900/75 px-4 py-3 font-black text-white shadow-lg active:bg-teal-400 active:text-slate-900">{label}</button>;
 }
 
-type ChapterStage = "portal" | "ship" | "armies" | "flood" | "forest" | "fruit-tree" | "rock-avalanche";
 const CHAPTERS = [
  {id:"portal",title:"El portal misterioso",detail:"Reúne luces y activa el portal.",icon:"🌀"},
  {id:"ship",title:"La nave de los monstruos",detail:"Encuentra cristales y libera una criatura amigable.",icon:"🚀"},
