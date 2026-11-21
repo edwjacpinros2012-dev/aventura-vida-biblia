@@ -21,3 +21,12 @@ declare module "three" {
   }
   export const MathUtils: { clamp(value: number, min: number, max: number): number };
 }
+
+// React Three Fiber JSX elements used in the project; official R3F types can replace this shim.
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      [elementName: string]: any;
+    }
+  }
+}
