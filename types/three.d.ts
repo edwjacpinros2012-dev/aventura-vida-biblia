@@ -2,6 +2,7 @@
 // The official @types/three package should replace this shim when the lockfile can be regenerated.
 declare module "three" {
   export const SRGBColorSpace: any;
+  export const DoubleSide: any;
   export class Vector2 {
     constructor(x?: number, y?: number);
     x: number; y: number;
@@ -13,6 +14,13 @@ declare module "three" {
     x: number; y: number; z: number;
     lerp(v: Vector3, alpha: number): this;
   }
+  export class Group {
+    position: Vector3;
+    rotation: Vector3;
+    scale: Vector3;
+  }
+  export class Texture { colorSpace: any; needsUpdate: boolean; }
+  export class TextureLoader { load(url: string): Texture; }
   export class Mesh {
     position: Vector3;
     rotation: Vector3;
