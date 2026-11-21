@@ -28,7 +28,7 @@ const CHAPTERS = [
 type Stage = "portal" | "ship";
 type Vec3 = [number, number, number];
 
-function AvatarBillboard({ image, position, active = false, scale = 1 }: { image: string; position: Vec3; active?: boolean; scale?: number }) {
+function AvatarBillboard({ image, position, scale = 1 }: { image: string; position: Vec3; scale?: number }) {
   const texture = useTexture(image);
   const mesh = useRef<THREE.Mesh>(null);
   const { camera } = useThree();
@@ -68,7 +68,6 @@ function Environment({ stage, selected, companions, keys, pad, collected, collec
   const friendA = useRef<THREE.Group>(null);
   const friendB = useRef<THREE.Group>(null);
   const { camera } = useThree();
-  const [playerNear, setPlayerNear] = useState(false);
   const lights = stage === "portal" ? [[-5, 0.7, -3], [5, 0.7, -7], [0, 0.7, 4]] as Vec3[] : [[-4, 0.8, -3], [4, 0.8, -5], [0, 0.8, -9]] as Vec3[];
   useFrame((_, delta) => {
     const p = player.current;
@@ -115,7 +114,7 @@ function Environment({ stage, selected, companions, keys, pad, collected, collec
       {!rescued && lights.map((position, index) => !collected.includes(index) && <Orb key={index} position={position} index={index} onCollect={collect} />)}
       <Text position={[0, 5.5, -13]} fontSize={0.65} color="#a7e7ff" anchorX="center">NAVE DE LAS CRIATURAS</Text>
     </>}
-    <group ref={player} position={[0, 0, 8]}><AvatarBillboard image={selected.image} position={[0, 1.25, 0]} active scale={1.1} /></group>
+    <group ref={player} position={[0, 0, 8]}><AvatarBillboard image={selected.image} position={[0, 1.25, 0]} scale={1.1} /></group>
     <group ref={friendA} position={[-2, 0, 10]}><AvatarBillboard image={companions[0].image} position={[0, 1.1, 0]} scale={0.9} /></group>
     <group ref={friendB} position={[2, 0, 11]}><AvatarBillboard image={companions[1].image} position={[0, 1.1, 0]} scale={0.9} /></group>
     <Sparkles count={45} scale={[22, 8, 24]} color="#b9ddff" size={2} />
@@ -156,6 +155,7 @@ export default function ThreeKidsPortalsWorld() {
     return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); };
   }, [stage, nearPortal, nearCreature, collected, rescued]);
 
+  const pray = () => setMessage(stage === "portal" ? "Los tres amigos hacen una pausa, dan gracias a Dios y piden sabiduría y valor para ayudar a quien lo necesite." : "Los amigos oran juntos, agradecen por estar a salvo y piden sabiduría para liberar a la criatura con bondad.");
   const collect = (index: number) => setCollected(old => {
     if (old.includes(index)) return old;
     const next = [...old, index];
@@ -187,6 +187,6 @@ export default function ThreeKidsPortalsWorld() {
       <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2"><div className="max-w-[70%] rounded-2xl border border-white/10 bg-slate-950/80 p-3 text-xs leading-5 text-white/90">{message}</div><div className="grid grid-cols-3 gap-1 sm:hidden"><span/><HoldButton label="↑" x={0} z={-1} pad={pad}/><span/><HoldButton label="←" x={-1} z={0} pad={pad}/><HoldButton label="↓" x={0} z={1} pad={pad}/><HoldButton label="→" x={1} z={0} pad={pad}/></div></div>
       {(nearPortal || nearCreature) && <button onClick={interact} className="absolute bottom-24 left-1/2 -translate-x-1/2 rounded-full bg-amber-300 px-5 py-3 text-sm font-black text-slate-950 shadow-lg">{stage === "portal" ? collected.length === 3 ? "Entrar al portal · E" : "Portal · faltan luces" : rescued ? "Rescate completado" : collected.length === 3 ? "Liberar criatura · E" : "Cápsula · faltan cristales"}</button>}
     </div>
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-[#081a2b] p-3 text-xs text-white/65"><label className="flex items-center gap-2"><span className="font-bold">Avatar que controlas:</span><select value={avatarId} onChange={e=>{setAvatarId(e.target.value);try{localStorage.setItem("av-portales-avatar",e.target.value)}catch{}}} className="rounded-lg border border-white/15 bg-slate-900 px-2 py-2 text-white">{AVATARS.map(a=><option key={a.id} value={a.id}>{a.label}</option>)}</select></label><p>Usa los seis avatares oficiales existentes. No se crean personajes nuevos.</p></div>
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-[#081a2b] p-3 text-xs text-white/65"><label className="flex items-center gap-2"><span className="font-bold">Avatar que controlas:</span><select value={avatarId} onChange={e=>{setAvatarId(e.target.value);try{localStorage.setItem("av-portales-avatar",e.target.value)}catch{}}} className="rounded-lg border border-white/15 bg-slate-900 px-2 py-2 text-white">{AVATARS.map(a=><option key={a.id} value={a.id}>{a.label}</option>)}</select></label><button type="button" onClick={pray} className="rounded-xl border border-amber-200/30 bg-amber-200/10 px-3 py-2 font-bold text-amber-100 hover:bg-amber-200/20">🙏 Orar juntos</button><p>Usa los seis avatares oficiales existentes. No se crean personajes nuevos.</p></div>
   </div>;
 }
