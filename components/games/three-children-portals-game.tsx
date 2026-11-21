@@ -89,7 +89,7 @@ function KidModel({
   hair: string;
   position: [number, number, number];
   scale?: number;
-  nodeRef?: React.Ref<THREE.Object3D>;
+  nodeRef?: (node: THREE.Object3D | null) => void;
 }) {
   const bob = useRef<THREE.Object3D | null>(null);
   useFrame((state) => {
@@ -99,7 +99,7 @@ function KidModel({
   });
 
   return (
-    <group ref={nodeRef} position={position} scale={scale}>
+    <group ref={nodeRef} name={name} position={position} scale={scale}>
       <group ref={bob}>
         <mesh position={[0, 1.12, 0]} castShadow>
           <capsuleGeometry args={[0.34, 0.58, 5, 10]} />
@@ -345,9 +345,9 @@ function GameScene({
           </mesh>
         </Float>
       ))}
-      <KidModel name={activeChild.name} shirt={activeChild.color} hair="#493329" position={[0, 0, 8]} nodeRef={player} />
-      <KidModel name="Mía" shirt="#8a74cb" hair="#382b35" position={[-1.3, 0, 9.4]} scale={0.94} nodeRef={friendOne} />
-      <KidModel name="Samuel" shirt="#4d9f9c" hair="#47372b" position={[1.3, 0, 9.4]} scale={0.96} nodeRef={friendTwo} />
+      <KidModel name={activeChild.name} shirt={activeChild.color} hair="#493329" position={[0, 0, 8]} nodeRef={(node) => { player.current = node; }} />
+      <KidModel name="Mía" shirt="#8a74cb" hair="#382b35" position={[-1.3, 0, 9.4]} scale={0.94} nodeRef={(node) => { friendOne.current = node; }} />
+      <KidModel name="Samuel" shirt="#4d9f9c" hair="#47372b" position={[1.3, 0, 9.4]} scale={0.96} nodeRef={(node) => { friendTwo.current = node; }} />
       <Sparkles count={70} scale={[28, 7, 32]} color="#fff1ba" />
     </>
   );
