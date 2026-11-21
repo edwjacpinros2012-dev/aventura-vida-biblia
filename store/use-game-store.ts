@@ -44,13 +44,13 @@ type GameState = {
   faith: number;
   isPraying: boolean;
   guidanceMessage: string;
-  inventory: string[];
+  inventory: InventoryItem[];
   missionProgress: number;
   hydrated: boolean;
   switchChild: (index: number) => void;
   triggerPrayer: (hint?: string) => void;
   restoreFaith: (amount: number) => void;
-  addItem: (item: string) => void;
+  addItem: (item: string, chapter?: number) => void;
   setMissionProgress: (progress: number) => void;
   setChapter: (chapter: number) => void;
   hydrate: () => void;
@@ -113,8 +113,11 @@ state = {
     prayerTimer = setTimeout(() => update({ isPraying: false, guidanceMessage: "" }), 4000);
   },
   restoreFaith: (amount) => update({ faith: Math.min(100, state.faith + Math.max(0, amount)) }),
-  addItem: (item) => {
-    if (!state.inventory.includes(item)) update({ inventory: [...state.inventory, item] });
+  addItem: (item, chapter = state.currentChapter) => {
+    const id = `chapter-${chapter}-${item.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    if (!state.inventory.some((entry) => entry.id === id)) {
+      update({ inventory: [...state.inventory, { id, name: item, chapter }] });
+    }
   },
   setMissionProgress: (missionProgress) => update({ missionProgress }),
   setChapter: (chapter) => {
@@ -139,7 +142,11 @@ state = {
           maxUnlockedChapter: Math.max(1, Math.min(7, parsed.maxUnlockedChapter ?? 1)),
           activeChildIndex: Math.max(0, Math.min(2, parsed.activeChildIndex ?? 0)),
           faith: Math.max(0, Math.min(100, parsed.faith ?? 100)),
-          inventory: Array.isArray(parsed.inventory) ? parsed.inventory.filter((item): item is string => typeof item === "string").slice(0, 50) : [],
+          inventory: Array.isArray(parsed.inventory) ? parsed.inventory.flatMap((item, index) => {
+            if (typeof item === "string") return [{ id: `legacy-${index}`, name: item, chapter: 1 }];
+            if (item && typeof item === "object" && "id" in item && "name" in item && "chapter" in item && typeof item.id === "string" && typeof item.name === "string" && typeof item.chapter === "number") return [{ id: item.id, name: item.name, chapter: item.chapter }];
+            return [];
+          }).slice(0, 50) : [],
           missionProgress: Math.max(0, parsed.missionProgress ?? 0),
         });
       }
