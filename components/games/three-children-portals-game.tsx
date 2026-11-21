@@ -289,7 +289,7 @@ function GameScene({
     if (!player.current) return;
     const keySet = keys.current;
     const jumpPressed = keySet.has(" ") || keySet.has("space");
-    if (jumpPressed && !jumpWasPressed.current && player.current.position.y <= 0.001) jumpVelocity.current = activeChild.jump;
+    if (jumpPressed && !jumpWasPressed.current && player.current.position.y <= 0.001) jumpVelocity.current = activeChild.jumpForce;
     jumpWasPressed.current = jumpPressed;
     if (player.current.position.y > 0 || jumpVelocity.current > 0) {
       jumpVelocity.current -= 18 * delta;
@@ -533,7 +533,7 @@ export function ThreeChildrenPortalsGame() {
           <p className="mb-1 font-black text-[#f5cf74]">Equipo</p>
           <div className="flex gap-1">{[0, 1, 2].map((index) => {
             const child = childrenData[index];
-            return <button key={child.id} type="button" onClick={() => switchChild(index)} aria-pressed={activeChild.id === child.id} className="rounded-lg px-2 py-1 font-bold" style={{ backgroundColor: activeChild.id === index ? child.color : "rgba(255,255,255,.1)" }}>{child.name}</button>;
+            return <button key={child.id} type="button" onClick={() => switchChild(index)} aria-pressed={activeChild.id === child.id} className="rounded-lg px-2 py-1 font-bold" style={{ backgroundColor: activeChild.id === child.id ? child.accentColor : "rgba(255,255,255,.1)" }}>{child.name}</button>;
           })}</div>
           <p className="mt-1 max-w-48 text-[10px] text-white/60">{activeChild.role} · Velocidad {activeChild.speed} · Salto {activeChild.jumpForce}</p>
           <p className="mt-1 max-w-48 text-[10px] text-white/60">Mochila: {inventory.length} objetos</p>
