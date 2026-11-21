@@ -164,7 +164,8 @@ export default function ThreeKidsPortalsWorld() {
     }
     if (stage === "ship" && nearCreature) {
       if (collected.length < 3) { setMessage("La cápsula de rescate necesita tres cristales de energía. Busca las luces de la nave."); return; }
-      setRescued(true); setMessage("¡Rescate completado! Los tres niños ayudaron a la criatura y descubrieron que la bondad y el trabajo en equipo pueden vencer al miedo."); try { localStorage.setItem("av-portales-chapter1", "ship-rescued"); } catch {}\n      completeChapter("ship");
+      setRescued(true); setMessage("¡Rescate completado! Los tres niños ayudaron a la criatura y descubrieron que la bondad y el trabajo en equipo pueden vencer al miedo."); try { localStorage.setItem("av-portales-chapter1", "ship-rescued"); } catch {}
+      completeChapter("ship");
       return;
     }
     setMessage(stage === "portal" ? "Explora el claro y toca las luces doradas para recogerlas." : "Explora la nave y reúne los cristales de energía.");
