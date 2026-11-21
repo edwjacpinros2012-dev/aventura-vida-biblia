@@ -454,7 +454,7 @@ export function ThreeChildrenPortalsGame() {
 
   useEffect(() => {
     if (started && nearGate && collected.length >= 3) advance();
-  }, [started, nearGate, collected.length, chapterIndex]);
+  }, [started, nearGate, collected.length, chapterIndex, advance]);
 
   const replay = () => {
     advancingRef.current = false;
