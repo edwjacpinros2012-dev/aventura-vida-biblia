@@ -319,6 +319,27 @@ export const games: Game[] = [
     lesson: "Cada parte es importante cuando trabajamos juntos para un buen propósito.",
     objectives: ["Elige dificultad", "Ordena las piezas", "Completa la escena"],
   },
+  {
+    id: "portales-poderosos",
+    slug: "los-3-ninos-y-los-portales-poderosos",
+    name: "Los 3 niños y los portales poderosos",
+    tagline: "Explora, reúne luces y ayuda a una criatura amistosa",
+    description: "Aventura 3D de exploración, cooperación y rescate en un claro y una nave misteriosa.",
+    longDescription: "Elige uno de los avatares oficiales, explora el claro con tus dos compañeros, reúne tres luces, abre el portal y recorre la nave para ayudar a una criatura. Usa teclado o controles táctiles.",
+    category: "Aventuras",
+    difficulty: "Explorador",
+    suggestedAge: "8–13 años",
+    maxPoints: 500,
+    xp: 150,
+    playMinutes: 12,
+    coverTheme: "night",
+    isNew: true,
+    isFeatured: true,
+    isPlayable: true,
+    gameKey: "portales-poderosos",
+    lesson: "La valentía, la oración y el trabajo en equipo nos ayudan a cuidar y rescatar a otros.",
+    objectives: ["Escoge un avatar oficial y explora con dos compañeros", "Reúne tres luces y activa el portal", "Entra en la nave y completa el rescate amistoso"],
+  },
 ];
 
 export const adventures: Adventure[] = [
