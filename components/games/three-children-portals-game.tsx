@@ -347,6 +347,7 @@ export function ThreeChildrenPortalsGame() {
   const [collected, setCollected] = useState<number[]>([]);
   const collectedRef = useRef<number[]>([]);
   const [nearGate, setNearGate] = useState(false);
+  const advancingRef = useRef(false);
   const [started, setStarted] = useState(false);
   const [message, setMessage] = useState("");
   const { result, finish, resetCompletion, saveGameProgress } = useGameCompletion("three-children-portals");
@@ -390,7 +391,8 @@ export function ThreeChildrenPortalsGame() {
   };
 
   const advance = () => {
-    if (collected.length < 3 || !nearGate) return;
+    if (advancingRef.current || collected.length < 3 || !nearGate) return;
+    advancingRef.current = true;
     if (chapterIndex === chapters.length - 1) {
       const completedChapters = chapters.map((_, index) => index + 1);
       saveGameProgress("three-children-portals", { chapter: 7, completedChapters, completed: true, completedAt: new Date().toISOString() });
@@ -413,7 +415,16 @@ export function ThreeChildrenPortalsGame() {
     } catch {}
   };
 
+  useEffect(() => {
+    advancingRef.current = false;
+  }, [chapterIndex]);
+
+  useEffect(() => {
+    if (started && nearGate && collected.length >= 3) advance();
+  }, [started, nearGate, collected.length, chapterIndex]);
+
   const replay = () => {
+    advancingRef.current = false;
     setChapterIndex(0);
     collectedRef.current = [];
     setCollected([]);
@@ -494,7 +505,7 @@ export function ThreeChildrenPortalsGame() {
           <button type="button" onClick={askGodForHelp} className="rounded-xl border border-[#f5cf74]/50 bg-[#142f3c]/95 px-3 py-2 text-xs font-black text-[#f5cf74] shadow-lg">Orar y pedir ayuda a Dios</button>
           {nearGate && (
             <button type="button" disabled={collected.length < 3} onClick={advance} className="rounded-xl bg-[#f5cf74] px-4 py-3 text-xs font-black text-[#203142] shadow-lg disabled:cursor-not-allowed disabled:opacity-50">
-              {collected.length < 3 ? "Busca las 3 señales" : chapterIndex === 6 ? "Completar aventura" : "Entrar al siguiente capítulo"}
+              {collected.length < 3 ? "Busca las 3 señales" : "Portal activado…"}
             </button>
           )}
         </div>
