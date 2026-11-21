@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { GameCard } from "@/components/game-card";
 import { SearchIcon } from "@/components/icons";
@@ -37,6 +38,12 @@ export function GamesCatalog({ initialGames, initialCategory, initialFilter }: {
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2"><span className="mr-1 text-xs font-black uppercase tracking-wide text-white/50">Mostrar</span>{([ ["todos", "Todos"], ["nuevos", "Nuevos"], ["populares", "Populares"] ] as const).map(([value, label]) => <button type="button" key={value} onClick={() => setFeatured(value)} className={`rounded-full px-3.5 py-2 text-xs font-extrabold outline-none transition-colors focus-visible:ring-4 focus-visible:ring-teal-200/25 ${featured === value ? "bg-[#f5bd4d] text-[#061923]" : "bg-white/10 text-white/70 hover:bg-teal-300/15 hover:text-teal-100"}`}>{label}</button>)}</div>
       </div>
+      <Link href="/portales-poderosos" className="group mt-6 block overflow-hidden rounded-[1.7rem] border border-violet-200/25 bg-gradient-to-r from-[#121e3e] via-[#2c2460] to-[#102d3c] p-5 text-white shadow-xl transition-transform hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-200/30 sm:p-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-3xl"><span className="inline-flex rounded-full border border-cyan-100/20 bg-cyan-100/10 px-3 py-1 text-[10px] font-black uppercase tracking-[.2em] text-cyan-100">Nueva aventura 3D · Capítulo 1</span><h2 className="mt-3 font-display text-2xl font-black sm:text-3xl">Los 3 niños y los portales poderosos</h2><p className="mt-2 text-sm leading-6 text-white/70">Explora el claro, reúne luces, abre el portal, recorre una nave misteriosa y ayuda a una criatura amistosa. Usa teclado o controles táctiles.</p></div>
+          <div className="shrink-0 rounded-xl bg-[#f5bd4d] px-5 py-3 text-center text-sm font-black text-[#071526] group-hover:brightness-105">Entrar a la aventura ↗</div>
+        </div>
+      </Link>
       <div className="mt-7 flex items-center justify-between gap-4"><p className="text-sm font-bold text-white/60"><span className="text-[#f5e5b9]">{visibleGames.length}</span> {visibleGames.length === 1 ? "aventura encontrada" : "aventuras encontradas"}</p>{(query || category !== "Todas" || difficulty !== "Todas" || age !== "Todas" || featured !== "todos") && <button type="button" onClick={clearFilters} className="text-sm font-extrabold text-[#67e5e0] hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-teal-200/25">Limpiar filtros</button>}</div>
       {visibleGames.length ? <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{visibleGames.map((game) => <GameCard key={game.id} game={game} />)}</div> : <div className="av-panel mt-5 rounded-[1.5rem] border border-dashed border-teal-100/25 p-10 text-center"><span className="text-4xl">🧭</span><h2 className="mt-3 font-display text-2xl font-black text-[#f5e5b9]">No encontramos esa ruta</h2><p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-white/65">Prueba con otra palabra o elimina algunos filtros para descubrir más aventuras.</p><button type="button" onClick={clearFilters} className="av-teal-button mt-5 rounded-xl px-4 py-2.5 text-sm font-extrabold outline-none focus-visible:ring-4 focus-visible:ring-teal-200/25">Ver todos los juegos</button></div>}
     </div>
