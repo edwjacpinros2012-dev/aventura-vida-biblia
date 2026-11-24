@@ -15,6 +15,7 @@ import { BabyAbcGame } from "@/components/games/baby-abc-game";
 import { WordSearchGame } from "@/components/games/word-search-game";
 import { LittleBigHeroesGame } from "@/components/games/little-big-heroes-game";
 import { CreationWorld } from "@/components/creation-world";
+import { ThreeChildrenPortalsGame } from "@/components/games/three-children-portals-game";
 
 export function GamePlayer({ game }: { game: Game }) {
   const ready = useReadyGame();
@@ -36,6 +37,7 @@ export function GamePlayer({ game }: { game: Game }) {
     vowels: <BabyAbcGame />,
     "little-big-heroes": <LittleBigHeroesGame />,
     "creation-world": <CreationWorld />,
+    "three-children-portals": <ThreeChildrenPortalsGame />,
   }[game.gameKey ?? "word-search"];
   return <GameShell game={game}>{content}</GameShell>;
 }
