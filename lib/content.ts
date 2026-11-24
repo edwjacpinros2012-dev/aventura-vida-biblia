@@ -127,7 +127,7 @@ export const games: Game[] = [
     name: "Tres niños y los portales poderosos",
     tagline: "Cruza mundos, resuelve desafíos y avanza con fe",
     description: "Una aventura 3D original de siete capítulos con tres amigos, portales misteriosos y enseñanzas de fe, amistad y ayuda.",
-    longDescription: "Acompaña a Noa, Mía y Samuel por siete mundos: el portal poderoso, la nave de los monstruos, la batalla de los ejércitos malos, la inundación del campamento, el bosque peligroso, el árbol de los frutos mágicos y la avalancha de las rocas gigantes. Explora escenarios 3D, encuentra señales, coopera con tus amigos y recuerda pedir sabiduría y ayuda a Dios.",
+    longDescription: "Acompaña a Mateo, Sofía y Lucas por siete mundos: el portal poderoso, la nave de los monstruos, la batalla de los ejércitos malos, la inundación del campamento, el bosque peligroso, el árbol de los frutos mágicos y la avalancha de las rocas gigantes. Explora escenarios 3D, encuentra señales, coopera con tus amigos y recuerda pedir sabiduría y ayuda a Dios.",
     category: "Aventuras",
     difficulty: "Explorador",
     suggestedAge: "7–13 años",
