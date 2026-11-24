@@ -74,6 +74,7 @@ const sparkPositions: [number, number, number][] = [
 ];
 
 type DirectionRef = React.MutableRefObject<[number, number]>;
+type SceneNode = { position: { x: number; y: number; z: number; lerp: (target: THREE.Vector3, alpha: number) => void; distanceTo: (target: THREE.Vector3) => number }; rotation: { y: number } };
 type KeysRef = React.MutableRefObject<Set<string>>;
 
 function KidModel({
@@ -89,9 +90,9 @@ function KidModel({
   hair: string;
   position: [number, number, number];
   scale?: number;
-  nodeRef?: (node: THREE.Object3D | null) => void;
+  nodeRef?: (node: SceneNode | null) => void;
 }) {
-  const bob = useRef<THREE.Object3D | null>(null);
+  const bob = useRef<SceneNode | null>(null);
   useFrame((state) => {
     if (bob.current) {
       bob.current.position.y = Math.sin(state.clock.elapsedTime * 2.5 + position[0]) * 0.045;
@@ -151,7 +152,7 @@ function KidModel({
 }
 
 function Portal({ position = [0, 0, -9] as [number, number, number] }) {
-  const ring = useRef<THREE.Mesh | null>(null);
+  const ring = useRef<{ rotation: { z: number } } | null>(null);
   useFrame((_, delta) => {
     if (ring.current) ring.current.rotation.z += delta * 0.18;
   });
@@ -279,9 +280,9 @@ function GameScene({
   activeChild: ChildProfile;
   companions: ChildProfile[];
 }) {
-  const player = useRef<THREE.Object3D | null>(null);
-  const friendOne = useRef<THREE.Object3D | null>(null);
-  const friendTwo = useRef<THREE.Object3D | null>(null);
+  const player = useRef<SceneNode | null>(null);
+  const friendOne = useRef<SceneNode | null>(null);
+  const friendTwo = useRef<SceneNode | null>(null);
   const { camera } = useThree();
   const lastNear = useRef(false);
   const jumpVelocity = useRef(0);
@@ -311,7 +312,7 @@ function GameScene({
     camera.position.lerp(target, 1 - Math.pow(0.001, delta));
     camera.lookAt(player.current.position.x, 1.2, player.current.position.z - 1.5);
 
-    const follow = (node: THREE.Object3D | null, xOffset: number, zOffset: number) => {
+    const follow = (node: SceneNode | null, xOffset: number, zOffset: number) => {
       if (!node || !player.current) return;
       const p = player.current.position;
       const desired = new THREE.Vector3(p.x + xOffset, 0, p.z + zOffset);
