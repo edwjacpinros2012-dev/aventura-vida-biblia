@@ -74,7 +74,8 @@ const sparkPositions: [number, number, number][] = [
 ];
 
 type DirectionRef = React.MutableRefObject<[number, number]>;
-type SceneNode = { position: { x: number; y: number; z: number; lerp: (target: THREE.Vector3, alpha: number) => void; distanceTo: (target: THREE.Vector3) => number }; rotation: { y: number } };
+type Vector3Like = { x: number; y: number; z: number };
+type SceneNode = { position: { x: number; y: number; z: number; lerp: (target: Vector3Like, alpha: number) => void; distanceTo: (target: Vector3Like) => number }; rotation: { y: number } };
 type KeysRef = React.MutableRefObject<Set<string>>;
 
 function KidModel({
