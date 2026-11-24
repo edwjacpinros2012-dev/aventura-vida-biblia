@@ -268,6 +268,7 @@ function GameScene({
   onCollect,
   onNearGate,
   activeChild,
+  companions,
 }: {
   chapter: Chapter;
   keys: KeysRef;
@@ -276,6 +277,7 @@ function GameScene({
   onCollect: (index: number) => void;
   onNearGate: (near: boolean) => void;
   activeChild: ChildProfile;
+  companions: ChildProfile[];
 }) {
   const player = useRef<THREE.Object3D | null>(null);
   const friendOne = useRef<THREE.Object3D | null>(null);
@@ -346,8 +348,8 @@ function GameScene({
         </Float>
       ))}
       <KidModel name={activeChild.name} shirt={activeChild.accentColor} hair="#493329" position={[0, 0, 8]} nodeRef={(node) => { player.current = node; }} />
-      <KidModel name="Mía" shirt="#8a74cb" hair="#382b35" position={[-1.3, 0, 9.4]} scale={0.94} nodeRef={(node) => { friendOne.current = node; }} />
-      <KidModel name="Samuel" shirt="#4d9f9c" hair="#47372b" position={[1.3, 0, 9.4]} scale={0.96} nodeRef={(node) => { friendTwo.current = node; }} />
+      <KidModel name={companions[0].name} shirt={companions[0].accentColor} hair="#382b35" position={[-1.3, 0, 9.4]} scale={0.94} nodeRef={(node) => { friendOne.current = node; }} />
+      <KidModel name={companions[1].name} shirt={companions[1].accentColor} hair="#47372b" position={[1.3, 0, 9.4]} scale={0.96} nodeRef={(node) => { friendTwo.current = node; }} />
       <Sparkles count={70} scale={[28, 7, 32]} color="#fff1ba" />
     </>
   );
@@ -515,7 +517,7 @@ export function ThreeChildrenPortalsGame() {
 
       <div className="relative h-[min(68vh,620px)] min-h-[440px]">
         <Canvas shadows camera={{ position: [0, 7, 19], fov: 48 }} dpr={[1, 1.5]}>
-          <GameScene key={chapterIndex} chapter={current} keys={keys} pad={pad} collected={collected} onCollect={collect} onNearGate={setNearGate} activeChild={activeChild} />
+          <GameScene key={chapterIndex} chapter={current} keys={keys} pad={pad} collected={collected} onCollect={collect} onNearGate={setNearGate} activeChild={activeChild} companions={childrenData.filter((child) => child.id !== activeChild.id)} />
         </Canvas>
 
         {!started && (
@@ -523,7 +525,7 @@ export function ThreeChildrenPortalsGame() {
             <div className="max-w-md rounded-3xl border border-white/15 bg-[#0b2d3d]/95 p-6 text-center shadow-2xl">
               <p className="text-xs font-black uppercase tracking-[.2em] text-[#f5cf74]">Una aventura de fe y amistad</p>
               <h3 className="mt-3 font-display text-3xl font-black">Tres niños y los portales poderosos</h3>
-              <p className="mt-3 text-sm leading-6 text-white/70">Explora con Noa, Mía y Samuel. Muévete, encuentra las señales y ayuda al equipo a llegar al siguiente capítulo.</p>
+              <p className="mt-3 text-sm leading-6 text-white/70">Explora con Mateo, Sofía y Lucas. Muévete, encuentra las señales y ayuda al equipo a llegar al siguiente capítulo.</p>
               <button type="button" onClick={() => setStarted(true)} className="mt-5 rounded-xl bg-[#f5cf74] px-6 py-3 text-sm font-black text-[#203142]">Entrar en la aventura</button>
             </div>
           </div>
