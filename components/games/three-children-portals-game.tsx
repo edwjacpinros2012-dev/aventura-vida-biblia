@@ -107,6 +107,36 @@ function KidModel({
           <capsuleGeometry args={[0.34, 0.58, 5, 10]} />
           <meshStandardMaterial color={shirt} roughness={0.78} />
         </mesh>
+        <mesh position={[0, 1.22, 0.325]} castShadow>
+          <boxGeometry args={[0.5, 0.48, 0.13]} />
+          <meshStandardMaterial color={name === "Mateo" ? "#9cc7ed" : name === "Sofía" ? "#f7b5d0" : "#9bd5b0"} metalness={0.28} roughness={0.42} />
+        </mesh>
+        <mesh position={[-0.31, 1.42, 0]} castShadow>
+          <sphereGeometry args={[0.19, 12, 10]} />
+          <meshStandardMaterial color={name === "Mateo" ? "#4c83b7" : name === "Sofía" ? "#c96d9a" : "#438d69"} metalness={0.22} roughness={0.48} />
+        </mesh>
+        <mesh position={[0.31, 1.42, 0]} castShadow>
+          <sphereGeometry args={[0.19, 12, 10]} />
+          <meshStandardMaterial color={name === "Mateo" ? "#4c83b7" : name === "Sofía" ? "#c96d9a" : "#438d69"} metalness={0.22} roughness={0.48} />
+        </mesh>
+        {name === "Lucas" && (
+          <group position={[0.61, 0.88, 0.2]} rotation={[0, 0, -0.12]}>
+            <mesh castShadow>
+              <cylinderGeometry args={[0.38, 0.38, 0.12, 6]} />
+              <meshStandardMaterial color="#b6d9c4" metalness={0.35} roughness={0.38} />
+            </mesh>
+            <mesh position={[0, 0.07, 0.065]}>
+              <circleGeometry args={[0.2, 6]} />
+              <meshStandardMaterial color="#f4d47b" emissive="#b88b37" emissiveIntensity={0.35} />
+            </mesh>
+          </group>
+        )}
+        {name === "Sofía" && (
+          <mesh position={[0, 1.05, -0.34]} castShadow>
+            <boxGeometry args={[0.42, 0.55, 0.24]} />
+            <meshStandardMaterial color="#8e6aa8" roughness={0.86} />
+          </mesh>
+        )}
         <mesh position={[0, 1.92, 0]} castShadow>
           <sphereGeometry args={[0.42, 18, 14]} />
           <meshStandardMaterial color="#d99b70" roughness={0.82} />
