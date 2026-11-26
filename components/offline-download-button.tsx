@@ -20,7 +20,7 @@ export function OfflineDownloadButton() {
       return;
     }
     setState("downloading");
-    setDetail("Guardando juegos, contenido y pantallas principales en este dispositivo…");
+    setDetail("Preparando el catálogo y las 16 rutas de juego con sus archivos de aplicación…");
     try {
       const registration = await navigator.serviceWorker.ready;
       const worker = navigator.serviceWorker.controller ?? registration.active;
@@ -36,8 +36,8 @@ export function OfflineDownloadButton() {
       });
       setState(result.ok ? "ready" : "partial");
       setDetail(result.ok
-        ? `¡Listo! ${result.cached} recursos quedaron guardados en este dispositivo.`
-        : `Se guardaron ${result.cached} de ${result.total} recursos. Mantén Internet para abrir las secciones que falten.`);
+        ? `¡Listo! ${result.cached} secciones principales quedaron preparadas en este dispositivo.`
+        : `Se prepararon ${result.cached} de ${result.total} secciones. Mantén Internet para completar las que falten.`);
     } catch (error) {
       setState("error");
       setDetail(error instanceof Error ? error.message : "No se pudo preparar el modo sin conexión.");
