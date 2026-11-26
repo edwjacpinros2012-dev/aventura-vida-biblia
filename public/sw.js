@@ -7,9 +7,13 @@ async function cacheRoute(cache, path) {
   if (!response.ok) throw new Error(`No se pudo descargar ${path} (${response.status})`);
   const html = await response.clone().text();
   await cache.put(path, response);
-  const assetPaths = [...html.matchAll(/(?:src|href)=["']([^"']*\/_next\/static\/[^"']+)["']/g)]
-    .map((match) => new URL(match[1], self.location.origin))
-    .filter((url) => url.origin === self.location.origin)
+  const referencedAssets = [
+    ...[...html.matchAll(/(?:src|href)=["']([^"']+)["']/g)].map((match) => match[1]),
+    ...[...html.matchAll(/url\\(["']?([^)"']+)["']?\\)/g)].map((match) => match[1]),
+  ];
+  const assetPaths = referencedAssets
+    .map((value) => new URL(value, self.location.origin))
+    .filter((url) => url.origin === self.location.origin && /\\.(?:js|css|png|jpg|jpeg|webp|svg|woff2?|mp3|ogg|glb|gltf|bin)(?:\\?|$)/i.test(url.pathname))
     .map((url) => url.href);
   await Promise.allSettled([...new Set(assetPaths)].map(async (asset) => {
     const assetResponse = await fetch(asset);
