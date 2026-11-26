@@ -7,7 +7,7 @@ async function cacheRoute(cache, path) {
   if (!response.ok) throw new Error(`No se pudo descargar ${path} (${response.status})`);
   const html = await response.clone().text();
   await cache.put(path, response);
-  const assetPaths = [...html.matchAll(/(?:src|href)=["']([^"']*\\/_next\\/static\\/[^"']+)["']/g)]
+  const assetPaths = [...html.matchAll(/(?:src|href)=["']([^"']*\/_next\/static\/[^"']+)["']/g)]
     .map((match) => new URL(match[1], self.location.origin))
     .filter((url) => url.origin === self.location.origin)
     .map((url) => url.href);
@@ -42,7 +42,7 @@ self.addEventListener("message", (event) => {
         const response = await fetch(path, { cache: "no-store" });
         if (!response.ok) throw new Error(`No se pudo guardar ${path}`);
         await cache.put(path, response);
-      } else if (/\\.webmanifest$/.test(path) || /^\\/icon(?:-|$)/.test(path)) {
+      } else if (/\.webmanifest$/.test(path) || /^\/icon(?:-|$)/.test(path)) {
         const response = await fetch(path);
         if (!response.ok) throw new Error(`No se pudo guardar ${path}`);
         await cache.put(path, response);
@@ -60,7 +60,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
   const isOfflineContent = url.pathname === "/api/content/offline";
-  const isStaticAsset = url.pathname.startsWith("/_next/") || /\\.(?:png|jpg|jpeg|webp|svg|woff2?)$/i.test(url.pathname);
+  const isStaticAsset = url.pathname.startsWith("/_next/") || /\.(?:png|jpg|jpeg|webp|svg|woff2?)$/i.test(url.pathname);
   const isNavigation = event.request.mode === "navigate";
   const isPrivateNavigation = ["/perfil", "/coleccion", "/pvp", "/multiplayer", "/admin"].some((path) => url.pathname === path || url.pathname.startsWith(`${path}/`));
   if (url.pathname.startsWith("/api/") && !isOfflineContent) return;
