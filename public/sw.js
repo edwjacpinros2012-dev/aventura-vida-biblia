@@ -9,11 +9,11 @@ async function cacheRoute(cache, path) {
   await cache.put(path, response);
   const referencedAssets = [
     ...[...html.matchAll(/(?:src|href)=["']([^"']+)["']/g)].map((match) => match[1]),
-    ...[...html.matchAll(/url\\(["']?([^)"']+)["']?\\)/g)].map((match) => match[1]),
+    ...[...html.matchAll(/url\(["']?([^)"']+)["']?\)/g)].map((match) => match[1]),
   ];
   const assetPaths = referencedAssets
     .map((value) => new URL(value, self.location.origin))
-    .filter((url) => url.origin === self.location.origin && /\\.(?:js|css|png|jpg|jpeg|webp|svg|woff2?|mp3|ogg|glb|gltf|bin)(?:\\?|$)/i.test(url.pathname))
+    .filter((url) => url.origin === self.location.origin && /\.(?:js|css|png|jpg|jpeg|webp|svg|woff2?|mp3|ogg|glb|gltf|bin)(?:\?|$)/i.test(url.pathname))
     .map((url) => url.href);
   await Promise.allSettled([...new Set(assetPaths)].map(async (asset) => {
     const assetResponse = await fetch(asset);
